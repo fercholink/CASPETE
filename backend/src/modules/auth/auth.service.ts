@@ -226,8 +226,9 @@ export async function forgotPassword(email: string) {
     },
   });
 
-  const firstName = user.full_name.split(' ')[0];
-  const resetUrl = `${env.FRONTEND_URL.split(',')[0].trim()}/reset-password?token=${raw}`;
+  const firstName = user.full_name.split(' ')[0] ?? user.full_name;
+  const baseUrl = (env.FRONTEND_URL.split(',')[0] ?? 'https://caspete.com').trim();
+  const resetUrl = `${baseUrl}/reset-password?token=${raw}`;
   await sendPasswordResetEmail(user.email, firstName, resetUrl);
 }
 

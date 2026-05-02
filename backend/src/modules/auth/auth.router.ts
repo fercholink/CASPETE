@@ -26,4 +26,10 @@ router.patch('/profile', authenticate, authController.updateProfile);
 // POST  /api/auth/change-password — cambiar contraseña
 router.post('/change-password', authenticate, authController.changePassword);
 
+// POST  /api/auth/forgot-password — solicitar recuperación por email
+router.post('/forgot-password', authController.forgotPassword);
+
+// POST  /api/auth/reset-password — establecer nueva contraseña con token
+router.post('/reset-password', authController.resetPassword);
+
 export default router;

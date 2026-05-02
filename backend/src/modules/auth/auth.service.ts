@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../lib/prisma.js';
 import { env } from '../../config/env.js';
 import { AppError } from '../../middleware/error.middleware.js';
+import { sendPasswordResetEmail } from '../../lib/email.js';
 import type { RegisterInput, LoginInput } from './auth.schemas.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { UserRole } from '@prisma/client';
@@ -200,4 +201,59 @@ function signToken(user: {
   };
   const expiresIn = env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] & string;
   return jwt.sign(payload, env.JWT_SECRET, { expiresIn });
+}
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hora
+
+export async function forgotPassword(email: string) {
+  // Buscar usuario — siempre respondemos igual por seguridad (evita user enumeration)
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true, full_name: true, email: true, active: true } });
+  if (!user || !user.active) return; // silencioso
+
+  // Invalidar tokens anteriores
+  await prisma.passwordResetToken.updateMany({
+    where: { user_id: user.id, used_at: null },
+    data: { used_at: new Date() },
+  });
+
+  // Generar token aleatorio y guardarlo hasheado
+  const raw = randomBytes(40).toString('hex');
+  await prisma.passwordResetToken.create({
+    data: {
+      user_id: user.id,
+      token_hash: createHash('sha256').update(raw).digest('hex'),
+      expires_at: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+    },
+  });
+
+  const firstName = user.full_name.split(' ')[0];
+  const resetUrl = `${env.FRONTEND_URL.split(',')[0].trim()}/reset-password?token=${raw}`;
+  await sendPasswordResetEmail(user.email, firstName, resetUrl);
+}
+
+export async function resetPassword(rawToken: string, newPassword: string) {
+  const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+
+  const record = await prisma.passwordResetToken.findFirst({
+    where: {
+      token_hash: tokenHash,
+      used_at: null,
+      expires_at: { gt: new Date() },
+    },
+    include: { user: { select: { id: true, active: true } } },
+  });
+
+  if (!record || !record.user.active) {
+    throw new AppError('El enlace de restablecimiento es inválido o ya expiró', 400);
+  }
+
+  const password_hash = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({ where: { id: record.user.id }, data: { password_hash } });
+
+  // Marcar token como usado y revocar todos los refresh tokens
+  await prisma.passwordResetToken.update({ where: { id: record.id }, data: { used_at: new Date() } });
+  await prisma.refreshToken.updateMany({
+    where: { user_id: record.user.id, revoked_at: null },
+    data: { revoked_at: new Date() },
+  });
 }

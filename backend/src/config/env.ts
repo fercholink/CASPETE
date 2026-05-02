@@ -8,7 +8,9 @@ const envSchema = z.object({
   REFRESH_TOKEN_SECRET: z.string().min(32, 'REFRESH_TOKEN_SECRET debe tener al menos 32 caracteres'),
   PORT: z.coerce.number().default(3001),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+  FRONTEND_URL: z.string().default('http://localhost:5173'),
+  RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY es requerida'),
+  EMAIL_FROM: z.string().default('info@caspete.com'),
 });
 
 const parsed = envSchema.safeParse(process.env);

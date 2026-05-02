@@ -43,3 +43,9 @@ export async function deactivate(req: Request, res: Response) {
   const school = await schoolService.deactivateSchool(id);
   sendSuccess(res, school, 'Colegio desactivado');
 }
+
+export async function deleteOne(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  await schoolService.deleteSchool(id);
+  sendSuccess(res, null, 'Colegio eliminado permanentemente');
+}

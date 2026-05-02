@@ -126,7 +126,8 @@ export default function StudentFormPage() {
             marginBottom: 24,
           }}
         >
-          ← Volver a estudiantes
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Volver a estudiantes
         </Link>
 
         <span className="brand-badge">
@@ -188,7 +189,7 @@ export default function StudentFormPage() {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="national_id">
                 Documento{' '}

@@ -28,11 +28,12 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 export default function SchoolsPage() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState<SchoolsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
     apiClient
@@ -52,33 +53,36 @@ export default function SchoolsPage() {
     try {
       await apiClient.delete(`/schools/${id}`);
       setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              schools: prev.schools.map((s) =>
-                s.id === id ? { ...s, active: false } : s,
-              ),
-            }
-          : prev,
+        prev ? { ...prev, schools: prev.schools.map((s) => s.id === id ? { ...s, active: false } : s) } : prev
       );
     } catch {
       alert('No se pudo desactivar el colegio');
     }
   }
 
+  async function handleDeleteSchool(school: School) {
+    if (!confirm(`⚠️ ¿Eliminar permanentemente el colegio "${school.name}"?\n\nSe eliminará toda su información, usuarios, estudiantes y pedidos.\nEsta acción NO se puede deshacer.`)) return;
+    if (!confirm(`Confirma: eliminar "${school.name}" para siempre.`)) return;
+    try {
+      await apiClient.delete(`/schools/${school.id}/permanent`);
+      setData((prev) => prev ? { ...prev, schools: prev.schools.filter((s) => s.id !== school.id), total: prev.total - 1 } : prev);
+    } catch (e) {
+      alert((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo eliminar el colegio');
+    }
+  }
+
   return (
     <>
       <nav className="dashboard-nav">
-        <span className="nav-logo">
-          <span className="nav-logo-dot" />
-          CASPETE
-        </span>
+        <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" onClick={() => navigate('/dashboard')}>
-            Dashboard
+          <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <span className="desktop-only">Inicio</span>
           </button>
           <button className="btn-ghost" onClick={logout}>
-            Cerrar sesión
+            <span className="desktop-only">Cerrar sesión</span>
+            <span className="mobile-only">Salir</span>
           </button>
         </div>
       </nav>
@@ -208,26 +212,15 @@ export default function SchoolsPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                    <Link
-                      to={`/schools/${school.id}/edit`}
-                      className="btn-ghost"
-                      style={{ fontSize: 13, padding: '5px 14px', textDecoration: 'none' }}
-                    >
-                      Editar
-                    </Link>
+                    <Link to={`/schools/${school.id}/edit`} className="btn-ghost" style={{ fontSize: 13, padding: '5px 14px', textDecoration: 'none' }}>Editar</Link>
                     {school.active && (
-                      <button
-                        className="btn-ghost"
-                        style={{
-                          fontSize: 13,
-                          padding: '5px 14px',
-                          color: 'var(--color-error)',
-                          borderColor: 'rgba(212,86,86,0.2)',
-                        }}
-                        onClick={() => handleDeactivate(school.id, school.name)}
-                      >
-                        Desactivar
-                      </button>
+                      <button className="btn-ghost" style={{ fontSize: 13, padding: '5px 14px', color: 'var(--color-error)', borderColor: 'rgba(212,86,86,0.2)' }}
+                        onClick={() => handleDeactivate(school.id, school.name)}>Desactivar</button>
+                    )}
+                    {isSuperAdmin && (
+                      <button className="btn-ghost"
+                        style={{ fontSize: 13, padding: '5px 14px', color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.05)' }}
+                        onClick={() => handleDeleteSchool(school)} title="Eliminar permanentemente">🗑 Eliminar</button>
                     )}
                   </div>
                 </div>

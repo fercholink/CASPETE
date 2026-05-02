@@ -151,7 +151,8 @@ export default function ProductFormPage() {
             marginBottom: 24,
           }}
         >
-          ← Volver a productos
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Volver a productos
         </Link>
 
         <span className="brand-badge">
@@ -191,7 +192,7 @@ export default function ProductFormPage() {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="price">Precio (COP)</label>
               <input

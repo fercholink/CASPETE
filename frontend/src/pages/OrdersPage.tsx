@@ -55,6 +55,7 @@ export default function OrdersPage() {
   const isParent  = user?.role === 'PARENT';
   const isAdmin   = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isVendor  = user?.role === 'VENDOR';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   // Filtros — VENDOR arranca con hoy + CONFIRMED
   const [statusFilter, setStatusFilter] = useState(isVendor ? 'CONFIRMED' : '');
@@ -103,6 +104,17 @@ export default function OrdersPage() {
     } catch { alert('No se pudo cancelar el pedido'); }
   }
 
+  async function handleDeleteOrder(order: Order) {
+    if (!confirm(`⚠️ ¿Eliminar permanentemente el pedido de "${order.student.full_name}"?\n\nEsta acción NO se puede deshacer y no reembolsa saldo automáticamente.`)) return;
+    if (!confirm(`Confirma: eliminar pedido "${order.id}" para siempre.`)) return;
+    try {
+      await apiClient.delete(`/orders/${order.id}/permanent`);
+      setOrders((prev) => prev.filter((o) => o.id !== order.id));
+    } catch (e) {
+      alert((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo eliminar el pedido');
+    }
+  }
+
   const setToday = () => setDateFilter(today());
   const clearDate = () => setDateFilter('');
 
@@ -111,8 +123,14 @@ export default function OrdersPage() {
       <nav className="dashboard-nav">
         <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" onClick={() => navigate('/dashboard')}>Dashboard</button>
-          <button className="btn-ghost" onClick={logout}>Cerrar sesión</button>
+          <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <span className="desktop-only">Inicio</span>
+          </button>
+          <button className="btn-ghost" onClick={logout}>
+            <span className="desktop-only">Cerrar sesión</span>
+            <span className="mobile-only">Salir</span>
+          </button>
         </div>
       </nav>
 
@@ -130,7 +148,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Filtros */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
           {/* Buscador (solo admin/vendor) */}
           {(isAdmin || isVendor) && (
             <input
@@ -178,10 +196,10 @@ export default function OrdersPage() {
           {(dateFilter || statusFilter || search) && (
             <button
               className="btn-ghost"
-              style={{ fontSize: 13, padding: '7px 12px', color: 'var(--color-text-muted)' }}
+              style={{ fontSize: 13, padding: '7px 12px', color: 'var(--color-text-muted)', width: '100%' }}
               onClick={() => { setStatusFilter(''); setDateFilter(''); setSearch(''); }}
             >
-              Limpiar ×
+              Limpiar filtros ×
             </button>
           )}
         </div>
@@ -273,6 +291,21 @@ export default function OrdersPage() {
                           onClick={() => handleCancel(order.id)}
                         >
                           Cancelar
+                        </button>
+                      )}
+                      {isSuperAdmin && (
+                        <button
+                          className="btn-ghost"
+                          style={{
+                            fontSize: 12, padding: '4px 12px',
+                            color: '#dc2626',
+                            borderColor: 'rgba(220,38,38,0.3)',
+                            background: 'rgba(220,38,38,0.05)',
+                          }}
+                          onClick={() => handleDeleteOrder(order)}
+                          title="Eliminar permanentemente"
+                        >
+                          🗑 Eliminar
                         </button>
                       )}
                     </div>

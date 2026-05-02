@@ -33,3 +33,9 @@ export async function deactivate(req: Request, res: Response) {
   const store = await storeService.deactivateStore(id, req.user!);
   sendSuccess(res, store, 'Tienda desactivada');
 }
+
+export async function deleteOne(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  await storeService.deleteStore(id, req.user!);
+  sendSuccess(res, null, 'Tienda eliminada permanentemente');
+}

@@ -304,3 +304,18 @@ export async function topupStudent(studentId: string, input: TopupInput, actor: 
     return updated;
   });
 }
+
+export async function deleteOrder(id: string, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') {
+    throw new AppError('Solo el Super Administrador puede eliminar pedidos permanentemente', 403);
+  }
+
+  const order = await prisma.lunchOrder.findUnique({ where: { id }, select: { id: true } });
+  if (!order) throw new AppError('Pedido no encontrado', 404);
+
+  await prisma.$transaction([
+    prisma.orderItem.deleteMany({ where: { order_id: id } }),
+    prisma.transaction.deleteMany({ where: { order_id: id } }),
+    prisma.lunchOrder.delete({ where: { id } }),
+  ]);
+}

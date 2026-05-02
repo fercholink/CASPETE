@@ -27,6 +27,7 @@ export default function ProductsPage() {
   const [error, setError] = useState('');
 
   const canWrite = user?.role === 'VENDOR' || user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
     apiClient
@@ -45,27 +46,35 @@ export default function ProductsPage() {
     if (!confirm(`¿Desactivar "${name}"?`)) return;
     try {
       await apiClient.delete(`/products/${id}`);
-      setProducts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, active: false } : p)),
-      );
+      setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, active: false } : p)));
     } catch {
       alert('No se pudo desactivar el producto');
+    }
+  }
+
+  async function handleDeleteProduct(product: Product) {
+    if (!confirm(`⚠️ ¿Eliminar permanentemente "${product.name}"?\n\nEsta acción NO se puede deshacer.`)) return;
+    if (!confirm(`Confirma: eliminar "${product.name}" para siempre.`)) return;
+    try {
+      await apiClient.delete(`/products/${product.id}/permanent`);
+      setProducts((prev) => prev.filter((p) => p.id !== product.id));
+    } catch (e) {
+      alert((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo eliminar el producto');
     }
   }
 
   return (
     <>
       <nav className="dashboard-nav">
-        <span className="nav-logo">
-          <span className="nav-logo-dot" />
-          CASPETE
-        </span>
+        <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" onClick={() => navigate('/dashboard')}>
-            Dashboard
+          <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <span className="desktop-only">Inicio</span>
           </button>
           <button className="btn-ghost" onClick={logout}>
-            Cerrar sesión
+            <span className="desktop-only">Cerrar sesión</span>
+            <span className="mobile-only">Salir</span>
           </button>
         </div>
       </nav>
@@ -197,21 +206,16 @@ export default function ProductsPage() {
 
                 {canWrite && (
                   <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                    <Link
-                      to={`/products/${product.id}/edit`}
-                      className="btn-ghost"
-                      style={{ fontSize: 13, padding: '5px 14px', textDecoration: 'none' }}
-                    >
-                      Editar
-                    </Link>
+                    <Link to={`/products/${product.id}/edit`} className="btn-ghost" style={{ fontSize: 13, padding: '5px 14px', textDecoration: 'none' }}>Editar</Link>
                     {product.active && (
-                      <button
-                        className="btn-ghost"
+                      <button className="btn-ghost"
                         style={{ fontSize: 13, padding: '5px 14px', color: 'var(--color-error)', borderColor: 'rgba(212,86,86,0.2)' }}
-                        onClick={() => handleDeactivate(product.id, product.name)}
-                      >
-                        Desactivar
-                      </button>
+                        onClick={() => handleDeactivate(product.id, product.name)}>Desactivar</button>
+                    )}
+                    {isSuperAdmin && (
+                      <button className="btn-ghost"
+                        style={{ fontSize: 13, padding: '5px 14px', color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.05)' }}
+                        onClick={() => handleDeleteProduct(product)} title="Eliminar permanentemente">🗑 Eliminar</button>
                     )}
                   </div>
                 )}

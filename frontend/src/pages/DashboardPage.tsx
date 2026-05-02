@@ -75,8 +75,14 @@ export default function DashboardPage() {
       <nav className="dashboard-nav">
         <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" onClick={() => navigate('/profile')}>Mi perfil</button>
-          <button className="btn-ghost" onClick={logout}>Cerrar sesión</button>
+          <button className="btn-ghost" onClick={() => navigate('/profile')}>
+            <span className="desktop-only">Mi perfil</span>
+            <span className="mobile-only">Perfil</span>
+          </button>
+          <button className="btn-ghost" onClick={logout}>
+            <span className="desktop-only">Cerrar sesión</span>
+            <span className="mobile-only">Salir</span>
+          </button>
         </div>
       </nav>
 
@@ -98,7 +104,7 @@ export default function DashboardPage() {
         {isAdmin && summary && (
           <div style={{ marginBottom: 8 }}>
             <p className="dashboard-label" style={{ marginBottom: 12 }}>Hoy</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginBottom: 16 }}>
+            <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginBottom: 16 }}>
               {[
                 { label: 'Pedidos creados', value: summary.orders_today, color: 'var(--color-text)' },
                 { label: 'Pendientes', value: summary.orders_pending, color: '#c37d0d' },
@@ -143,7 +149,7 @@ export default function DashboardPage() {
         {quickLinks.length > 0 && (
           <>
             <p className="dashboard-label" style={{ marginBottom: 12 }}>Accesos rápidos</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+            <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               {quickLinks.map((link) => (
                 <Link key={link.to} to={link.to} style={{ textDecoration: 'none' }}>
                   <div

@@ -135,7 +135,8 @@ export default function NewOrderPage() {
     <div className="auth-page" style={{ justifyContent: 'flex-start', paddingTop: 40, alignItems: 'stretch', padding: '40px 24px' }}>
       <div style={{ maxWidth: 600, width: '100%', margin: '0 auto' }}>
         <Link to="/orders" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-muted)', textDecoration: 'none', marginBottom: 24 }}>
-          ← Volver a pedidos
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Volver a pedidos
         </Link>
 
         <span className="brand-badge"><span className="brand-dot" />CASPETE</span>
@@ -159,7 +160,7 @@ export default function NewOrderPage() {
           {selectedStudent && (
             <>
               {/* Tienda + Fecha */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" htmlFor="store">Tienda</label>
                   {loadingStudent ? (

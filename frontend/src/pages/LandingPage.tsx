@@ -13,47 +13,28 @@ const Logo = ({ size = 28 }: { size?: number }) => (
 
 export default function LandingPage() {
   return (
-    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#fafdfb', minHeight: '100vh', overflowX: 'hidden' }}>
+    <div className="landing-wrapper">
 
       {/* ── Navbar ── */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 48px', height: 64,
-        background: 'rgba(250,253,251,0.85)', backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(26,71,49,0.08)',
-      }}>
+      <nav className="landing-nav">
         <Logo size={26} />
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link to="/login" style={{ textDecoration: 'none', fontSize: 14, fontWeight: 500, color: '#374151', padding: '8px 16px', borderRadius: 99, transition: 'background 0.15s' }}
-            onMouseOver={e => (e.currentTarget.style.background = '#f0fdf4')}
-            onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>
+          <Link to="/login" className="landing-nav-link">
             Iniciar sesión
           </Link>
-          <Link to="/register" style={{
-            textDecoration: 'none', fontSize: 14, fontWeight: 600, color: '#fff',
-            padding: '9px 22px', borderRadius: 99, background: '#1a4731',
-            boxShadow: '0 2px 8px rgba(26,71,49,0.3)', transition: 'opacity 0.15s',
-          }}
-            onMouseOver={e => (e.currentTarget.style.opacity = '0.88')}
-            onMouseOut={e => (e.currentTarget.style.opacity = '1')}>
+          <Link to="/register" className="btn-primary-landing">
             Registrarme gratis
           </Link>
         </div>
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center',
-        padding: '100px 48px 80px',
-        background: 'linear-gradient(135deg, #f0fdf4 0%, #fafdfb 50%, #ecfdf5 100%)',
-        position: 'relative', overflow: 'hidden',
-      }}>
+      <section className="landing-hero">
         {/* Decorative blobs */}
         <div style={{ position: 'absolute', top: -120, right: -120, width: 500, height: 500, borderRadius: '50%', background: 'rgba(26,71,49,0.06)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -80, left: -80, width: 350, height: 350, borderRadius: '50%', background: 'rgba(24,226,153,0.08)', pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 80, width: '100%', position: 'relative' }}>
+        <div className="landing-container landing-hero-content">
           {/* Left */}
           <div style={{ flex: 1 }}>
             <span style={{
@@ -66,14 +47,22 @@ export default function LandingPage() {
               Plataforma Escolar Digital
             </span>
 
-            <h1 style={{ fontSize: 60, fontWeight: 800, lineHeight: 1.08, letterSpacing: '-2px', color: '#0d1f16', margin: '0 0 24px' }}>
+            <h1 className="landing-hero-title">
               Loncheras sanas,<br />
               <span style={{ color: '#1a4731' }}>padres tranquilos.</span>
             </h1>
 
-            <p style={{ fontSize: 19, color: '#4b5563', lineHeight: 1.7, margin: '0 0 40px', maxWidth: 520 }}>
+            <p className="landing-hero-subtitle">
               Caspete une a <strong style={{ color: '#1a4731' }}>padres, colegios y niños</strong> en un ecosistema digital. Programa loncheras saludables, controla el saldo y garantiza entregas seguras con código OTP.
             </p>
+
+            {/* Mobile-only image */}
+            <div className="mobile-only landing-mobile-hero-img">
+              <img
+                src="/caspete_mobile_app_mockup.png"
+                alt="App de Caspete en el celular"
+              />
+            </div>
 
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 48 }}>
               <Link to="/register" style={{
@@ -113,7 +102,7 @@ export default function LandingPage() {
           </div>
 
           {/* Right - Image collage */}
-          <div style={{ flex: 1, position: 'relative', height: 580, display: 'flex', justifyContent: 'flex-end' }}>
+          <div className="landing-hero-image">
             <div style={{ width: '100%', maxWidth: 480, position: 'relative' }}>
               {/* Main image */}
               <div style={{ borderRadius: 28, overflow: 'hidden', height: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.12)', position: 'relative' }}>
@@ -169,7 +158,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Cómo funciona (infografía) ── */}
-      <section style={{ padding: '100px 48px', background: '#0d1f16' }}>
+      <section className="landing-how">
         <div style={{ maxWidth: 1100, margin: '0 auto', textAlign: 'center' }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: '#18E299', textTransform: 'uppercase', letterSpacing: '1px' }}>Proceso</span>
           <h2 style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-1.5px', margin: '12px 0 48px', color: '#fff' }}>¿Cómo funciona Caspete?</h2>
@@ -184,16 +173,16 @@ export default function LandingPage() {
       </section>
 
       {/* ── Ecosistema ── */}
-      <section style={{ padding: '100px 48px', background: '#fff' }}>
+      <section className="landing-ecosystem">
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+          <div className="landing-section-header">
             <span style={{ fontSize: 12, fontWeight: 700, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '1px' }}>Ecosistema</span>
-            <h2 style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-1.5px', margin: '12px 0 0', color: '#0d1f16' }}>
+            <h2 className="landing-section-title">
               Un sistema que funciona<br />para todos
             </h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28 }}>
+          <div className="landing-grid-3">
             {[
               { icon: '👨‍👩‍👧', title: 'Padres', color: '#f0fdf4', border: '#bbf7d0', desc: 'Programa loncheras semanales, recarga saldo digital y recibe notificaciones de cada entrega. Tranquilidad total.', items: ['Programación semanal', 'Recarga de saldo', 'Historial de pedidos'] },
               { icon: '🏫', title: 'Colegios', color: '#eff6ff', border: '#bfdbfe', desc: 'Administra estudiantes, vincula tiendas y monitorea la nutrición de toda la institución desde un panel central.', items: ['Dashboard administrativo', 'Control por grado', 'Reportes de consumo'] },
@@ -229,7 +218,7 @@ export default function LandingPage() {
             <h2 style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-1.5px', margin: '12px 0 0', color: '#0d1f16' }}>Diseñado para la vida real</h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
+          <div className="landing-grid-4">
             {[
               { icon: '🥗', title: 'Menús Saludables', desc: 'Productos aprobados por el colegio, sin comida chatarra. Tu hijo come bien, siempre.' },
               { icon: '📱', title: 'Todo desde el celular', desc: 'Gestiona las loncheras de la semana en 3 minutos desde cualquier dispositivo.' },
@@ -247,12 +236,7 @@ export default function LandingPage() {
       </section>
 
 
-      {/* ── CTA ── */}
-      <section style={{
-        padding: '100px 48px', textAlign: 'center',
-        background: 'linear-gradient(135deg, #1a4731 0%, #0d2e1e 100%)',
-        position: 'relative', overflow: 'hidden',
-      }}>
+      <section className="landing-cta">
         <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 600, height: 600, borderRadius: '50%', background: 'rgba(24,226,153,0.06)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', maxWidth: 640, margin: '0 auto' }}>
           <h2 style={{ fontSize: 48, fontWeight: 800, color: '#fff', letterSpacing: '-1.5px', margin: '0 0 20px' }}>
@@ -273,7 +257,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ background: '#07130d', padding: '60px 48px 32px' }}>
+      <footer className="landing-footer">
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 48, flexWrap: 'wrap', marginBottom: 48, paddingBottom: 48, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ maxWidth: 280 }}>

@@ -34,4 +34,7 @@ router.post('/bulk-confirm', adminRoles, orderController.bulkConfirm);
 // POST   /api/orders/topup/:studentId        — recargar saldo (admin)
 router.post('/topup/:studentId', adminRoles, orderController.topup);
 
+// DELETE /api/orders/:id/permanent            — eliminar permanentemente (solo SUPER_ADMIN)
+router.delete('/:id/permanent', requireRole('SUPER_ADMIN'), orderController.deleteOne);
+
 export default router;

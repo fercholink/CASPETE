@@ -62,3 +62,9 @@ export async function topup(req: Request, res: Response) {
   const student = await orderService.topupStudent(studentId, input, req.user!);
   sendSuccess(res, student, 'Saldo recargado');
 }
+
+export async function deleteOne(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  await orderService.deleteOrder(id, req.user!);
+  sendSuccess(res, null, 'Pedido eliminado permanentemente');
+}

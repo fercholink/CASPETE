@@ -25,4 +25,7 @@ router.patch('/:id', canWrite, productController.update);
 // DELETE /api/products/:id  — soft delete
 router.delete('/:id', canWrite, productController.deactivate);
 
+// DELETE /api/products/:id/permanent — eliminar permanentemente (solo SUPER_ADMIN)
+router.delete('/:id/permanent', requireRole('SUPER_ADMIN'), productController.deleteOne);
+
 export default router;

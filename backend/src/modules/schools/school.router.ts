@@ -25,4 +25,7 @@ router.patch('/:id', requireRole('SUPER_ADMIN'), schoolController.update);
 // DELETE /api/schools/:id     — desactivar colegio (soft delete)
 router.delete('/:id', requireRole('SUPER_ADMIN'), schoolController.deactivate);
 
+// DELETE /api/schools/:id/permanent — eliminar permanentemente (solo SUPER_ADMIN)
+router.delete('/:id/permanent', requireRole('SUPER_ADMIN'), schoolController.deleteOne);
+
 export default router;

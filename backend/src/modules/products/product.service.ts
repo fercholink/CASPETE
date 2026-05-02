@@ -114,3 +114,17 @@ export async function deactivateProduct(id: string, actor: JwtPayload) {
     select: productSelect,
   });
 }
+
+export async function deleteProduct(id: string, actor: JwtPayload) {
+  const product = await getProduct(id);
+  assertAccess(product, actor);
+
+  if (actor.role !== 'SUPER_ADMIN') {
+    throw new AppError('Solo el Super Administrador puede eliminar productos permanentemente', 403);
+  }
+
+  await prisma.$transaction([
+    prisma.orderItem.deleteMany({ where: { product_id: id } }),
+    prisma.product.delete({ where: { id } }),
+  ]);
+}

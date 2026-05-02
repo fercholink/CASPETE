@@ -92,3 +92,25 @@ export async function deactivateSchool(id: string) {
     select: schoolSelect,
   });
 }
+
+export async function deleteSchool(id: string) {
+  const school = await prisma.school.findUnique({
+    where: { id },
+    include: { _count: { select: { users: true, students: true, stores: true, products: true } } }
+  });
+  if (!school) throw new AppError('Colegio no encontrado', 404);
+
+  // Big bang deletion
+  await prisma.$transaction([
+    prisma.orderItem.deleteMany({ where: { order: { school_id: id } } }),
+    prisma.transaction.deleteMany({ where: { school_id: id } }),
+    prisma.lunchOrder.deleteMany({ where: { school_id: id } }),
+    prisma.product.deleteMany({ where: { school_id: id } }),
+    prisma.store.deleteMany({ where: { school_id: id } }),
+    prisma.student.deleteMany({ where: { school_id: id } }),
+    prisma.refreshToken.deleteMany({ where: { user: { school_id: id } } }),
+    prisma.passwordResetToken.deleteMany({ where: { user: { school_id: id } } }),
+    prisma.user.deleteMany({ where: { school_id: id } }),
+    prisma.school.delete({ where: { id } }),
+  ]);
+}

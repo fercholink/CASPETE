@@ -39,13 +39,30 @@ export default function StoresPage() {
     }
   }
 
+  async function handleDeleteStore(store: Store) {
+    if (!confirm(`⚠️ ¿Eliminar permanentemente la tienda "${store.name}"?\n\nEsta acción NO se puede deshacer.`)) return;
+    if (!confirm(`Confirma: eliminar "${store.name}" para siempre.`)) return;
+    try {
+      await apiClient.delete(`/stores/${store.id}/permanent`);
+      setStores((prev) => prev.filter((s) => s.id !== store.id));
+    } catch (e) {
+      alert((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo eliminar la tienda');
+    }
+  }
+
   return (
     <>
       <nav className="dashboard-nav">
         <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" onClick={() => navigate('/dashboard')}>Dashboard</button>
-          <button className="btn-ghost" onClick={logout}>Cerrar sesión</button>
+          <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <span className="desktop-only">Inicio</span>
+          </button>
+          <button className="btn-ghost" onClick={logout}>
+            <span className="desktop-only">Cerrar sesión</span>
+            <span className="mobile-only">Salir</span>
+          </button>
         </div>
       </nav>
 
@@ -92,24 +109,15 @@ export default function StoresPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                    <Link
-                      to={`/stores/${store.id}/edit`}
-                      className="btn-ghost"
-                      style={{ fontSize: 13, padding: '5px 14px', textDecoration: 'none' }}
-                    >
-                      Editar
-                    </Link>
-                    <button
-                      className="btn-ghost"
-                      style={{
-                        fontSize: 13, padding: '5px 14px',
-                        color: store.active ? 'var(--color-error)' : 'var(--color-brand-deep)',
-                        borderColor: store.active ? 'rgba(212,86,86,0.2)' : 'rgba(24,226,153,0.3)',
-                      }}
-                      onClick={() => handleToggle(store)}
-                    >
-                      {store.active ? 'Desactivar' : 'Activar'}
-                    </button>
+                    <Link to={`/stores/${store.id}/edit`} className="btn-ghost" style={{ fontSize: 13, padding: '5px 14px', textDecoration: 'none' }}>Editar</Link>
+                    <button className="btn-ghost"
+                      style={{ fontSize: 13, padding: '5px 14px', color: store.active ? 'var(--color-error)' : 'var(--color-brand-deep)', borderColor: store.active ? 'rgba(212,86,86,0.2)' : 'rgba(24,226,153,0.3)' }}
+                      onClick={() => handleToggle(store)}>{store.active ? 'Desactivar' : 'Activar'}</button>
+                    {isSuperAdmin && (
+                      <button className="btn-ghost"
+                        style={{ fontSize: 13, padding: '5px 14px', color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.05)' }}
+                        onClick={() => handleDeleteStore(store)} title="Eliminar permanentemente">🗑 Eliminar</button>
+                    )}
                   </div>
                 </div>
               </div>

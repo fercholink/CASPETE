@@ -87,3 +87,19 @@ export async function deactivateStore(id: string, actor: JwtPayload) {
   assertAccess(store, actor);
   return prisma.store.update({ where: { id }, data: { active: false }, select: storeSelect });
 }
+
+export async function deleteStore(id: string, actor: JwtPayload) {
+  const store = await getStore(id);
+  assertAccess(store, actor);
+
+  if (actor.role !== 'SUPER_ADMIN') {
+    throw new AppError('Solo el Super Administrador puede eliminar tiendas permanentemente', 403);
+  }
+
+  await prisma.$transaction([
+    prisma.orderItem.deleteMany({ where: { order: { store_id: id } } }),
+    prisma.transaction.deleteMany({ where: { order: { store_id: id } } }),
+    prisma.lunchOrder.deleteMany({ where: { store_id: id } }),
+    prisma.store.delete({ where: { id } }),
+  ]);
+}

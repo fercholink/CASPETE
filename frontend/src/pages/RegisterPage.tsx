@@ -65,9 +65,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="register-wrapper">
       {/* ── Panel izquierdo: Formulario ─────────────────────────── */}
-      <div style={{ flex: '0 0 520px', maxWidth: 520, overflowY: 'auto', padding: '40px 48px', display: 'flex', flexDirection: 'column', background: '#fff' }}>
+      <div className="register-left">
 
         {/* Botón volver */}
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7280', fontSize: 13, marginBottom: 32, textDecoration: 'none', fontWeight: 500 }}>
@@ -92,7 +92,7 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit}>
           {/* Nombre y Apellido */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div>
               <label className="form-label" htmlFor="firstName">Nombre(s)</label>
               <input id="firstName" name="firstName" className="form-input" type="text" value={form.firstName} onChange={handleChange} required placeholder="Juan" autoComplete="given-name" />
@@ -104,7 +104,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Email y Teléfono */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div>
               <label className="form-label" htmlFor="email">Correo electrónico</label>
               <input id="email" name="email" className="form-input" type="email" value={form.email} onChange={handleChange} required placeholder="tu@correo.com" autoComplete="email" />
@@ -116,7 +116,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Contraseñas */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div>
               <label className="form-label" htmlFor="password">Contraseña</label>
               <div style={{ position: 'relative' }}>
@@ -142,7 +142,7 @@ export default function RegisterPage() {
           {/* Tipo de usuario */}
           <div style={{ marginBottom: 20 }}>
             <label className="form-label" style={{ marginBottom: 8, display: 'block' }}>Tipo de usuario</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            <div className="grid-3-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
               {ROLE_OPTIONS.map((opt, idx) => (
                 <button key={idx} type="button" onClick={() => setForm(p => ({ ...p, roleIndex: idx }))}
                   style={{ border: `2px solid ${form.roleIndex === idx ? '#1a4731' : '#e5e7eb'}`, borderRadius: 10, padding: '10px 8px', background: form.roleIndex === idx ? 'rgba(26,71,49,0.07)' : 'transparent', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
@@ -178,7 +178,7 @@ export default function RegisterPage() {
       </div>
 
       {/* ── Panel derecho: Visual ─────────────────────────────────── */}
-      <div style={{ flex: 1, background: 'linear-gradient(135deg, #1a4731 0%, #2d6a4f 40%, #40916c 80%, #52b788 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 48px', position: 'relative', overflow: 'hidden' }}>
+      <div className="register-right">
 
         {/* Círculos decorativos */}
         <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />

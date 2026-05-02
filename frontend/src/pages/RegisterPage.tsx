@@ -10,7 +10,6 @@ const ROLE_OPTIONS: { value: AuthUser['role']; label: string; description: strin
   { value: 'PARENT', label: 'Acudiente', description: 'Soy el responsable del estudiante', icon: '👴' },
   { value: 'PARENT', label: 'Familiar', description: 'Familiar a cargo del estudiante', icon: '👪' },
   { value: 'VENDOR', label: 'Tendero', description: 'Administro una tienda escolar', icon: '🏪' },
-  { value: 'SCHOOL_ADMIN', label: 'Administrador', description: 'Gestiono mi institución educativa', icon: '🏫' },
 ];
 
 const EyeIcon = ({ open }: { open: boolean }) => open ? (

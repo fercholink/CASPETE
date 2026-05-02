@@ -17,9 +17,10 @@ import StoreFormPage from '../pages/StoreFormPage';
 import TransactionsPage from '../pages/TransactionsPage';
 import UsersPage from '../pages/UsersPage';
 import ProfilePage from '../pages/ProfilePage';
+import LandingPage from '../pages/LandingPage';
 
 export const router = createBrowserRouter([
-  { path: '/', element: <Navigate to="/login" replace /> },
+  { path: '/', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
 

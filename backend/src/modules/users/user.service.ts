@@ -99,12 +99,29 @@ export async function deleteUser(id: string, actor: JwtPayload) {
   if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede eliminar usuarios', 403);
   if (id === actor.sub) throw new AppError('No puedes eliminar tu propia cuenta', 400);
 
-  const user = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
+  const user = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, full_name: true } });
   if (!user) throw new AppError('Usuario no encontrado', 404);
   if (user.role === 'SUPER_ADMIN') throw new AppError('No se puede eliminar otro Super Administrador', 403);
 
-  // Revocar tokens antes de eliminar
+  // Verificar si tiene estudiantes vinculados
+  const studentCount = await prisma.student.count({ where: { parent_id: id } });
+  if (studentCount > 0) {
+    throw new AppError(
+      `No se puede eliminar a "${user.full_name}" porque tiene ${studentCount} estudiante(s) vinculado(s). Primero reasigna o elimina los estudiantes.`,
+      409
+    );
+  }
+
+  // Verificar si tiene órdenes como entregador
+  const deliveryCount = await prisma.lunchOrder.count({ where: { delivered_by: id } });
+  if (deliveryCount > 0) {
+    // Quitar la referencia de entregador (set null) en vez de bloquear
+    await prisma.lunchOrder.updateMany({ where: { delivered_by: id }, data: { delivered_by: null } });
+  }
+
+  // Limpiar tokens antes de eliminar
   await prisma.refreshToken.deleteMany({ where: { user_id: id } });
   await prisma.passwordResetToken.deleteMany({ where: { user_id: id } });
   await prisma.user.delete({ where: { id } });
 }
+

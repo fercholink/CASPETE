@@ -33,3 +33,9 @@ export async function deactivate(req: Request, res: Response) {
   const user = await userService.deactivateUser(id, req.user!);
   sendSuccess(res, user, 'Usuario desactivado');
 }
+
+export async function deleteOne(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  await userService.deleteUser(id, req.user!);
+  sendSuccess(res, null, 'Usuario eliminado permanentemente');
+}

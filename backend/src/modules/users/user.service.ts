@@ -91,7 +91,20 @@ export async function updateUser(id: string, input: UpdateUserInput, actor: JwtP
 }
 
 export async function deactivateUser(id: string, actor: JwtPayload) {
-  // No se puede auto-desactivar
   if (id === actor.sub) throw new AppError('No puedes desactivar tu propia cuenta', 400);
   return updateUser(id, { active: false }, actor);
+}
+
+export async function deleteUser(id: string, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede eliminar usuarios', 403);
+  if (id === actor.sub) throw new AppError('No puedes eliminar tu propia cuenta', 400);
+
+  const user = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
+  if (!user) throw new AppError('Usuario no encontrado', 404);
+  if (user.role === 'SUPER_ADMIN') throw new AppError('No se puede eliminar otro Super Administrador', 403);
+
+  // Revocar tokens antes de eliminar
+  await prisma.refreshToken.deleteMany({ where: { user_id: id } });
+  await prisma.passwordResetToken.deleteMany({ where: { user_id: id } });
+  await prisma.user.delete({ where: { id } });
 }

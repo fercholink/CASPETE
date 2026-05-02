@@ -86,6 +86,18 @@ export default function UsersPage() {
     }
   }
 
+  async function handleDelete(target: User) {
+    if (!confirm(`⚠️ ¿Eliminar permanentemente a "${target.full_name}"?\n\nEsta acción NO se puede deshacer.`)) return;
+    if (!confirm(`Confirma: vas a eliminar la cuenta de "${target.email}" para siempre.`)) return;
+    try {
+      await apiClient.delete(`/users/${target.id}/permanent`);
+      setUsers((prev) => prev.filter((u) => u.id !== target.id));
+    } catch (e) {
+      alert((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo eliminar el usuario');
+    }
+  }
+
+
   const filtered = users.filter((u) => {
     const matchSearch = !search || u.full_name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     const matchRole = !roleFilter || u.role === roleFilter;
@@ -162,17 +174,34 @@ export default function UsersPage() {
                     )}
                   </div>
                   {u.id !== user?.id && (
-                    <button
-                      className="btn-ghost"
-                      style={{
-                        fontSize: 13, padding: '5px 14px', flexShrink: 0,
-                        color: u.active ? 'var(--color-error)' : 'var(--color-brand-deep)',
-                        borderColor: u.active ? 'rgba(212,86,86,0.2)' : 'rgba(24,226,153,0.3)',
-                      }}
-                      onClick={() => handleToggle(u)}
-                    >
-                      {u.active ? 'Desactivar' : 'Activar'}
-                    </button>
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                      <button
+                        className="btn-ghost"
+                        style={{
+                          fontSize: 13, padding: '5px 14px',
+                          color: u.active ? 'var(--color-error)' : 'var(--color-brand-deep)',
+                          borderColor: u.active ? 'rgba(212,86,86,0.2)' : 'rgba(24,226,153,0.3)',
+                        }}
+                        onClick={() => handleToggle(u)}
+                      >
+                        {u.active ? 'Desactivar' : 'Activar'}
+                      </button>
+                      {isSuperAdmin && u.role !== 'SUPER_ADMIN' && (
+                        <button
+                          className="btn-ghost"
+                          style={{
+                            fontSize: 13, padding: '5px 14px',
+                            color: '#dc2626',
+                            borderColor: 'rgba(220,38,38,0.3)',
+                            background: 'rgba(220,38,38,0.05)',
+                          }}
+                          onClick={() => handleDelete(u)}
+                          title="Eliminar permanentemente"
+                        >
+                          🗑 Eliminar
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

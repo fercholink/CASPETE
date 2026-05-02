@@ -20,7 +20,10 @@ router.get('/:id', adminRoles, userController.getOne);
 // PATCH  /api/users/:id           — actualizar nombre / teléfono / estado
 router.patch('/:id', adminRoles, userController.update);
 
-// DELETE /api/users/:id           — desactivar
+// DELETE /api/users/:id           — desactivar (admin colegio)
 router.delete('/:id', adminRoles, userController.deactivate);
+
+// DELETE /api/users/:id/permanent — eliminar permanentemente (solo SUPER_ADMIN)
+router.delete('/:id/permanent', requireRole('SUPER_ADMIN'), userController.deleteOne);
 
 export default router;

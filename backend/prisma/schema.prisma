@@ -65,9 +65,23 @@ model User {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  school     School?      @relation(fields: [school_id], references: [id])
-  students   Student[]    @relation("ParentToStudent")
-  deliveries LunchOrder[] @relation("DeliveredBy")
+  school         School?        @relation(fields: [school_id], references: [id])
+  students       Student[]      @relation("ParentToStudent")
+  deliveries     LunchOrder[]   @relation("DeliveredBy")
+  refresh_tokens RefreshToken[]
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  user_id    String    @db.Uuid
+  token_hash String    @db.Text
+  expires_at DateTime
+  revoked_at DateTime?
+  created_at DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([token_hash])
 }
 
 model Student {
@@ -127,6 +141,8 @@ model LunchOrder {
   delivered_at   DateTime?
   delivered_by   String?     @db.Uuid
   otp_verified   Boolean     @default(false)
+  otp_code       String?     @db.VarChar(6)
+  otp_expires_at DateTime?
   notes          String?     @db.Text
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt

@@ -41,3 +41,9 @@ export async function topup(req: Request, res: Response) {
   const student = await topupStudent(id, input, req.user!);
   sendSuccess(res, student, 'Saldo recargado');
 }
+
+export async function deleteOne(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  await studentService.deleteStudent(id, req.user!);
+  sendSuccess(res, null, 'Estudiante eliminado permanentemente');
+}

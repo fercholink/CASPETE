@@ -113,3 +113,24 @@ export async function deactivateStudent(id: string, actor: JwtPayload) {
   assertAccess(student, actor);
   return prisma.student.update({ where: { id }, data: { active: false }, select: studentSelect });
 }
+
+export async function deleteStudent(id: string, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede eliminar estudiantes', 403);
+
+  const student = await prisma.student.findUnique({ where: { id }, select: { id: true, full_name: true, balance: true } });
+  if (!student) throw new AppError('Estudiante no encontrado', 404);
+
+  // Eliminar en cascada: transactions → order_items → lunch_orders → student
+  const orders = await prisma.lunchOrder.findMany({ where: { student_id: id }, select: { id: true } });
+  const orderIds = orders.map((o) => o.id);
+
+  if (orderIds.length > 0) {
+    await prisma.orderItem.deleteMany({ where: { order_id: { in: orderIds } } });
+    await prisma.transaction.deleteMany({ where: { order_id: { in: orderIds } } });
+    await prisma.lunchOrder.deleteMany({ where: { id: { in: orderIds } } });
+  }
+
+  // Eliminar transacciones sin orden
+  await prisma.transaction.deleteMany({ where: { student_id: id } });
+  await prisma.student.delete({ where: { id } });
+}

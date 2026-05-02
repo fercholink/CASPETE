@@ -32,6 +32,7 @@ export default function StudentsPage() {
 
   const isParent = user?.role === 'PARENT';
   const isAdmin = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
     apiClient
@@ -50,6 +51,17 @@ export default function StudentsPage() {
       setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, active: false } : s)));
     } catch {
       alert('No se pudo desactivar el estudiante');
+    }
+  }
+
+  async function handleDeleteStudent(student: Student) {
+    if (!confirm(`⚠️ ¿Eliminar permanentemente a "${student.full_name}"?\n\nSe eliminarán también sus órdenes, transacciones e historial.\nEsta acción NO se puede deshacer.`)) return;
+    if (!confirm(`Confirma: eliminar a "${student.full_name}" del sistema para siempre.`)) return;
+    try {
+      await apiClient.delete(`/students/${student.id}/permanent`);
+      setStudents((prev) => prev.filter((s) => s.id !== student.id));
+    } catch (e) {
+      alert((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo eliminar el estudiante');
     }
   }
 
@@ -171,6 +183,21 @@ export default function StudentsPage() {
                         onClick={() => handleDeactivate(student.id, student.full_name)}
                       >
                         Desactivar
+                      </button>
+                    )}
+                    {isSuperAdmin && (
+                      <button
+                        className="btn-ghost"
+                        style={{
+                          fontSize: 13, padding: '5px 14px',
+                          color: '#dc2626',
+                          borderColor: 'rgba(220,38,38,0.3)',
+                          background: 'rgba(220,38,38,0.05)',
+                        }}
+                        onClick={() => handleDeleteStudent(student)}
+                        title="Eliminar permanentemente (solo Super Admin)"
+                      >
+                        🗑 Eliminar
                       </button>
                     )}
                   </div>

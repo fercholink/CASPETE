@@ -27,4 +27,7 @@ router.delete('/:id', requireRole('PARENT', 'SCHOOL_ADMIN', 'SUPER_ADMIN'), stud
 // POST   /api/students/:id/topup — recargar saldo (admin)
 router.post('/:id/topup', requireRole('SCHOOL_ADMIN', 'SUPER_ADMIN'), studentController.topup);
 
+// DELETE /api/students/:id/permanent — eliminar permanentemente (solo SUPER_ADMIN)
+router.delete('/:id/permanent', requireRole('SUPER_ADMIN'), studentController.deleteOne);
+
 export default router;

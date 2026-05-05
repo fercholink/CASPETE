@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
+import QRScanner from '../components/QRScanner';
 
 interface OrderItem {
   id: string;
@@ -20,7 +21,7 @@ interface Order {
   notes: string | null;
   created_at: string;
   school: { id: string; name: string };
-  student: { id: string; full_name: string; grade: string | null; parent_id: string };
+  student: { id: string; full_name: string; grade: string | null; photo_url?: string | null; parent_id: string };
   store: { id: string; name: string };
   order_items: OrderItem[];
 }
@@ -61,9 +62,10 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState(isVendor ? 'CONFIRMED' : '');
   const [dateFilter, setDateFilter]     = useState(isVendor ? today() : '');
   const [search, setSearch]             = useState('');
+  const [isScanning, setIsScanning]     = useState(false);
 
-  const fetchOrders = useCallback(() => {
-    setLoading(true);
+  const fetchOrders = useCallback((isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const params = new URLSearchParams();
     if (statusFilter) params.set('status', statusFilter);
     if (dateFilter)   params.set('scheduled_date', dateFilter);
@@ -75,7 +77,13 @@ export default function OrdersPage() {
       .finally(() => setLoading(false));
   }, [statusFilter, dateFilter, search]);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => { 
+    fetchOrders(false); 
+    const interval = setInterval(() => {
+      fetchOrders(true);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchOrders]);
 
   async function handleConfirm(id: string) {
     try {
@@ -115,6 +123,46 @@ export default function OrdersPage() {
     }
   }
 
+  async function handleQRScan(decodedText: string) {
+    setIsScanning(false);
+
+    if (decodedText.startsWith('CASPETE:ORDER:')) {
+      const parts = decodedText.split(':');
+      if (parts.length < 4) { alert('Formato de QR incorrecto'); return; }
+      const orderId = parts[2];
+      const otpCode = parts[3];
+      try {
+        setLoading(true);
+        const r = await apiClient.post<{ data: Order }>(`/orders/${orderId}/deliver`, { otp_code: otpCode });
+        alert(`¡Entrega exitosa para ${r.data.data.student.full_name}!`);
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? r.data.data : o)));
+      } catch (e) {
+        alert((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al procesar entrega por QR');
+      } finally { setLoading(false); }
+      return;
+    }
+
+    if (decodedText.startsWith('CASPETE:STUDENT:')) {
+      const parts = decodedText.split(':');
+      if (parts.length < 4) { alert('Formato de QR de estudiante incorrecto'); return; }
+      const studentId = parts[2];
+      const deliveryCode = parts[3];
+      try {
+        setLoading(true);
+        const r = await apiClient.post<{ data: { delivered: number; orders: Order[] } }>(`/orders/deliver-student`, { student_id: studentId, delivery_code: deliveryCode });
+        alert(`¡Entrega exitosa! Se entregaron ${r.data.data.delivered} pedido(s).`);
+        // Actualizar los pedidos entregados en el estado
+        const updatedOrdersMap = new Map(r.data.data.orders.map((o) => [o.id, o]));
+        setOrders((prev) => prev.map((o) => updatedOrdersMap.get(o.id) ?? o));
+      } catch (e) {
+        alert((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error en la entrega');
+      } finally { setLoading(false); }
+      return;
+    }
+
+    alert('QR inválido para esta plataforma');
+  }
+
   const setToday = () => setDateFilter(today());
   const clearDate = () => setDateFilter('');
 
@@ -140,12 +188,26 @@ export default function OrdersPage() {
             <p className="dashboard-label">Loncheras</p>
             <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.56px' }}>Pedidos</h1>
           </div>
-          {isParent && (
-            <Link to="/orders/new" className="btn-primary" style={{ width: 'auto', textDecoration: 'none' }}>
-              + Nuevo pedido
-            </Link>
-          )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            {isVendor && (
+              <button className="btn-primary" style={{ width: 'auto', background: '#3772cf' }} onClick={() => setIsScanning(true)}>
+                📷 Escanear QR
+              </button>
+            )}
+            {isParent && (
+              <Link to="/orders/new" className="btn-primary" style={{ width: 'auto', textDecoration: 'none' }}>
+                + Nuevo pedido
+              </Link>
+            )}
+          </div>
         </div>
+
+        {isScanning && (
+          <QRScanner
+            onScan={handleQRScan}
+            onClose={() => setIsScanning(false)}
+          />
+        )}
 
         {/* Filtros */}
         <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
@@ -205,7 +267,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Acción masiva */}
-        {isAdmin && !loading && orders.some((o) => o.status === 'PENDING') && (
+        {(isAdmin || isVendor) && !loading && orders.some((o) => o.status === 'PENDING') && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(195,125,13,0.06)', border: '1px solid rgba(195,125,13,0.2)', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
             <p style={{ margin: 0, fontSize: 13, color: '#c37d0d', fontWeight: 500 }}>
               {orders.filter((o) => o.status === 'PENDING').length} pedido(s) pendiente(s) de confirmar
@@ -247,17 +309,32 @@ export default function OrdersPage() {
                       </span>
                     </div>
 
-                    <p style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 600, letterSpacing: '-0.3px' }}>
-                      {order.student.full_name}
-                      {order.student.grade && (
-                        <span style={{ fontWeight: 400, color: 'var(--color-text-muted)', fontSize: 13, marginLeft: 8 }}>
-                          {order.student.grade}
-                        </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+                      {order.student.photo_url ? (
+                        <img 
+                          src={order.student.photo_url} 
+                          alt="" 
+                          style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--color-border)' }}
+                        />
+                      ) : (
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--color-gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
                       )}
-                    </p>
-                    <p style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--color-text-muted)' }}>
-                      {order.store.name} · {order.school.name}
-                    </p>
+                      <div>
+                        <p style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 600, letterSpacing: '-0.3px' }}>
+                          {order.student.full_name}
+                          {order.student.grade && (
+                            <span style={{ fontWeight: 400, color: 'var(--color-text-muted)', fontSize: 13, marginLeft: 8 }}>
+                              {order.student.grade}
+                            </span>
+                          )}
+                        </p>
+                        <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
+                          {order.store.name} · {order.school.name}
+                        </p>
+                      </div>
+                    </div>
                     <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
                       {order.order_items.map((i) => `${i.product.name} ×${i.quantity}`).join(', ')}
                     </p>
@@ -275,7 +352,7 @@ export default function OrdersPage() {
                       >
                         Ver
                       </Link>
-                      {isAdmin && order.status === 'PENDING' && (
+                      {(isAdmin || isVendor) && order.status === 'PENDING' && (
                         <button
                           className="btn-ghost"
                           style={{ fontSize: 12, padding: '4px 12px', color: 'var(--color-brand-deep)', borderColor: 'rgba(24,226,153,0.3)' }}
@@ -284,7 +361,7 @@ export default function OrdersPage() {
                           Confirmar
                         </button>
                       )}
-                      {(isAdmin || isParent) && (order.status === 'PENDING' || (isAdmin && order.status === 'CONFIRMED')) && (
+                      {(isAdmin || isParent || isVendor) && (order.status === 'PENDING' || ((isAdmin || isVendor) && order.status === 'CONFIRMED')) && (
                         <button
                           className="btn-ghost"
                           style={{ fontSize: 12, padding: '4px 12px', color: 'var(--color-error)', borderColor: 'rgba(212,86,86,0.2)' }}

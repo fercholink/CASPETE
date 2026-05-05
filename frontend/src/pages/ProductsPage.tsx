@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
@@ -11,8 +11,11 @@ interface Product {
   image_url: string | null;
   is_healthy: boolean;
   active: boolean;
+  stock: number | null;
+  customizable_options: string[];
   created_at: string;
   school: { id: string; name: string; city: string };
+  _count: { order_items: number };
 }
 
 function formatPrice(price: string) {
@@ -29,10 +32,13 @@ export default function ProductsPage() {
   const canWrite = user?.role === 'VENDOR' || user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  useEffect(() => {
+  const fetchProducts = useCallback(() => {
     apiClient
       .get<{ data: Product[] }>('/products')
-      .then((res) => setProducts(res.data.data))
+      .then((res) => {
+        setProducts(res.data.data);
+        setError('');
+      })
       .catch((err) => {
         const msg =
           (err as { response?: { data?: { error?: string } } }).response?.data
@@ -41,6 +47,15 @@ export default function ProductsPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchProducts();
+    // Auto-refresh every 5 seconds to keep stock and orders updated
+    const interval = setInterval(() => {
+      fetchProducts();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchProducts]);
 
   async function handleDeactivate(id: string, name: string) {
     if (!confirm(`¿Desactivar "${name}"?`)) return;
@@ -186,17 +201,35 @@ export default function ProductsPage() {
                       </p>
                     )}
 
-                    <p
-                      style={{
-                        margin: '0 0 6px',
-                        fontSize: 18,
-                        fontWeight: 600,
-                        letterSpacing: '-0.36px',
-                        color: 'var(--color-text)',
-                      }}
-                    >
-                      {formatPrice(product.price)}
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: 18,
+                          fontWeight: 600,
+                          letterSpacing: '-0.36px',
+                          color: 'var(--color-text)',
+                        }}
+                      >
+                        {formatPrice(product.price)}
+                      </p>
+                      
+                      <span style={{ fontSize: 13, color: product.stock !== null && product.stock <= 5 ? 'var(--color-error)' : 'var(--color-text-muted)' }}>
+                        📦 Stock: {product.stock !== null ? product.stock : 'Infinito'}
+                      </span>
+                      
+                      {canWrite && (
+                        <span style={{ fontSize: 13, color: 'var(--color-brand-deep)', background: 'var(--color-brand-light)', padding: '2px 8px', borderRadius: 12 }}>
+                          🛒 Pedidos: {product._count?.order_items ?? 0}
+                        </span>
+                      )}
+                    </div>
+
+                    {product.customizable_options && product.customizable_options.length > 0 && (
+                      <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                        <strong>Opciones:</strong> {product.customizable_options.join(', ')}
+                      </p>
+                    )}
 
                     <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
                       {product.school.name}

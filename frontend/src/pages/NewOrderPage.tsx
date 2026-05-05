@@ -23,11 +23,14 @@ interface Product {
   description: string | null;
   is_healthy: boolean;
   active: boolean;
+  stock: number | null;
+  customizable_options: string[];
 }
 
 interface CartItem {
   product: Product;
   quantity: number;
+  customizations: string[];
 }
 
 function fmt(price: string) {
@@ -83,12 +86,24 @@ export default function NewOrderPage() {
   }
 
   function setQty(product: Product, qty: number) {
+    if (product.stock !== null && qty > product.stock) {
+      qty = product.stock;
+    }
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (qty <= 0) return prev.filter((i) => i.product.id !== product.id);
       if (existing) return prev.map((i) => i.product.id === product.id ? { ...i, quantity: qty } : i);
-      return [...prev, { product, quantity: qty }];
+      return [...prev, { product, quantity: qty, customizations: [] }];
     });
+  }
+
+  function toggleCustomization(productId: string, option: string) {
+    setCart((prev) => prev.map((i) => {
+      if (i.product.id !== productId) return i;
+      const isSelected = i.customizations.includes(option);
+      const newCust = isSelected ? i.customizations.filter((c) => c !== option) : [...i.customizations, option];
+      return { ...i, customizations: newCust };
+    }));
   }
 
   function getQty(productId: string) {
@@ -110,7 +125,7 @@ export default function NewOrderPage() {
         store_id: storeId,
         scheduled_date: scheduledDate,
         notes: notes || undefined,
-        items: cart.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
+        items: cart.map((i) => ({ product_id: i.product.id, quantity: i.quantity, customizations: i.customizations })),
       });
       navigate(`/orders/${r.data.data.id}`);
     } catch (err: unknown) {
@@ -190,23 +205,55 @@ export default function NewOrderPage() {
                     {products.map((product) => {
                       const qty = getQty(product.id);
                       return (
-                        <div key={product.id} className="user-card" style={{ padding: '14px 16px', marginBottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <div style={{ flex: 1 }}>
-                            <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 500 }}>
-                              {product.name}
-                              {product.is_healthy && (
-                                <span className="role-badge" style={{ marginLeft: 8, fontSize: 11 }}>Saludable</span>
-                              )}
-                            </p>
-                            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>{fmt(product.price)}</p>
+                        <div key={product.id} className="user-card" style={{ padding: '14px 16px', marginBottom: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 500 }}>
+                                {product.name}
+                                {product.is_healthy && (
+                                  <span className="role-badge" style={{ marginLeft: 8, fontSize: 11 }}>Saludable</span>
+                                )}
+                              </p>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>{fmt(product.price)}</p>
+                                {product.stock !== null && (
+                                  <span style={{ fontSize: 12, color: product.stock <= 5 ? 'var(--color-error)' : 'var(--color-text-muted)' }}>
+                                    📦 Quedan: {product.stock}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <button type="button" onClick={() => setQty(product, qty - 1)}
+                                style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid var(--color-border-md)', background: 'white', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                              <span style={{ width: 24, textAlign: 'center', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 14 }}>{qty}</span>
+                              <button type="button" onClick={() => setQty(product, qty + 1)}
+                                disabled={product.stock !== null && qty >= product.stock}
+                                style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid var(--color-border-md)', background: 'white', cursor: (product.stock !== null && qty >= product.stock) ? 'not-allowed' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (product.stock !== null && qty >= product.stock) ? 0.5 : 1 }}>+</button>
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <button type="button" onClick={() => setQty(product, qty - 1)}
-                              style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid var(--color-border-md)', background: 'white', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-                            <span style={{ width: 24, textAlign: 'center', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 14 }}>{qty}</span>
-                            <button type="button" onClick={() => setQty(product, qty + 1)}
-                              style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid var(--color-border-md)', background: 'white', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
-                          </div>
+                          
+                          {qty > 0 && product.customizable_options && product.customizable_options.length > 0 && (
+                            <div style={{ background: 'var(--color-gray-50)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--color-border)' }}>
+                              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: 'var(--color-text)' }}>Personalizar:</p>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                                {product.customizable_options.map((opt) => {
+                                  const isSelected = cart.find(i => i.product.id === product.id)?.customizations.includes(opt);
+                                  return (
+                                    <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected ?? false}
+                                        onChange={() => toggleCustomization(product.id, opt)}
+                                        style={{ accentColor: 'var(--color-brand)' }}
+                                      />
+                                      {opt}
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

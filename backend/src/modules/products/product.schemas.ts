@@ -7,6 +7,8 @@ export const createProductSchema = z.object({
   price: z.number().positive(),
   image_url: z.string().max(500).optional(),
   is_healthy: z.boolean().default(true),
+  stock: z.number().int().min(0).optional().nullable(),
+  customizable_options: z.array(z.string()).default([]),
 });
 
 export const updateProductSchema = z.object({
@@ -16,6 +18,8 @@ export const updateProductSchema = z.object({
   image_url: z.string().max(500).optional(),
   is_healthy: z.boolean().optional(),
   active: z.boolean().optional(),
+  stock: z.number().int().min(0).optional().nullable(),
+  customizable_options: z.array(z.string()).optional(),
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;

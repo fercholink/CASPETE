@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
+import QRCodeLib from 'react-qr-code';
+
+// Fix para el problema de exportación en Vite
+const QRCode = (QRCodeLib as any).default || QRCodeLib;
 
 interface Order {
   id: string;
@@ -14,7 +18,7 @@ interface Order {
   otp_code: string | null;
   created_at: string;
   school: { id: string; name: string };
-  student: { id: string; full_name: string; grade: string | null; parent_id: string; balance: string };
+  student: { id: string; full_name: string; grade: string | null; photo_url?: string | null; parent_id: string; balance: string };
   store: { id: string; name: string };
   deliverer: { id: string; full_name: string } | null;
   order_items: {
@@ -22,6 +26,7 @@ interface Order {
     quantity: number;
     unit_price: string;
     subtotal: string;
+    customizations: string[];
     product: { id: string; name: string; is_healthy: boolean };
   }[];
 }
@@ -108,14 +113,29 @@ export default function OrderDetailPage() {
             </span>
           </div>
 
-          <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 600, letterSpacing: '-0.48px' }}>
-            {order.student.full_name}
-            {order.student.grade && (
-              <span style={{ fontWeight: 400, fontSize: 16, color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                {order.student.grade}
-              </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
+            {order.student.photo_url ? (
+              <img 
+                src={order.student.photo_url} 
+                alt="Foto del estudiante" 
+                style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-border)' }}
+              />
+            ) : (
+              <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--color-gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
             )}
-          </h1>
+            <div>
+              <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 600, letterSpacing: '-0.48px' }}>
+                {order.student.full_name}
+                {order.student.grade && (
+                  <span style={{ fontWeight: 400, fontSize: 16, color: 'var(--color-text-muted)', marginLeft: 8 }}>
+                    {order.student.grade}
+                  </span>
+                )}
+              </h1>
+            </div>
+          </div>
           <p style={{ margin: '0 0 4px', fontSize: 14, color: 'var(--color-text-muted)' }}>
             {order.store.name} · {order.school.name}
           </p>
@@ -133,16 +153,23 @@ export default function OrderDetailPage() {
         <div className="user-card" style={{ marginBottom: 12 }}>
           <p className="dashboard-label" style={{ marginBottom: 12 }}>Productos</p>
           {order.order_items.map((item) => (
-            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
-              <span>
-                {item.product.name}
-                {item.product.is_healthy && <span className="role-badge" style={{ marginLeft: 8, fontSize: 11 }}>Saludable</span>}
-                <span style={{ color: 'var(--color-text-muted)', marginLeft: 6 }}>×{item.quantity}</span>
-              </span>
-              <span style={{ fontWeight: 500, fontFamily: 'var(--font-mono)' }}>{fmt(item.subtotal)}</span>
+            <div key={item.id} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid var(--color-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 14 }}>
+                <span>
+                  {item.product.name}
+                  {item.product.is_healthy && <span className="role-badge" style={{ marginLeft: 8, fontSize: 11 }}>Saludable</span>}
+                  <span style={{ color: 'var(--color-text-muted)', marginLeft: 6 }}>×{item.quantity}</span>
+                </span>
+                <span style={{ fontWeight: 500, fontFamily: 'var(--font-mono)' }}>{fmt(item.subtotal)}</span>
+              </div>
+              {item.customizations && item.customizations.length > 0 && (
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>
+                  <strong style={{ fontWeight: 500 }}>Personalización:</strong> {item.customizations.join(', ')}
+                </p>
+              )}
             </div>
           ))}
-          <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
             <span style={{ fontWeight: 600 }}>Total</span>
             <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.36px' }}>{fmt(order.total_amount)}</span>
           </div>
@@ -159,6 +186,7 @@ export default function OrderDetailPage() {
               display: 'inline-flex', gap: 8, padding: '16px 32px',
               background: 'var(--color-brand-light)', borderRadius: 16,
               border: '1px solid rgba(24,226,153,0.3)',
+              marginBottom: 16
             }}>
               {order.otp_code.split('').map((digit, i) => (
                 <span key={i} style={{
@@ -169,6 +197,11 @@ export default function OrderDetailPage() {
                 </span>
               ))}
             </div>
+            
+            <p className="dashboard-label" style={{ marginBottom: 8 }}>O escanea este QR</p>
+            <div style={{ display: 'flex', justifyContent: 'center', background: '#fff', padding: 16, borderRadius: 16, border: '1px solid var(--color-border)', width: 'fit-content', margin: '0 auto' }}>
+              <QRCode value={`CASPETE:STUDENT:${order.student.id}:${order.otp_code}`} size={160} />
+            </div>
           </div>
         )}
 
@@ -177,19 +210,19 @@ export default function OrderDetailPage() {
           <div className="user-card" style={{ marginBottom: 12 }}>
             <p className="dashboard-label" style={{ marginBottom: 8 }}>Verificar entrega</p>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-text-muted)' }}>
-              Ingresa el código de 4 dígitos que te muestra el padre/madre
+              Ingresa el PIN de 6 dígitos del estudiante
             </p>
             <form onSubmit={handleDeliver} style={{ display: 'flex', gap: 10 }}>
               <input
                 className="form-input"
                 type="text"
-                maxLength={4}
+                maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                placeholder="0000"
+                placeholder="000000"
                 style={{ flex: 1, textAlign: 'center', fontSize: 24, fontFamily: 'var(--font-mono)', letterSpacing: 8 }}
               />
-              <button type="submit" className="btn-primary" disabled={otp.length !== 4 || delivering} style={{ width: 'auto', whiteSpace: 'nowrap' }}>
+              <button type="submit" className="btn-primary" disabled={otp.length !== 6 || delivering} style={{ width: 'auto', whiteSpace: 'nowrap' }}>
                 {delivering ? '...' : 'Entregar'}
               </button>
             </form>
@@ -205,6 +238,22 @@ export default function OrderDetailPage() {
               {order.deliverer && ` por ${order.deliverer.full_name}`}
             </p>
           </div>
+        )}
+
+        {/* Acciones adicionales en detalle */}
+        {order.status === 'PENDING' && (user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'VENDOR') && (
+          <button 
+            className="btn-primary" 
+            style={{ width: '100%', marginBottom: 12 }}
+            onClick={async () => {
+              try {
+                const r = await apiClient.patch<{ data: Order }>(`/orders/${order.id}/confirm`);
+                setOrder(r.data.data);
+              } catch { alert('No se pudo confirmar el pedido'); }
+            }}
+          >
+            Confirmar pedido
+          </button>
         )}
 
         <button className="btn-ghost" onClick={() => navigate('/orders')} style={{ width: '100%', marginTop: 8 }}>

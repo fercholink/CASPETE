@@ -13,6 +13,7 @@ interface StudentData {
   full_name: string;
   national_id: string | null;
   grade: string | null;
+  delivery_code: string | null;
   school: ActiveSchool;
 }
 
@@ -21,12 +22,50 @@ const emptyForm: {
   full_name: string;
   national_id: string;
   grade: string;
+  photo_url: string;
+  delivery_code: string;
 } = {
   school_id: '',
   full_name: '',
   national_id: '',
   grade: '',
+  photo_url: '',
+  delivery_code: '',
 };
+
+function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject('No canvas context');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7)); // compress to 70% jpeg
+      };
+      img.onerror = () => reject('Error al cargar la imagen');
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject('Error al leer el archivo');
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function StudentFormPage() {
   const navigate = useNavigate();
@@ -55,6 +94,8 @@ export default function StudentFormPage() {
             full_name: s.full_name,
             national_id: s.national_id ?? '',
             grade: s.grade ?? '',
+            delivery_code: s.delivery_code ?? '',
+            photo_url: (s as any).photo_url ?? '',
           });
         }),
       );
@@ -72,6 +113,17 @@ export default function StudentFormPage() {
     setForm((p) => ({ ...p, [name]: value }));
   }
 
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const base64 = await resizeImage(file, 400, 400);
+      setForm((p) => ({ ...p, photo_url: base64 }));
+    } catch (err) {
+      alert('Error al procesar la imagen');
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -81,6 +133,8 @@ export default function StudentFormPage() {
       full_name: form.full_name,
       ...(form.national_id ? { national_id: form.national_id } : {}),
       ...(form.grade ? { grade: form.grade } : {}),
+      ...(form.delivery_code ? { delivery_code: form.delivery_code } : {}),
+      ...(form.photo_url ? { photo_url: form.photo_url } : {}),
       ...(!isEdit && { school_id: form.school_id }),
     };
 
@@ -224,6 +278,62 @@ export default function StudentFormPage() {
                 onChange={handleChange}
                 placeholder="5B"
               />
+            </div>
+          </div>
+
+          <div className="form-group" style={{ marginTop: 14 }}>
+            <label className="form-label" htmlFor="delivery_code">
+              Código de entrega (PIN de 6 dígitos){' '}
+              <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>
+                {isEdit ? '(Opcional: cambiar código)' : '(Opcional: se generará uno aleatorio)'}
+              </span>
+            </label>
+            <input
+              id="delivery_code"
+              name="delivery_code"
+              className="form-input"
+              type="text"
+              maxLength={6}
+              pattern="\d{6}"
+              value={form.delivery_code}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '');
+                setForm(p => ({...p, delivery_code: val}));
+              }}
+              placeholder="Ej: 123456"
+            />
+          </div>
+
+          <div className="form-group" style={{ marginTop: 14 }}>
+            <label className="form-label" htmlFor="photo">
+              Fotografía para identificación <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span>
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              {form.photo_url ? (
+                <img 
+                  src={form.photo_url} 
+                  alt="Previsualización" 
+                  style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '50%', border: '2px solid var(--color-border)' }} 
+                />
+              ) : (
+                <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--color-gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+              )}
+              <div style={{ flex: 1 }}>
+                <input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  className="form-input"
+                  style={{ padding: '8px', fontSize: 13, cursor: 'pointer', marginBottom: 0 }}
+                />
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                  Puedes tomar una foto o subir una imagen de galería.
+                </p>
+              </div>
             </div>
           </div>
 

@@ -50,6 +50,12 @@ export async function deliver(req: Request, res: Response) {
   sendSuccess(res, order, '¡Entrega verificada!');
 }
 
+export async function deliverStudent(req: Request, res: Response) {
+  const { student_id, delivery_code } = req.body;
+  const result = await orderService.deliverStudentOrders(student_id, delivery_code, req.user!);
+  sendSuccess(res, result, `¡${result.delivered} pedido(s) entregado(s)!`);
+}
+
 export async function bulkConfirm(req: Request, res: Response) {
   const scheduledDate = req.query['scheduled_date'] as string | undefined;
   const result = await orderService.bulkConfirmOrders(req.user!, scheduledDate);

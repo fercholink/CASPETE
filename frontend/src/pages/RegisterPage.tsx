@@ -9,7 +9,6 @@ const ROLE_OPTIONS: { value: AuthUser['role']; label: string; description: strin
   { value: 'PARENT', label: 'Madre de familia', description: 'Programo la lonchera de mi hijo/a', icon: '👩' },
   { value: 'PARENT', label: 'Acudiente', description: 'Soy el responsable del estudiante', icon: '👴' },
   { value: 'PARENT', label: 'Familiar', description: 'Familiar a cargo del estudiante', icon: '👪' },
-  { value: 'VENDOR', label: 'Tendero', description: 'Administro una tienda escolar', icon: '🏪' },
 ];
 
 const EyeIcon = ({ open }: { open: boolean }) => open ? (
@@ -141,7 +140,7 @@ export default function RegisterPage() {
           {/* Tipo de usuario */}
           <div style={{ marginBottom: 20 }}>
             <label className="form-label" style={{ marginBottom: 8, display: 'block' }}>Tipo de usuario</label>
-            <div className="grid-3-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
               {ROLE_OPTIONS.map((opt, idx) => (
                 <button key={idx} type="button" onClick={() => setForm(p => ({ ...p, roleIndex: idx }))}
                   style={{ border: `2px solid ${form.roleIndex === idx ? '#1a4731' : '#e5e7eb'}`, borderRadius: 10, padding: '10px 8px', background: form.roleIndex === idx ? 'rgba(26,71,49,0.07)' : 'transparent', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>

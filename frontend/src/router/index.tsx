@@ -20,6 +20,7 @@ import TransactionsPage from '../pages/TransactionsPage';
 import UsersPage from '../pages/UsersPage';
 import ProfilePage from '../pages/ProfilePage';
 import LandingPage from '../pages/LandingPage';
+import TopupRequestsPage from '../pages/TopupRequestsPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -167,6 +168,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['PARENT', 'VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN']}>
         <TransactionsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/topup-requests',
+    element: (
+      <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <TopupRequestsPage />
       </ProtectedRoute>
     ),
   },

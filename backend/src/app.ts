@@ -11,8 +11,10 @@ import orderRouter from './modules/orders/order.router.js';
 import transactionRouter from './modules/transactions/transaction.router.js';
 import userRouter from './modules/users/user.router.js';
 import reportRouter from './modules/reports/report.router.js';
+import topupRequestRouter from './modules/topup-requests/topup-request.router.js';
 
 const app = express();
+ 
 
 const allowedOrigins = env.FRONTEND_URL.split(',').map((o) => o.trim());
 
@@ -29,8 +31,8 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -45,6 +47,7 @@ app.use('/api/orders', orderRouter);
 app.use('/api/transactions', transactionRouter);
 app.use('/api/users', userRouter);
 app.use('/api/reports', reportRouter);
+app.use('/api/topup-requests', topupRequestRouter);
 
 app.use(errorHandler);
 

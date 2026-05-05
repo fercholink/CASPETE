@@ -16,6 +16,8 @@ interface ProductData {
   price: string;
   image_url: string | null;
   is_healthy: boolean;
+  stock: number | null;
+  customizable_options: string[];
   school: ActiveSchool;
 }
 
@@ -26,6 +28,8 @@ const emptyForm: {
   price: string;
   image_url: string;
   is_healthy: boolean;
+  stock: string;
+  customizable_options: string;
 } = {
   school_id: '',
   name: '',
@@ -33,6 +37,8 @@ const emptyForm: {
   price: '',
   image_url: '',
   is_healthy: true,
+  stock: '',
+  customizable_options: '',
 };
 
 export default function ProductFormPage() {
@@ -70,6 +76,8 @@ export default function ProductFormPage() {
             price: parseFloat(p.price).toString(),
             image_url: p.image_url ?? '',
             is_healthy: p.is_healthy,
+            stock: p.stock !== null ? String(p.stock) : '',
+            customizable_options: p.customizable_options?.join(', ') ?? '',
           });
         }),
       );
@@ -104,6 +112,8 @@ export default function ProductFormPage() {
       name: form.name,
       price,
       is_healthy: form.is_healthy,
+      stock: form.stock.trim() === '' ? null : parseInt(form.stock, 10),
+      customizable_options: form.customizable_options.split(',').map(s => s.trim()).filter(s => s.length > 0),
       ...(form.description ? { description: form.description } : {}),
       ...(form.image_url ? { image_url: form.image_url } : {}),
       ...(!isEdit && isSuperAdmin && form.school_id ? { school_id: form.school_id } : {}),
@@ -201,8 +211,21 @@ export default function ProductFormPage() {
                 required min="0.01" step="0.01" placeholder="1500"
               />
             </div>
+          </div>
+
+          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+              <label className="form-label" htmlFor="stock">
+                Stock disponible <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(vacío = infinito)</span>
+              </label>
+              <input
+                id="stock" name="stock" className="form-input" type="number"
+                value={form.stock} onChange={handleChange}
+                min="0" placeholder="Ej: 50"
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0, display: 'flex', alignItems: 'center' }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginTop: 24 }}>
                 <input
                   id="is_healthy" name="is_healthy" type="checkbox"
                   checked={form.is_healthy} onChange={handleChange}
@@ -222,6 +245,17 @@ export default function ProductFormPage() {
               id="description" name="description" className="form-input" type="text"
               value={form.description} onChange={handleChange}
               placeholder="Rellena con pollo desmenuzado y queso"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="customizable_options">
+              Opciones de personalización <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(separadas por comas)</span>
+            </label>
+            <input
+              id="customizable_options" name="customizable_options" className="form-input" type="text"
+              value={form.customizable_options} onChange={handleChange}
+              placeholder="Ej: Sin cebolla, Doble queso, Sin salsas"
             />
           </div>
 

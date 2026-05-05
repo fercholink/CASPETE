@@ -28,5 +28,6 @@ export function errorHandler(
     return;
   }
   const errMsg = err instanceof Error ? err.message : String(err);
+  console.error('[Error 500]:', err);
   sendError(res, 'Error interno del servidor', 500, env.NODE_ENV === 'development' ? errMsg : undefined);
 }

@@ -12,8 +12,11 @@ const productSelect = {
   image_url: true,
   is_healthy: true,
   active: true,
+  stock: true,
+  customizable_options: true,
   created_at: true,
   school: { select: { id: true, name: true, city: true } },
+  _count: { select: { order_items: true } },
 } as const;
 
 function resolveSchoolId(actor: JwtPayload, inputSchoolId?: string): string {
@@ -44,6 +47,8 @@ export async function createProduct(input: CreateProductInput, actor: JwtPayload
       is_healthy: input.is_healthy,
       description: input.description ?? null,
       image_url: input.image_url ?? null,
+      stock: input.stock ?? null,
+      customizable_options: input.customizable_options ?? [],
     },
     select: productSelect,
   });
@@ -100,6 +105,8 @@ export async function updateProduct(
       ...(input.image_url !== undefined && { image_url: input.image_url }),
       ...(input.is_healthy !== undefined && { is_healthy: input.is_healthy }),
       ...(input.active !== undefined && { active: input.active }),
+      ...(input.stock !== undefined && { stock: input.stock }),
+      ...(input.customizable_options !== undefined && { customizable_options: input.customizable_options }),
     },
     select: productSelect,
   });

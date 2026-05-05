@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
@@ -20,6 +20,7 @@ const QUICK_LINKS: Partial<Record<string, QuickLink[]>> = {
     { to: '/stores', label: 'Tiendas', description: 'Gestionar tiendas' },
     { to: '/products', label: 'Productos', description: 'Ver catálogo de productos' },
     { to: '/orders', label: 'Pedidos', description: 'Ver todos los pedidos' },
+    { to: '/topup-requests', label: 'Recargas', description: 'Validar comprobantes' },
   ],
   SCHOOL_ADMIN: [
     { to: '/students', label: 'Estudiantes', description: 'Ver y recargar saldo' },
@@ -27,6 +28,7 @@ const QUICK_LINKS: Partial<Record<string, QuickLink[]>> = {
     { to: '/stores', label: 'Tiendas', description: 'Gestionar tiendas del colegio' },
     { to: '/products', label: 'Productos', description: 'Ver catálogo del colegio' },
     { to: '/orders', label: 'Pedidos', description: 'Gestionar pedidos del colegio' },
+    { to: '/topup-requests', label: 'Recargas', description: 'Validar comprobantes' },
   ],
   VENDOR: [
     { to: '/products', label: 'Mis productos', description: 'Gestionar tu catálogo' },
@@ -62,13 +64,21 @@ export default function DashboardPage() {
 
   const [summary, setSummary] = useState<Summary | null>(null);
 
-  useEffect(() => {
+  const fetchSummary = useCallback(() => {
     if (!isAdmin) return;
     apiClient
       .get<{ data: Summary }>('/reports/summary')
       .then((r) => setSummary(r.data.data))
       .catch(() => { /* métricas opcionales, no bloquear la página */ });
   }, [isAdmin]);
+
+  useEffect(() => {
+    fetchSummary();
+    const interval = setInterval(() => {
+      fetchSummary();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchSummary]);
 
   return (
     <>

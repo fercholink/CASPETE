@@ -23,7 +23,7 @@ const orderSelect = {
   created_at: true,
   updated_at: true,
   school: { select: { id: true, name: true } },
-  student: { select: { id: true, full_name: true, grade: true, parent_id: true, balance: true } },
+  student: { select: { id: true, full_name: true, grade: true, photo_url: true, parent_id: true, balance: true, delivery_code: true } },
   store: { select: { id: true, name: true } },
   deliverer: { select: { id: true, full_name: true } },
   order_items: {
@@ -32,6 +32,7 @@ const orderSelect = {
       quantity: true,
       unit_price: true,
       subtotal: true,
+      customizations: true,
       product: { select: { id: true, name: true, is_healthy: true } },
     },
   },
@@ -66,7 +67,7 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   const productIds = input.items.map((i) => i.product_id);
   const products = await prisma.product.findMany({
     where: { id: { in: productIds }, active: true, school_id: student.school_id },
-    select: { id: true, price: true },
+    select: { id: true, price: true, stock: true, name: true },
   });
   if (products.length !== new Set(productIds).size)
     throw new AppError('Uno o más productos no están disponibles en este colegio', 400);
@@ -75,10 +76,19 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   let totalAmount = 0;
   const orderItemsData = input.items.map((item) => {
     const product = productMap.get(item.product_id)!;
+    if (product.stock !== null && product.stock < item.quantity) {
+      throw new AppError(`Stock insuficiente para "${product.name}". (Quedan ${product.stock})`, 400);
+    }
     const unitPrice = product.price.toNumber();
     const subtotal = Math.round(unitPrice * item.quantity * 100) / 100;
     totalAmount += subtotal;
-    return { product_id: item.product_id, quantity: item.quantity, unit_price: unitPrice, subtotal };
+    return { 
+      product_id: item.product_id, 
+      quantity: item.quantity, 
+      unit_price: unitPrice, 
+      subtotal,
+      customizations: item.customizations ?? []
+    };
   });
   totalAmount = Math.round(totalAmount * 100) / 100;
 
@@ -103,6 +113,16 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
       },
       select: orderSelect,
     });
+
+    for (const item of orderItemsData) {
+      const product = productMap.get(item.product_id)!;
+      if (product.stock !== null) {
+        await tx.product.update({
+          where: { id: item.product_id },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+    }
 
     const newBalance = Math.round((balance - totalAmount) * 100) / 100;
     await tx.student.update({ where: { id: input.student_id }, data: { balance: newBalance } });
@@ -166,7 +186,7 @@ export async function listOrders(
 }
 
 export async function bulkConfirmOrders(actor: JwtPayload, scheduledDate?: string) {
-  if (actor.role === 'PARENT' || actor.role === 'VENDOR') {
+  if (actor.role === 'PARENT') {
     throw new AppError('No tienes permiso para confirmar pedidos masivamente', 403);
   }
   const schoolFilter = actor.role === 'SUPER_ADMIN' ? {} : { school_id: actor.schoolId! };
@@ -182,29 +202,17 @@ export async function bulkConfirmOrders(actor: JwtPayload, scheduledDate?: strin
 export async function getOrder(id: string, actor: JwtPayload) {
   const order = await prisma.lunchOrder.findUnique({
     where: { id },
-    select: { ...orderSelect, otp_code: true, otp_expires_at: true },
+    select: { ...orderSelect },
   });
   if (!order) throw new AppError('Pedido no encontrado', 404);
   assertAccess(order, actor);
 
   let otpCode: string | null = null;
-
   if (actor.role === 'PARENT' && order.status === 'CONFIRMED') {
-    const now = new Date();
-    if (order.otp_code && order.otp_expires_at && order.otp_expires_at > now) {
-      otpCode = order.otp_code;
-    } else {
-      // Generar OTP aleatorio y persistirlo
-      otpCode = generateOTP();
-      await prisma.lunchOrder.update({
-        where: { id },
-        data: { otp_code: otpCode, otp_expires_at: new Date(now.getTime() + OTP_TTL_MS) },
-      });
-    }
+    otpCode = order.student.delivery_code ?? null;
   }
 
-  const { otp_code: _c, otp_expires_at: _e, ...orderData } = order;
-  return { ...orderData, otp_code: otpCode };
+  return { ...order, otp_code: otpCode };
 }
 
 export async function confirmOrder(id: string, actor: JwtPayload) {
@@ -252,6 +260,19 @@ export async function cancelOrder(id: string, actor: JwtPayload) {
       },
     });
 
+    for (const item of order.order_items) {
+      // Check if product tracking is enabled? 
+      // We can just increment it blindly? If stock was null, increment will fail if we just do { increment }. We need to check if it's null first, but we can't fetch all products again easily inside tx without extra queries.
+      // So let's fetch products:
+      const product = await tx.product.findUnique({ where: { id: item.product.id }, select: { stock: true } });
+      if (product?.stock !== null) {
+        await tx.product.update({
+          where: { id: item.product.id },
+          data: { stock: { increment: item.quantity } },
+        });
+      }
+    }
+
     return updated;
   });
 }
@@ -259,20 +280,62 @@ export async function cancelOrder(id: string, actor: JwtPayload) {
 export async function deliverOrder(id: string, otpCode: string, actor: JwtPayload) {
   const order = await prisma.lunchOrder.findUnique({
     where: { id },
-    select: { ...orderSelect, otp_code: true, otp_expires_at: true },
+    select: { ...orderSelect },
   });
   if (!order) throw new AppError('Pedido no encontrado', 404);
   assertAccess(order, actor);
   if (order.status !== 'CONFIRMED') throw new AppError('Solo se pueden entregar pedidos confirmados', 400);
-  if (!order.otp_code) throw new AppError('Este pedido aún no tiene OTP. El padre debe consultarlo primero.', 400);
-  if (order.otp_expires_at && order.otp_expires_at < new Date()) throw new AppError('El OTP ha expirado', 400);
-  if (otpCode !== order.otp_code) throw new AppError('Código OTP inválido', 400);
+  if (!order.student.delivery_code) throw new AppError('El estudiante no tiene un código de entrega asignado.', 400);
+  if (otpCode !== order.student.delivery_code) throw new AppError('Código de entrega inválido', 400);
 
   return prisma.lunchOrder.update({
     where: { id },
     data: { status: 'DELIVERED', otp_verified: true, delivered_at: new Date(), delivered_by: actor.sub, otp_code: null, otp_expires_at: null },
     select: orderSelect,
   });
+}
+
+export async function deliverStudentOrders(studentId: string, deliveryCode: string, actor: JwtPayload) {
+  const student = await prisma.student.findUnique({ where: { id: studentId } });
+  if (!student) throw new AppError('Estudiante no encontrado', 404);
+  if (!student.delivery_code) throw new AppError('El estudiante no tiene código de entrega asignado.', 400);
+  if (deliveryCode !== student.delivery_code) throw new AppError('Código de entrega inválido', 400);
+
+  // Consider all CONFIRMED orders for today or earlier, or just any CONFIRMED order for this student.
+  const pendingDeliveries = await prisma.lunchOrder.findMany({
+    where: {
+      student_id: studentId,
+      status: 'CONFIRMED',
+      ...(actor.role === 'VENDOR' ? { store: { school_id: actor.schoolId! } } : {}),
+    },
+    select: { id: true }
+  });
+
+  if (pendingDeliveries.length === 0) {
+    throw new AppError('El estudiante no tiene pedidos confirmados pendientes de entrega.', 400);
+  }
+
+  const orderIds = pendingDeliveries.map(o => o.id);
+
+  const result = await prisma.lunchOrder.updateMany({
+    where: { id: { in: orderIds } },
+    data: {
+      status: 'DELIVERED',
+      otp_verified: true,
+      delivered_at: new Date(),
+      delivered_by: actor.sub,
+      otp_code: null,
+      otp_expires_at: null,
+    }
+  });
+
+  // Return the updated orders
+  const updatedOrders = await prisma.lunchOrder.findMany({
+    where: { id: { in: orderIds } },
+    select: orderSelect,
+  });
+
+  return { delivered: result.count, orders: updatedOrders };
 }
 
 export async function topupStudent(studentId: string, input: TopupInput, actor: JwtPayload) {

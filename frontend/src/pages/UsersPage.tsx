@@ -14,6 +14,13 @@ interface User {
   school: { id: string; name: string; city: string } | null;
 }
 
+interface School {
+  id: string;
+  name: string;
+  city: string;
+  active: boolean;
+}
+
 const ROLE_LABEL: Record<string, string> = {
   PARENT: 'Padre/Madre', VENDOR: 'Tendero',
   SCHOOL_ADMIN: 'Admin Colegio', SUPER_ADMIN: 'Super Admin',
@@ -25,7 +32,7 @@ const ROLE_STYLE: Record<string, React.CSSProperties> = {
   SUPER_ADMIN:  { background: 'rgba(55,114,207,0.1)', color: '#3772cf' },
 };
 
-const emptyForm = { full_name: '', email: '', password: '', phone: '', role: 'VENDOR' as 'VENDOR' | 'SCHOOL_ADMIN' };
+const emptyForm = { full_name: '', email: '', password: '', phone: '', role: 'VENDOR' as 'VENDOR' | 'SCHOOL_ADMIN', school_id: '' };
 
 export default function UsersPage() {
   const { user, logout } = useAuth();
@@ -44,13 +51,19 @@ export default function UsersPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
 
+  const [schools, setSchools] = useState<School[]>([]);
+
   useEffect(() => {
     apiClient
       .get<{ data: User[] }>('/users')
       .then((r) => setUsers(r.data.data))
       .catch((e) => setError((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al cargar usuarios'))
       .finally(() => setLoading(false));
-  }, []);
+
+    if (isSuperAdmin) {
+      apiClient.get<{ data: School[] }>('/schools/active').then((r) => setSchools(r.data.data));
+    }
+  }, [isSuperAdmin]);
 
   async function handleToggle(target: User) {
     const action = target.active ? 'desactivar' : 'activar';
@@ -74,6 +87,7 @@ export default function UsersPage() {
         password: form.password,
         role: form.role,
         ...(form.phone ? { phone: form.phone } : {}),
+        ...(isSuperAdmin && form.school_id ? { school_id: form.school_id } : {}),
       };
       const r = await apiClient.post<{ data: User }>('/users', payload);
       setUsers((prev) => [...prev, r.data.data]);
@@ -263,6 +277,19 @@ export default function UsersPage() {
                     placeholder="+573001234567" />
                 </div>
               </div>
+
+              {isSuperAdmin && (
+                <div className="form-group">
+                  <label className="form-label" htmlFor="new-school">Colegio al que pertenece</label>
+                  <select id="new-school" className="form-select" value={form.school_id}
+                    onChange={(e) => setForm((p) => ({ ...p, school_id: e.target.value }))} required>
+                    <option value="">Selecciona un colegio</option>
+                    {schools.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} - {s.city}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {createError && <p className="form-error" style={{ marginTop: 12, marginBottom: 0 }}>{createError}</p>}
 

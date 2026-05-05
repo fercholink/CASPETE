@@ -19,8 +19,8 @@ router.get('/', allRoles, orderController.list);
 // GET    /api/orders/:id                     — detalle con OTP para PARENT
 router.get('/:id', allRoles, orderController.getOne);
 
-// PATCH  /api/orders/:id/confirm             — confirmar (admin)
-router.patch('/:id/confirm', adminRoles, orderController.confirm);
+// PATCH  /api/orders/:id/confirm             — confirmar (admin/vendor)
+router.patch('/:id/confirm', requireRole('SCHOOL_ADMIN', 'SUPER_ADMIN', 'VENDOR'), orderController.confirm);
 
 // PATCH  /api/orders/:id/cancel              — cancelar
 router.patch('/:id/cancel', allRoles, orderController.cancel);
@@ -28,8 +28,11 @@ router.patch('/:id/cancel', allRoles, orderController.cancel);
 // POST   /api/orders/:id/deliver             — entregar con OTP (VENDOR)
 router.post('/:id/deliver', deliveryLimiter, requireRole('VENDOR'), orderController.deliver);
 
-// POST   /api/orders/bulk-confirm?scheduled_date= — confirmar todos los PENDING (admin)
-router.post('/bulk-confirm', adminRoles, orderController.bulkConfirm);
+// POST   /api/orders/deliver-student         — entregar pedidos de un estudiante (VENDOR)
+router.post('/deliver-student', deliveryLimiter, requireRole('VENDOR'), orderController.deliverStudent);
+
+// POST   /api/orders/bulk-confirm?scheduled_date= — confirmar todos los PENDING (admin/vendor)
+router.post('/bulk-confirm', requireRole('SCHOOL_ADMIN', 'SUPER_ADMIN', 'VENDOR'), orderController.bulkConfirm);
 
 // POST   /api/orders/topup/:studentId        — recargar saldo (admin)
 router.post('/topup/:studentId', adminRoles, orderController.topup);

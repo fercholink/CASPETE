@@ -19,7 +19,6 @@ interface Student {
 }
 
 // Datos de pago de CASPETE — reemplaza con los datos reales de la empresa
-const PAYMENT_EMAIL = 'pagos@caspete.com';
 const PAYMENT_INFO = {
   NEQUI: {
     label: 'Nequi',
@@ -360,16 +359,6 @@ export default function StudentsPage() {
         const rechargeStudent = students.find((s) => s.id === rechargeStudentId);
         if (!rechargeStudent) return null;
         const bankInfo = rechargeBank ? PAYMENT_INFO[rechargeBank] : null;
-
-        function buildMailtoLink() {
-          const subject = encodeURIComponent(
-            `RECARGAR CASPETE | Estudiante: ${rechargeStudent!.full_name} | $${rechargeAmount} | ${rechargeBank}`,
-          );
-          const body = encodeURIComponent(
-            `Hola equipo CASPETE,\n\nAdjunto el soporte de pago de la siguiente recarga:\n\nDATO DE LA RECARGA:\n- Estudiante: ${rechargeStudent!.full_name}\n- ID Estudiante: ${rechargeStudent!.id}\n- Monto enviado: $${rechargeAmount}\n- Banco: ${rechargeBank}\n- Fecha: ${new Date().toLocaleDateString('es-CO')}\n\nPor favor confirmar la recarga a la brevedad.\n\nGracias.`,
-          );
-          return `mailto:${PAYMENT_EMAIL}?subject=${subject}&body=${body}`;
-        }
 
         return (
           <div

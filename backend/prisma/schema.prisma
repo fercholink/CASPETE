@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PlanType {
+  BASIC
+  STANDARD
+  PREMIUM
+}
+
+enum UserRole {
+  PARENT
+  VENDOR
+  SCHOOL_ADMIN
+  SUPER_ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum TransactionType {
+  TOPUP
+  CHARGE
+  REFUND
+  ADJUSTMENT
+}
+
+enum TopupRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model School {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(200)
+  nit        String?  @unique @db.VarChar(20)
+  city       String   @db.VarChar(100)
+  address    String?  @db.Text
+  plan       PlanType @default(BASIC)
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  users        User[]
+  students     Student[]
+  stores       Store[]
+  lunch_orders LunchOrder[]
+  transactions   Transaction[]
+  products       Product[]
+  topup_requests TopupRequest[]
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  school_id     String?  @db.Uuid
+  email         String   @unique @db.VarChar(255)
+  phone         String?  @db.VarChar(20)
+  password_hash String   @db.Text
+  role          UserRole
+  full_name     String   @db.VarChar(200)
+  avatar_url    String?  @db.Text
+  active        Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  school         School?             @relation(fields: [school_id], references: [id])
+  students       Student[]           @relation("ParentToStudent")
+  deliveries     LunchOrder[]        @relation("DeliveredBy")
+  refresh_tokens   RefreshToken[]
+  reset_tokens     PasswordResetToken[]
+  topup_requests   TopupRequest[]
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  user_id    String    @db.Uuid
+  token_hash String    @db.Text
+  expires_at DateTime
+  revoked_at DateTime?
+  created_at DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([token_hash])
+}
+
+model Student {
+  id          String   @id @default(uuid()) @db.Uuid
+  school_id   String   @db.Uuid
+  parent_id   String   @db.Uuid
+  national_id String?  @db.VarChar(20)
+  full_name   String   @db.VarChar(200)
+  grade       String?  @db.VarChar(10)
+  photo_url   String?  @db.Text
+  balance     Decimal  @default(0.00) @db.Decimal(10, 2)
+  delivery_code String? @db.VarChar(6)
+  active      Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  school         School        @relation(fields: [school_id], references: [id])
+  parent         User          @relation("ParentToStudent", fields: [parent_id], references: [id])
+  lunch_orders   LunchOrder[]
+  transactions   Transaction[]
+  topup_requests TopupRequest[]
+
+  @@unique([school_id, national_id])
+}
+
+model Store {
+  id         String   @id @default(uuid()) @db.Uuid
+  school_id  String   @db.Uuid
+  name       String   @db.VarChar(200)
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  school       School       @relation(fields: [school_id], references: [id])
+  lunch_orders LunchOrder[]
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  school_id   String   @db.Uuid
+  name        String   @db.VarChar(200)
+  description String?  @db.Text
+  price               Decimal  @db.Decimal(10, 2)
+  image_url           String?  @db.Text
+  is_healthy          Boolean  @default(true)
+  active              Boolean  @default(true)
+  stock               Int?     // Si es null, el stock es infinito
+  customizable_options String[] @default([]) // Ej: ["Sin cebolla", "Doble queso", "Sin salsas"]
+  created_at          DateTime @default(now())
+
+  school      School      @relation(fields: [school_id], references: [id])
+  order_items OrderItem[]
+}
+
+model LunchOrder {
+  id             String      @id @default(uuid()) @db.Uuid
+  school_id      String      @db.Uuid
+  student_id     String      @db.Uuid
+  store_id       String      @db.Uuid
+  scheduled_date DateTime    @db.Date
+  status         OrderStatus @default(PENDING)
+  total_amount   Decimal     @db.Decimal(10, 2)
+  delivered_at   DateTime?
+  delivered_by   String?     @db.Uuid
+  otp_verified   Boolean     @default(false)
+  otp_code       String?     @db.VarChar(6)
+  otp_expires_at DateTime?
+  notes          String?     @db.Text
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+
+  school      School        @relation(fields: [school_id], references: [id])
+  student     Student       @relation(fields: [student_id], references: [id])
+  store       Store         @relation(fields: [store_id], references: [id])
+  deliverer   User?         @relation("DeliveredBy", fields: [delivered_by], references: [id])
+  order_items OrderItem[]
+  Transaction Transaction[]
+}
+
+model OrderItem {
+  id         String  @id @default(uuid()) @db.Uuid
+  order_id   String  @db.Uuid
+  product_id String  @db.Uuid
+  quantity       Int      @default(1) @db.SmallInt
+  unit_price     Decimal  @db.Decimal(10, 2)
+  subtotal       Decimal  @db.Decimal(10, 2)
+  customizations String[] @default([])
+
+  order   LunchOrder @relation(fields: [order_id], references: [id])
+  product Product    @relation(fields: [product_id], references: [id])
+}
+
+model Transaction {
+  id             String          @id @default(uuid()) @db.Uuid
+  school_id      String          @db.Uuid
+  student_id     String          @db.Uuid
+  type           TransactionType
+  amount         Decimal         @db.Decimal(10, 2)
+  balance_after  Decimal         @db.Decimal(10, 2)
+  payment_method String?         @db.VarChar(50)
+  gateway_ref    String?         @db.VarChar(100)
+  order_id       String?         @db.Uuid
+  created_at     DateTime        @default(now())
+
+  school  School      @relation(fields: [school_id], references: [id])
+  student Student     @relation(fields: [student_id], references: [id])
+  order   LunchOrder? @relation(fields: [order_id], references: [id])
+}
+
+model PasswordResetToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  token_hash String   @db.Text
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([token_hash])
+}
+
+model TopupRequest {
+  id              String             @id @default(uuid()) @db.Uuid
+  school_id       String             @db.Uuid
+  student_id      String             @db.Uuid
+  parent_id       String             @db.Uuid
+  amount          Decimal            @db.Decimal(10, 2)
+  receipt_url     String             @db.Text
+  status          TopupRequestStatus @default(PENDING)
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @updatedAt
+
+  school  School  @relation(fields: [school_id], references: [id])
+  student Student @relation(fields: [student_id], references: [id])
+  parent  User    @relation(fields: [parent_id], references: [id])
+}

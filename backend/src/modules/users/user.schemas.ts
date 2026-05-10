@@ -11,9 +11,10 @@ export const createUserSchema = z.object({
 
 export const updateUserSchema = z.object({
   full_name: z.string().min(2).max(200).optional(),
-  phone: z.string().max(20).optional(),
-  role: z.enum(['VENDOR', 'SCHOOL_ADMIN']).optional(),
+  phone: z.string().max(20).nullable().optional(),
+  role: z.enum(['PARENT', 'VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN']).optional(),
   active: z.boolean().optional(),
+  school_id: z.string().uuid().nullable().optional(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;

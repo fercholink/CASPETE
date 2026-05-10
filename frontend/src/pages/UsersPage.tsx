@@ -31,6 +31,7 @@ function initials(name: string) { return name.split(' ').map(n => n[0]).slice(0,
 function timeAgo(d: string) { const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : days < 30 ? `Hace ${days}d` : `Hace ${Math.floor(days/30)}m`; }
 
 const emptyForm = { full_name: '', email: '', password: '', phone: '', role: 'VENDOR' as 'VENDOR' | 'SCHOOL_ADMIN', school_id: '' };
+const emptyEditForm = { full_name: '', phone: '', role: '' as string, school_id: '' };
 
 export default function UsersPage() {
   const { user, logout } = useAuth();
@@ -51,6 +52,12 @@ export default function UsersPage() {
   const [createError, setCreateError] = useState('');
   const [schools, setSchools] = useState<School[]>([]);
 
+  // Edit modal
+  const [editTarget, setEditTarget] = useState<User | null>(null);
+  const [editForm, setEditForm] = useState(emptyEditForm);
+  const [editing, setEditing] = useState(false);
+  const [editError, setEditError] = useState('');
+
   const fetchUsers = useCallback((pg = 1) => {
     setLoading(true);
     const p = new URLSearchParams();
@@ -66,7 +73,17 @@ export default function UsersPage() {
 
   useEffect(() => { fetchUsers(page); }, [fetchUsers, page]);
   useEffect(() => { const t = setTimeout(() => { setPage(1); fetchUsers(1); }, 350); return () => clearTimeout(t); }, [search]);
-  useEffect(() => { if (isSA) apiClient.get<{ data: School[] }>('/schools/active').then(r => setSchools(r.data.data)); }, [isSA]);
+  useEffect(() => {
+    if (isSA) {
+      apiClient.get<{ data: { schools?: School[]; data?: School[] } } | { data: School[] }>('/schools?active=true&limit=200')
+        .then(r => {
+          const raw = (r as any).data?.data;
+          if (Array.isArray(raw)) setSchools(raw);
+          else if (Array.isArray(raw?.schools)) setSchools(raw.schools);
+        })
+        .catch(() => {});
+    }
+  }, [isSA]);
 
   const stats = useMemo(() => {
     if (!data) return null;
@@ -112,6 +129,36 @@ export default function UsersPage() {
       const msg = e?.response?.data?.error ?? e?.message ?? 'Error desconocido';
       alert(`No se pudo eliminar: ${msg}`);
     }
+  }
+
+  function openEdit(u: User) {
+    setEditTarget(u);
+    setEditForm({
+      full_name: u.full_name,
+      phone: u.phone ?? '',
+      role: u.role,
+      school_id: u.school?.id ?? '',
+    });
+    setEditError('');
+  }
+
+  async function handleEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editTarget) return;
+    setEditing(true); setEditError('');
+    try {
+      const payload: Record<string, unknown> = {
+        full_name: editForm.full_name,
+        phone: editForm.phone || null,
+        role: editForm.role,
+      };
+      if (isSA && editForm.school_id) payload.school_id = editForm.school_id;
+      const r = await apiClient.patch<{ data: User }>(`/users/${editTarget.id}`, payload);
+      setData(prev => prev ? { ...prev, users: prev.users.map(u => u.id === editTarget.id ? r.data.data : u) } : prev);
+      setEditTarget(null);
+    } catch (err: unknown) {
+      setEditError((err as any).response?.data?.error ?? 'Error al actualizar usuario');
+    } finally { setEditing(false); }
   }
 
   return (
@@ -220,10 +267,11 @@ export default function UsersPage() {
                       </div>
                     </div>
                     {u.id !== user?.id && (
-                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                        <button className="btn-ghost" style={{ fontSize: 13, padding: '5px 14px', color: u.active ? '#c37d0d' : 'var(--color-brand-deep)', borderColor: u.active ? 'rgba(195,125,13,0.2)' : 'rgba(0,128,0,0.2)' }} onClick={() => handleToggle(u)}>{u.active ? '⏸' : '▶'}</button>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
+                        <button className="btn-ghost" style={{ fontSize: 13, padding: '5px 12px' }} onClick={() => openEdit(u)}>✏️ Editar</button>
+                        <button className="btn-ghost" style={{ fontSize: 13, padding: '5px 12px', color: u.active ? '#c37d0d' : 'var(--color-brand-deep)', borderColor: u.active ? 'rgba(195,125,13,0.2)' : 'rgba(0,128,0,0.2)' }} onClick={() => handleToggle(u)}>{u.active ? '⏸' : '▶'}</button>
                         {isSA && u.role !== 'SUPER_ADMIN' && (
-                          <button className="btn-ghost" style={{ fontSize: 13, padding: '5px 14px', color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.05)' }} onClick={() => handleDelete(u)}>🗑</button>
+                          <button className="btn-ghost" style={{ fontSize: 13, padding: '5px 12px', color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.05)' }} onClick={() => handleDelete(u)}>🗑</button>
                         )}
                       </div>
                     )}
@@ -289,6 +337,50 @@ export default function UsersPage() {
               <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
                 <button type="button" className="btn-ghost" style={{ flex: 1 }} onClick={() => setShowModal(false)}>Cancelar</button>
                 <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={creating}>{creating ? 'Creando...' : 'Crear usuario'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ── Modal Editar usuario ──────────────────────────────── */}
+      {editTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }} onClick={e => { if (e.target === e.currentTarget) setEditTarget(null); }}>
+          <div className="user-card" style={{ maxWidth: 480, width: '100%', padding: '32px 28px' }}>
+            <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 600 }}>✏️ Editar usuario</h2>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--color-text-muted)' }}>{editTarget.email}</p>
+            <form onSubmit={handleEdit}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="edit-name">Nombre completo</label>
+                <input id="edit-name" className="form-input" type="text" value={editForm.full_name} onChange={e => setEditForm(p => ({ ...p, full_name: e.target.value }))} required minLength={2} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="edit-role">Rol</label>
+                  <select id="edit-role" className="form-select" value={editForm.role} onChange={e => setEditForm(p => ({ ...p, role: e.target.value }))}>
+                    <option value="PARENT">👨‍👩‍👧 Padre/Madre</option>
+                    <option value="VENDOR">🏪 Tendero</option>
+                    <option value="SCHOOL_ADMIN">🎓 Admin Colegio</option>
+                    {isSA && <option value="SUPER_ADMIN">🛡️ Super Admin</option>}
+                  </select>
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="edit-phone">Teléfono <span style={{ fontWeight: 400, color: 'var(--color-placeholder)' }}>(opc.)</span></label>
+                  <input id="edit-phone" className="form-input" type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} placeholder="+573001234567" />
+                </div>
+              </div>
+              {isSA && (
+                <div className="form-group">
+                  <label className="form-label" htmlFor="edit-school">Colegio asignado</label>
+                  <select id="edit-school" className="form-select" value={editForm.school_id} onChange={e => setEditForm(p => ({ ...p, school_id: e.target.value }))}>
+                    <option value="">Sin colegio asignado</option>
+                    {schools.map(s => <option key={s.id} value={s.id}>{s.name} — {s.city}</option>)}
+                  </select>
+                </div>
+              )}
+              {editError && <p className="form-error" style={{ marginTop: 12, marginBottom: 0 }}>{editError}</p>}
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <button type="button" className="btn-ghost" style={{ flex: 1 }} onClick={() => setEditTarget(null)}>Cancelar</button>
+                <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={editing}>{editing ? 'Guardando...' : 'Guardar cambios'}</button>
               </div>
             </form>
           </div>

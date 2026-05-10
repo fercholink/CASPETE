@@ -120,6 +120,7 @@ export async function updateUser(id: string, input: UpdateUserInput, actor: JwtP
       ...(input.phone !== undefined && { phone: input.phone }),
       ...(input.active !== undefined && { active: input.active }),
       ...(input.role !== undefined && { role: input.role as UserRole }),
+      ...(input.school_id !== undefined && actor.role === 'SUPER_ADMIN' && { school_id: input.school_id || null }),
     },
     select: userSelect,
   });

@@ -22,7 +22,7 @@ passport.use(
           full_name: profile.displayName ?? email.split('@')[0],
           avatar_url: profile.photos?.[0]?.value ?? null,
         });
-        return done(null, result);
+        return done(null, result as any);
       } catch (err) {
         return done(err as Error, undefined);
       }

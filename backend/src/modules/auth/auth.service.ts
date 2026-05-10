@@ -55,7 +55,7 @@ export async function loginOrCreateGoogleUser(input: {
         data: {
           google_id: input.google_id,
           auth_provider: 'google',
-          avatar_url: input.avatar_url ?? undefined,
+          ...(input.avatar_url != null ? { avatar_url: input.avatar_url } : {}),
         },
       });
     }
@@ -141,7 +141,7 @@ export async function loginUser(input: LoginInput) {
     throw new AppError('Credenciales inválidas', 401);
   }
 
-  const valid = await bcrypt.compare(input.password, user.password_hash);
+  const valid = await bcrypt.compare(input.password, user.password_hash ?? '');
   if (!valid) {
     throw new AppError('Credenciales inválidas', 401);
   }
@@ -231,7 +231,7 @@ export async function updateProfile(userId: string, input: import('./auth.schema
 export async function changePassword(userId: string, input: import('./auth.schemas.js').ChangePasswordInput) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { password_hash: true } });
   if (!user) throw new AppError('Usuario no encontrado', 404);
-  const valid = await bcrypt.compare(input.current_password, user.password_hash);
+  const valid = await bcrypt.compare(input.current_password, user.password_hash ?? '');
   if (!valid) throw new AppError('La contraseña actual es incorrecta', 400);
   const password_hash = await bcrypt.hash(input.new_password, SALT_ROUNDS);
   await prisma.user.update({ where: { id: userId }, data: { password_hash } });

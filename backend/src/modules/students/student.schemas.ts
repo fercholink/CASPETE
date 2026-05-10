@@ -10,6 +10,7 @@ export const createStudentSchema = z.object({
 
 export const updateStudentSchema = z.object({
   full_name: z.string().min(2).max(200).optional(),
+  school_id: z.string().uuid().optional(),
   national_id: z.string().max(20).optional(),
   grade: z.string().max(10).optional(),
   photo_url: z.string().optional(),

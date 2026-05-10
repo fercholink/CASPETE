@@ -48,11 +48,14 @@ export async function checkNequi(req: Request, res: Response) {
 }
 
 export async function list(req: Request, res: Response) {
-  const status = req.query['status'] as string | undefined;
-  const search = req.query['search'] as string | undefined;
   const page = Number(req.query['page']) || 1;
   const limit = Number(req.query['limit']) || 20;
-  const result = await topupService.listTopupRequests(req.user as JwtPayload, { status, search, page, limit });
+  const opts: { status?: string; search?: string; page: number; limit: number } = { page, limit };
+  const _status = req.query['status'];
+  const _search = req.query['search'];
+  if (typeof _status === 'string') opts.status = _status;
+  if (typeof _search === 'string') opts.search = _search;
+  const result = await topupService.listTopupRequests(req.user as JwtPayload, opts);
   sendSuccess(res, result);
 }
 

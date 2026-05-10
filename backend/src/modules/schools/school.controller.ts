@@ -13,11 +13,16 @@ export async function create(req: Request, res: Response) {
 export async function list(req: Request, res: Response) {
   const page = Math.max(1, Number(req.query['page']) || 1);
   const limit = Math.min(100, Math.max(1, Number(req.query['limit']) || 20));
-  const search = req.query['search'] as string | undefined;
-  const city = req.query['city'] as string | undefined;
-  const plan = req.query['plan'] as string | undefined;
-  const active = req.query['active'] as string | undefined;
-  const result = await schoolService.listSchools(page, limit, { search, city, plan, active });
+  const filters: { search?: string; city?: string; plan?: string; active?: string } = {};
+  const _search = req.query['search'];
+  const _city = req.query['city'];
+  const _plan = req.query['plan'];
+  const _active = req.query['active'];
+  if (typeof _search === 'string') filters.search = _search;
+  if (typeof _city === 'string') filters.city = _city;
+  if (typeof _plan === 'string') filters.plan = _plan;
+  if (typeof _active === 'string') filters.active = _active;
+  const result = await schoolService.listSchools(page, limit, filters);
   sendSuccess(res, result);
 }
 

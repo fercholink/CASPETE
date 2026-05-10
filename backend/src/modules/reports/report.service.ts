@@ -27,7 +27,7 @@ export async function getSummary(actor: JwtPayload) {
     prisma.transaction.aggregate({ where: { ...schoolFilter, type: 'CHARGE', created_at: { gte: start, lte: end } }, _sum: { amount: true } }),
     prisma.student.count({ where: { ...schoolFilter, active: true } }),
     prisma.orderItem.groupBy({
-      by: ['product_id'],
+      by: ['store_product_id'],
       where: { order: { ...schoolFilter, created_at: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, status: { not: 'CANCELLED' } } },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: 'desc' } },
@@ -35,14 +35,17 @@ export async function getSummary(actor: JwtPayload) {
     }),
   ]);
 
-  const productIds = topProductsRaw.map(r => r.product_id);
-  const products = await prisma.product.findMany({ where: { id: { in: productIds } }, select: { id: true, name: true, price: true } });
-  const productMap = new Map(products.map(p => [p.id, p]));
+  const spIds = topProductsRaw.map(r => r.store_product_id);
+  const storeProducts = await prisma.storeProduct.findMany({
+    where: { id: { in: spIds } },
+    select: { id: true, product: { select: { id: true, name: true, price: true } } },
+  });
+  const spMap = new Map(storeProducts.map(sp => [sp.id, sp]));
   const topProducts = topProductsRaw.map(r => ({
-    product_id: r.product_id,
-    name: productMap.get(r.product_id)?.name ?? 'Desconocido',
-    price: productMap.get(r.product_id)?.price ?? '0',
-    total_qty: r._sum.quantity ?? 0,
+    product_id: spMap.get(r.store_product_id)?.product.id ?? r.store_product_id,
+    name: spMap.get(r.store_product_id)?.product.name ?? 'Desconocido',
+    price: spMap.get(r.store_product_id)?.product.price ?? '0',
+    total_qty: r._sum?.quantity ?? 0,
   }));
 
   return {
@@ -103,15 +106,21 @@ export async function getParentSummary(actor: JwtPayload) {
   if (actor.role !== 'PARENT') throw new AppError('Solo para padres', 403);
   const { start, end } = todayRange();
 
+  // Find student IDs for this parent
+  const studentIds = (await prisma.student.findMany({
+    where: { parent_id: actor.sub, active: true },
+    select: { id: true },
+  })).map(s => s.id);
+
   const [students, recentOrders, pendingTopups] = await Promise.all([
     prisma.student.findMany({
       where: { parent_id: actor.sub, active: true },
       select: { id: true, full_name: true, grade: true, balance: true, school: { select: { name: true } } },
     }),
     prisma.lunchOrder.findMany({
-      where: { parent_id: actor.sub },
+      where: { student_id: { in: studentIds } },
       orderBy: { created_at: 'desc' }, take: 5,
-      select: { id: true, status: true, total: true, created_at: true, student: { select: { full_name: true } } },
+      select: { id: true, status: true, total_amount: true, created_at: true, student: { select: { full_name: true } } },
     }),
     prisma.topupRequest.count({ where: { parent_id: actor.sub, status: 'PENDING' } }),
   ]);
@@ -120,7 +129,7 @@ export async function getParentSummary(actor: JwtPayload) {
 
   // Pedidos de hoy de sus hijos
   const todayOrders = await prisma.lunchOrder.count({
-    where: { parent_id: actor.sub, created_at: { gte: start, lte: end } },
+    where: { student_id: { in: studentIds }, created_at: { gte: start, lte: end } },
   });
 
   return { students, total_balance: totalBalance, recent_orders: recentOrders, pending_topups: pendingTopups, today_orders: todayOrders };
@@ -140,21 +149,24 @@ export async function getVendorSummary(actor: JwtPayload) {
     prisma.lunchOrder.count({ where: { school_id: schoolId, status: 'DELIVERED', delivered_at: { gte: start, lte: end } } }),
     prisma.transaction.aggregate({ where: { school_id: schoolId, type: 'CHARGE', created_at: { gte: start, lte: end } }, _sum: { amount: true } }),
     prisma.orderItem.groupBy({
-      by: ['product_id'],
+      by: ['store_product_id'],
       where: { order: { school_id: schoolId, created_at: { gte: start, lte: end }, status: { not: 'CANCELLED' } } },
       _sum: { quantity: true }, orderBy: { _sum: { quantity: 'desc' } }, take: 5,
     }),
   ]);
 
-  const productIds = topProducts.map(p => p.product_id);
-  const products = await prisma.product.findMany({ where: { id: { in: productIds } }, select: { id: true, name: true } });
-  const productMap = new Map(products.map(p => [p.id, p]));
+  const spIds = topProducts.map(p => p.store_product_id);
+  const storeProducts = await prisma.storeProduct.findMany({
+    where: { id: { in: spIds } },
+    select: { id: true, product: { select: { id: true, name: true } } },
+  });
+  const spMap = new Map(storeProducts.map(sp => [sp.id, sp]));
 
   return {
     pending_orders: pendingOrders,
     confirmed_orders: confirmedOrders,
     delivered_today: deliveredToday,
     revenue_today: revenueToday._sum.amount?.toNumber() ?? 0,
-    top_products_today: topProducts.map(p => ({ name: productMap.get(p.product_id)?.name ?? 'N/A', qty: p._sum.quantity ?? 0 })),
+    top_products_today: topProducts.map(p => ({ name: spMap.get(p.store_product_id)?.product.name ?? 'N/A', qty: p._sum?.quantity ?? 0 })),
   };
 }

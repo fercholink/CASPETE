@@ -39,8 +39,8 @@ async function getAccessToken(): Promise<string> {
   });
 
   if (!res.ok) throw new AppError('Error al autenticar con Nequi', 502);
-  const data = await res.json();
-  return data.access_token;
+  const data: any = await res.json();
+  return data.access_token as string;
 }
 
 function buildRequestHeader(messageId: string) {
@@ -107,7 +107,7 @@ export async function initiatePayment(opts: {
     throw new AppError(`Nequi error: ${err}`, 502);
   }
 
-  const data = await res.json();
+  const data: any = await res.json();
   const statusCode = data?.ResponseMessage?.ResponseBody?.any?.unregisteredPaymentRS?.status?.statusCode;
   const transactionId = data?.ResponseMessage?.ResponseBody?.any?.unregisteredPaymentRS?.transactionId;
 
@@ -158,7 +158,7 @@ export async function checkPaymentStatus(messageId: string) {
 
   if (!res.ok) throw new AppError('Error al consultar estado en Nequi', 502);
 
-  const data = await res.json();
+  const data: any = await res.json();
   const statusCode = data?.ResponseMessage?.ResponseBody?.any?.getStatusPaymentRS?.status?.statusCode ?? '';
 
   let status: 'PENDING' | 'SUCCESS' | 'REJECTED' | 'EXPIRED' | 'FAILED' = 'PENDING';

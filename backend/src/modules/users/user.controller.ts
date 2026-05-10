@@ -10,13 +10,14 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function list(req: Request, res: Response) {
-  const search = req.query['search'] as string | undefined;
-  const role = req.query['role'] as string | undefined;
-  const active = req.query['active'] as string | undefined;
-  const school_id = req.query['school_id'] as string | undefined;
   const page = Number(req.query['page']) || 1;
   const limit = Number(req.query['limit']) || 50;
-  const result = await userService.listUsers(req.user!, { search, role, active, school_id, page, limit });
+  const opts: { page: number; limit: number; search?: string; role?: string; active?: string; school_id?: string } = { page, limit };
+  if (typeof req.query['search'] === 'string') opts.search = req.query['search'];
+  if (typeof req.query['role'] === 'string') opts.role = req.query['role'];
+  if (typeof req.query['active'] === 'string') opts.active = req.query['active'];
+  if (typeof req.query['school_id'] === 'string') opts.school_id = req.query['school_id'];
+  const result = await userService.listUsers(req.user!, opts);
   sendSuccess(res, result);
 }
 

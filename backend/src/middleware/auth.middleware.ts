@@ -11,11 +11,11 @@ export interface JwtPayload {
   schoolId: string | null;
 }
 
+// Override Express.User globally so req.user is always JwtPayload
 declare global {
   namespace Express {
-    interface Request {
-      user?: JwtPayload;
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface User extends JwtPayload {}
   }
 }
 

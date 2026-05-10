@@ -14,11 +14,12 @@ export async function create(req: Request, res: Response) {
 export async function list(req: Request, res: Response) {
   const page = Math.max(1, Number(req.query['page']) || 1);
   const limit = Math.min(100, Math.max(1, Number(req.query['limit']) || 20));
-  const search = req.query['search'] as string | undefined;
-  const school_id = req.query['school_id'] as string | undefined;
-  const grade = req.query['grade'] as string | undefined;
-  const active = req.query['active'] as string | undefined;
-  const result = await studentService.listStudents(req.user!, { page, limit, search, school_id, grade, active });
+  const opts: { page: number; limit: number; search?: string; school_id?: string; grade?: string; active?: string } = { page, limit };
+  if (typeof req.query['search'] === 'string') opts.search = req.query['search'];
+  if (typeof req.query['school_id'] === 'string') opts.school_id = req.query['school_id'];
+  if (typeof req.query['grade'] === 'string') opts.grade = req.query['grade'];
+  if (typeof req.query['active'] === 'string') opts.active = req.query['active'];
+  const result = await studentService.listStudents(req.user!, opts);
   sendSuccess(res, result);
 }
 

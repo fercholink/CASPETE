@@ -8,8 +8,9 @@ export async function list(req: Request, res: Response) {
   if (!studentId) throw new AppError('student_id es requerido', 400);
   const page = Number(req.query['page']) || 1;
   const limit = Number(req.query['limit']) || 30;
-  const type = req.query['type'] as string | undefined;
-  const data = await txService.listTransactions(studentId, req.user!, { page, limit, type });
+  const opts: { page: number; limit: number; type?: string } = { page, limit };
+  if (typeof req.query['type'] === 'string') opts.type = req.query['type'];
+  const data = await txService.listTransactions(studentId, req.user!, opts);
   sendSuccess(res, data);
 }
 

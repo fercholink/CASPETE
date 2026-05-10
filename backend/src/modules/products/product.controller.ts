@@ -12,11 +12,12 @@ export async function create(req: Request, res: Response) {
 export async function list(req: Request, res: Response) {
   const page = Math.max(1, Number(req.query['page']) || 1);
   const limit = Math.min(100, Math.max(1, Number(req.query['limit']) || 50));
-  const search = req.query['search'] as string | undefined;
-  const category = req.query['category'] as string | undefined;
-  const active = req.query['active'] as string | undefined;
-  const is_healthy = req.query['is_healthy'] as string | undefined;
-  const result = await productService.listProducts(req.user!, { page, limit, search, category, active, is_healthy });
+  const opts: { page: number; limit: number; search?: string; category?: string; active?: string; is_healthy?: string } = { page, limit };
+  if (typeof req.query['search'] === 'string') opts.search = req.query['search'];
+  if (typeof req.query['category'] === 'string') opts.category = req.query['category'];
+  if (typeof req.query['active'] === 'string') opts.active = req.query['active'];
+  if (typeof req.query['is_healthy'] === 'string') opts.is_healthy = req.query['is_healthy'];
+  const result = await productService.listProducts(req.user!, opts);
   sendSuccess(res, result);
 }
 

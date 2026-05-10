@@ -40,26 +40,30 @@ export async function listAll(_req: Request, res: Response) {
 
 /** GET /api/payment-methods/:id */
 export async function getOne(req: Request, res: Response) {
-  const data = await pmService.getById(req.params['id']!);
+  const data = await pmService.getById(req.params['id'] as string);
   sendSuccess(res, data);
 }
 
 /** POST /api/payment-methods */
 export async function create(req: Request, res: Response) {
-  const input = createSchema.parse(req.body);
-  const data = await pmService.create(input);
+  const parsed = createSchema.parse(req.body);
+  const createData: { key: string; label: string; icon: string; color: string; fields: { label: string; value: string }[]; sort_order?: number } = {
+    key: parsed.key, label: parsed.label, icon: parsed.icon, color: parsed.color, fields: parsed.fields,
+  };
+  if (parsed.sort_order !== undefined) createData.sort_order = parsed.sort_order;
+  const data = await pmService.create(createData);
   sendSuccess(res, data, 'Método de pago creado', 201);
 }
 
 /** PUT /api/payment-methods/:id */
 export async function update(req: Request, res: Response) {
   const input = updateSchema.parse(req.body);
-  const data = await pmService.update(req.params['id']!, input);
+  const data = await pmService.update(req.params['id'] as string, input as any);
   sendSuccess(res, data, 'Método de pago actualizado');
 }
 
 /** DELETE /api/payment-methods/:id */
 export async function remove(req: Request, res: Response) {
-  const data = await pmService.remove(req.params['id']!);
+  const data = await pmService.remove(req.params['id'] as string);
   sendSuccess(res, data, 'Método de pago eliminado');
 }

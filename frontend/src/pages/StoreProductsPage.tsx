@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ export default function StoreProductsPage() {
   const fetchCatalog = useCallback(() => {
     setLoadingCatalog(true);
     const assignedIds = new Set(storeProducts.map(sp => sp.product_id));
-    apiClient.get<{ data: { products: CatalogProduct[]; total: number } }>('/products?active=true&limit=200')
+    apiClient.get<{ data: { products: CatalogProduct[]; total: number; categories: unknown[] } }>('/products?active=true&limit=200')
       .then(r => {
         const all = r.data.data.products ?? [];
         // Excluir los que ya están asignados
@@ -213,6 +213,9 @@ export default function StoreProductsPage() {
       <nav className="dashboard-nav">
         <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            🏠 <span className="desktop-only">Inicio</span>
+          </button>
           <button className="btn-ghost" onClick={() => navigate('/stores')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
             <span className="desktop-only">Tiendas</span>

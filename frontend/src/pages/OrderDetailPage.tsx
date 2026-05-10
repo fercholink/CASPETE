@@ -56,6 +56,12 @@ function fmt(price: string) {
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
 }
+function fmtDateTime(iso: string) {
+  const d = new Date(iso);
+  const fecha = d.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+  const hora  = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
+  return `${fecha} a las ${hora}`;
+}
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -241,13 +247,22 @@ export default function OrderDetailPage() {
           </div>
         )}
 
-        {/* Entregado */}
         {order.status === 'DELIVERED' && (
           <div className="user-card" style={{ marginBottom: 12, textAlign: 'center', background: 'rgba(55,114,207,0.04)' }}>
-            <p style={{ margin: 0, fontSize: 15, fontWeight: 500, color: '#3772cf' }}>
-              ✓ Entregado {order.delivered_at ? `el ${fmtDate(order.delivered_at)}` : ''}
-              {order.deliverer && ` por ${order.deliverer.full_name}`}
+            <p style={{ margin: '0 0 6px', fontSize: 20 }}>✅</p>
+            <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: '#3772cf' }}>
+              Pedido entregado
             </p>
+            {order.delivered_at && (
+              <p style={{ margin: '0 0 4px', fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
+                📅 {fmtDateTime(order.delivered_at)}
+              </p>
+            )}
+            {order.deliverer && (
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
+                👤 Entregado por <strong>{order.deliverer.full_name}</strong>
+              </p>
+            )}
           </div>
         )}
 

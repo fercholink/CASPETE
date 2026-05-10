@@ -381,7 +381,7 @@ body {
 
   .dashboard-nav {
     padding: 0 16px;
-    height: 60px;
+    height: 56px;
   }
 
   .nav-logo {
@@ -389,11 +389,12 @@ body {
   }
 
   .dashboard-body {
-    padding: 32px 16px;
+    padding: 24px 14px;
+    max-width: 100%;
   }
 
   .user-card {
-    padding: 20px 16px;
+    padding: 16px 14px;
     border-radius: var(--radius-lg);
   }
 
@@ -401,24 +402,100 @@ body {
     font-size: 22px;
   }
 
-  .form-input, .form-select, .btn-primary, .btn-ghost {
+  .form-input, .form-select, .btn-primary {
     padding: 12px 16px;
-    font-size: 16px; /* Better for iOS to prevent zoom */
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+
+  .btn-ghost {
+    padding: 8px 12px;
+    font-size: 13px;
   }
 
   .desktop-only {
     display: none !important;
   }
+
+  .grid-2-mobile-1 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stat cards: 2 columns on mobile */
+  .dashboard-body > div[style*="grid-template-columns: repeat(auto-fill"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  /* Action buttons in cards: stack vertically */
+  .user-card > div > div:last-child {
+    flex-wrap: wrap;
+  }
+
+  /* Filter bar: stack on mobile */
+  .dashboard-body > div[style*="gap: 10"] {
+    flex-direction: column;
+  }
+
+  .dashboard-body > div[style*="gap: 10"] select {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+
+  /* School/User card content: reduce gap */
+  .user-card div[style*="gap: 16"] {
+    gap: 10px !important;
+  }
+
+  .user-card div[style*="gap: 14"] {
+    gap: 10px !important;
+  }
+
+  /* Make card layouts stack when cramped */
+  .user-card > div[style*="justify-content: space-between"] {
+    flex-direction: column;
+    gap: 12px !important;
+  }
+
+  /* Action buttons go horizontal stretch */
+  .user-card > div > div[style*="flexShrink: 0"],
+  .user-card > div > div:last-child[style*="flex-shrink: 0"] {
+    width: 100%;
+    justify-content: flex-start !important;
+  }
+
+  /* Modal fullscreen on mobile */
+  .user-card[style*="maxWidth: 460"],
+  .user-card[style*="maxWidth: 440"],
+  .user-card[style*="max-width: 460"],
+  .user-card[style*="max-width: 440"] {
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: var(--radius-xl) !important;
+  }
+
+  /* Page title smaller */
+  h1[style*="fontSize: 28"],
+  h1[style*="font-size: 28"] {
+    font-size: 22px !important;
+  }
 }
 
 @media (max-width: 400px) {
   .nav-logo span:not(.nav-logo-dot) {
-    display: none; /* Hide 'CASPETE' text on very small screens, keep dot */
+    display: none;
   }
   
   .btn-ghost {
     padding: 6px 10px;
     font-size: 13px;
+  }
+
+  .dashboard-body {
+    padding: 20px 12px;
+  }
+
+  .user-card {
+    padding: 14px 12px;
   }
 }
 
@@ -430,10 +507,6 @@ body {
 @media (max-width: 640px) {
   .mobile-only {
     display: block;
-  }
-  
-  .grid-2-mobile-1 {
-    grid-template-columns: 1fr !important;
   }
 }
 

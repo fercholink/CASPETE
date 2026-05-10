@@ -50,6 +50,23 @@ Basado en el documento de arquitectura, el proyecto iniciarÃ¡ con una **Plataf
 
 ---
 
+## 💎 Planes de Suscripción
+
+Cada colegio se registra bajo uno de los siguientes planes. Las restricciones se aplican automáticamente desde el backend.
+
+| Característica | ⚡ Básico | ⭐ Estándar | 👑 Premium |
+| :--- | :---: | :---: | :---: |
+| **Tiendas por colegio** | 1 | 3 | Ilimitadas |
+| **Estudiantes** | Hasta 200 | Hasta 500 | Ilimitados |
+| **Usuarios admin** | 2 | 5 | Ilimitados |
+| **Reportes** | Básicos | Avanzados | Completos + exportación |
+| **Soporte** | Email | Email + Chat | Prioritario |
+| **Personalización (logo, colores)** | ❌ | ✅ | ✅ |
+| **Notificaciones push a padres** | ❌ | ✅ | ✅ |
+| **API / Integraciones externas** | ❌ | ❌ | ✅ |
+
+---
+
 ## ðŸš€ Hoja de Ruta - Fase MVP (Semanas 1 a 8)
 
 ### Semana 1-2: Base y Estructura

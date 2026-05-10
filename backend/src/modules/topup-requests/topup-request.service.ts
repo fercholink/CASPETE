@@ -256,7 +256,10 @@ export async function confirmTopup(input: ConfirmTopupInput) {
       student.parent.email, student.parent.full_name,
       student.full_name, amount, newBalance, paymentMethod,
     );
-  } catch { /* El fallo de email no revierte la recarga */ }
+    console.log(`[Email] Confirmación de recarga enviada a ${student.parent.email}`);
+  } catch (emailErr) {
+    console.error(`[Email] Error al enviar confirmación de recarga a ${student.parent.email}:`, emailErr);
+  }
 
   return result;
 }

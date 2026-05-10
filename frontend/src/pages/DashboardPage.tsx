@@ -42,11 +42,27 @@ const ORDER_STATUS: Record<string, { label: string; color: string }> = {
 };
 
 // ─── Componente StatCard ──────────────────────────────────────
-function StatCard({ label, value, color = 'var(--color-text)', icon, sub }: {
+function StatCard({ label, value, color = 'var(--color-text)', icon, sub, onClick, to }: {
   label: string; value: string | number; color?: string; icon: string; sub?: string;
+  onClick?: () => void; to?: string;
 }) {
+  const navigate = useNavigate();
+  const handleClick = onClick ?? (to ? () => navigate(to) : undefined);
+  const isClickable = !!handleClick;
+
   return (
-    <div className="user-card" style={{ padding: '18px 20px', marginBottom: 0 }}>
+    <div
+      className="user-card"
+      onClick={handleClick}
+      style={{
+        padding: '18px 20px', marginBottom: 0,
+        cursor: isClickable ? 'pointer' : 'default',
+        transition: 'transform 0.15s, border-color 0.15s',
+        ...(isClickable ? { borderColor: color === 'var(--color-text)' ? undefined : `${color}40` } : {}),
+      }}
+      onMouseEnter={isClickable ? (e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; } : undefined}
+      onMouseLeave={isClickable ? (e) => { (e.currentTarget as HTMLElement).style.transform = 'none'; } : undefined}
+    >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
@@ -55,6 +71,9 @@ function StatCard({ label, value, color = 'var(--color-text)', icon, sub }: {
         </div>
         <span style={{ fontSize: 28, opacity: 0.85 }}>{icon}</span>
       </div>
+      {isClickable && (
+        <p style={{ margin: '8px 0 0', fontSize: 10, color, opacity: 0.7, letterSpacing: '0.3px', textTransform: 'uppercase' }}>Ver detalles →</p>
+      )}
     </div>
   );
 }
@@ -111,13 +130,13 @@ function SuperAdminDashboard() {
       {global && (
         <>
           <p className="dashboard-label" style={{ marginBottom: 10 }}>Sistema global</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
-            <StatCard label="Colegios activos"  value={global.schools.active}                     icon="🏫" sub={`${global.schools.total} total`} />
-            <StatCard label="Estudiantes activos" value={global.students.active}                  icon="🎒" sub={`${global.students.total} total`} color="var(--color-brand-deep)" />
-            <StatCard label="Recargas pendientes" value={global.pending_topups}                   icon="⏳" color={global.pending_topups > 0 ? '#c37d0d' : 'var(--color-text)'} />
-            <StatCard label="Ingresos hoy"        value={fmt(global.revenue.today)}               icon="💵" color="#059669" />
-            <StatCard label="Ingresos del mes"    value={fmt(global.revenue.month)}               icon="📈" color="#6366f1" />
-            <StatCard label="Pedidos hoy"         value={global.orders_today}                     icon="📋" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
+            <StatCard label="Colegios activos"   value={global.schools.active}    icon="🏫" sub={`${global.schools.total} total`}    to="/schools" />
+            <StatCard label="Estudiantes activos" value={global.students.active}   icon="🎒" sub={`${global.students.total} total`}   color="var(--color-brand-deep)" to="/students" />
+            <StatCard label="Recargas pendientes" value={global.pending_topups}    icon="⏳"   color={global.pending_topups > 0 ? '#c37d0d' : 'var(--color-text)'} to="/topup-requests" />
+            <StatCard label="Ingresos hoy"        value={fmt(global.revenue.today)} icon="💵" color="#059669" to="/transactions" />
+            <StatCard label="Ingresos del mes"    value={fmt(global.revenue.month)} icon="📈" color="#6366f1" to="/transactions" />
+            <StatCard label="Pedidos hoy"         value={global.orders_today}       icon="📋"              to="/orders" />
           </div>
 
           {global.top_schools.length > 0 && (
@@ -141,10 +160,10 @@ function SuperAdminDashboard() {
         <>
           <p className="dashboard-label" style={{ marginBottom: 10 }}>Hoy (todos los colegios)</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
-            <StatCard label="Pedidos creados"  value={admin.orders_today}          icon="📋" />
-            <StatCard label="Pendientes"        value={admin.orders_pending}        icon="⏳" color="#c37d0d" />
-            <StatCard label="Confirmados"       value={admin.orders_confirmed}      icon="✅" color="#6366f1" />
-            <StatCard label="Entregados"        value={admin.orders_delivered_today}icon="🚀" color="#059669" />
+            <StatCard label="Pedidos creados"  value={admin.orders_today}           icon="📋"              to="/orders" />
+            <StatCard label="Pendientes"        value={admin.orders_pending}         icon="⏳" color="#c37d0d"  to="/orders?status=PENDING" />
+            <StatCard label="Confirmados"       value={admin.orders_confirmed}       icon="✅" color="#6366f1"  to="/orders?status=CONFIRMED" />
+            <StatCard label="Entregados"        value={admin.orders_delivered_today} icon="🚀" color="#059669" to="/orders?status=DELIVERED" />
           </div>
 
           {admin.top_products.length > 0 && (
@@ -183,12 +202,12 @@ function SchoolAdminDashboard() {
     <>
       <p className="dashboard-label" style={{ marginBottom: 10 }}>Hoy en tu colegio</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
-        <StatCard label="Pedidos hoy"       value={data.orders_today}           icon="📋" />
-        <StatCard label="Pendientes"         value={data.orders_pending}         icon="⏳" color="#c37d0d" />
-        <StatCard label="Confirmados"        value={data.orders_confirmed}       icon="✅" color="#6366f1" />
-        <StatCard label="Entregados hoy"     value={data.orders_delivered_today} icon="🚀" color="#059669" />
-        <StatCard label="Ingresos hoy"       value={fmt(data.revenue_today)}     icon="💵" color="#059669" />
-        <StatCard label="Estudiantes activos"value={data.active_students}        icon="🎒" />
+        <StatCard label="Pedidos hoy"       value={data.orders_today}           icon="📋"              to="/orders" />
+        <StatCard label="Pendientes"         value={data.orders_pending}         icon="⏳" color="#c37d0d"  to="/orders?status=PENDING" />
+        <StatCard label="Confirmados"        value={data.orders_confirmed}       icon="✅" color="#6366f1"  to="/orders?status=CONFIRMED" />
+        <StatCard label="Entregados hoy"     value={data.orders_delivered_today} icon="🚀" color="#059669" to="/orders?status=DELIVERED" />
+        <StatCard label="Ingresos hoy"       value={fmt(data.revenue_today)}     icon="💵" color="#059669" to="/transactions" />
+        <StatCard label="Estudiantes activos"value={data.active_students}        icon="🎒"              to="/students" />
       </div>
 
       {data.top_products.length > 0 && (
@@ -226,10 +245,10 @@ function VendorDashboard() {
     <>
       <p className="dashboard-label" style={{ marginBottom: 10 }}>Tu turno hoy</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
-        <StatCard label="Pendientes"     value={data.pending_orders}   icon="⏳" color={data.pending_orders > 0 ? '#c37d0d' : 'var(--color-text)'} />
-        <StatCard label="Confirmados"    value={data.confirmed_orders} icon="✅" color="#6366f1" />
-        <StatCard label="Entregados hoy" value={data.delivered_today}  icon="🚀" color="#059669" />
-        <StatCard label="Ingresos hoy"   value={fmt(data.revenue_today)} icon="💵" color="#059669" />
+        <StatCard label="Pendientes"     value={data.pending_orders}     icon="⏳" color={data.pending_orders > 0 ? '#c37d0d' : 'var(--color-text)'}  to="/orders?status=PENDING" />
+        <StatCard label="Confirmados"    value={data.confirmed_orders}   icon="✅" color="#6366f1"  to="/orders?status=CONFIRMED" />
+        <StatCard label="Entregados hoy" value={data.delivered_today}    icon="🚀" color="#059669" to="/orders?status=DELIVERED" />
+        <StatCard label="Ingresos hoy"   value={fmt(data.revenue_today)} icon="💵" color="#059669" to="/transactions" />
       </div>
 
       {data.pending_orders > 0 && (

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
 import QRScanner from '../components/QRScanner';
@@ -57,6 +57,7 @@ interface OrderStats { total: number; pending: number; confirmed: number; delive
 export default function OrdersPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -64,20 +65,22 @@ export default function OrdersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState<OrderStats | null>(null);
 
-  // Delete modal
-  const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
   const isParent  = user?.role === 'PARENT';
   const isAdmin   = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isVendor  = user?.role === 'VENDOR';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  // Filtros — VENDOR arranca con CONFIRMED (sin filtro de fecha)
-  const [statusFilter, setStatusFilter] = useState(isVendor ? 'CONFIRMED' : '');
-  const [dateFilter, setDateFilter]     = useState('');
+  // Leer query params iniciales de la URL (navegación desde dashboard)
+  const initialParams = new URLSearchParams(location.search);
+  const [statusFilter, setStatusFilter] = useState(initialParams.get('status') ?? (isVendor ? 'CONFIRMED' : ''));
+  const [dateFilter, setDateFilter]     = useState(initialParams.get('scheduled_date') ?? '');
   const [search, setSearch]             = useState('');
   const [isScanning, setIsScanning]     = useState(false);
+
+  // Delete modal
+  const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
 
   const fetchOrders = useCallback((isBackground = false, pg = page) => {
     if (!isBackground) setLoading(true);

@@ -246,15 +246,17 @@ model PasswordResetToken {
 }
 
 model TopupRequest {
-  id              String             @id @default(uuid()) @db.Uuid
-  school_id       String             @db.Uuid
-  student_id      String             @db.Uuid
-  parent_id       String             @db.Uuid
-  amount          Decimal            @db.Decimal(10, 2)
-  receipt_url     String             @db.Text
-  status          TopupRequestStatus @default(PENDING)
-  created_at      DateTime           @default(now())
-  updated_at      DateTime           @updatedAt
+  id                    String             @id @default(uuid()) @db.Uuid
+  school_id             String             @db.Uuid
+  student_id            String             @db.Uuid
+  parent_id             String             @db.Uuid
+  amount                Decimal            @db.Decimal(10, 2)
+  receipt_url           String             @db.Text
+  status                TopupRequestStatus @default(PENDING)
+  payment_method        String?            @db.VarChar(20) // TRANSFERENCIA, NEQUI
+  nequi_transaction_id  String?            @db.VarChar(100)
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @updatedAt
 
   school  School  @relation(fields: [school_id], references: [id])
   student Student @relation(fields: [student_id], references: [id])

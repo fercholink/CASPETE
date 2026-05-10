@@ -473,11 +473,14 @@ export default function StudentsPage() {
                 ))}
               </div>
 
-              {/* Paso 1: Selección de banco */}
+              {/* Paso 1: Selección de método de pago */}
               {rechargeStep === 1 && (
                 <div>
-                  <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--color-text-muted)' }}>¿Cómo vas a realizar la transferencia?</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--color-text-muted)' }}>¿Cómo quieres recargar?</p>
+
+                  {/* Sección: Transferencia manual */}
+                  <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🏦 Transferencia manual</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
                     {(Object.keys(PAYMENT_INFO) as PaymentBank[]).map((bank) => {
                       const info = PAYMENT_INFO[bank];
                       return (
@@ -486,21 +489,43 @@ export default function StudentsPage() {
                           onClick={() => { setRechargeBank(bank); setRechargeStep(2); }}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 14,
-                            padding: '16px 20px', border: `1.5px solid ${info.color}30`,
+                            padding: '14px 18px', border: `1.5px solid ${info.color}30`,
                             borderRadius: 10, background: info.bg, cursor: 'pointer',
                             textAlign: 'left', transition: 'all 0.15s',
                           }}
                         >
-                          <span style={{ fontSize: 28 }}>{info.icon}</span>
+                          <span style={{ fontSize: 24 }}>{info.icon}</span>
                           <div>
-                            <p style={{ margin: 0, fontWeight: 600, fontSize: 15, color: info.color }}>{info.label}</p>
-                            <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>Transferencia bancaria</p>
+                            <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: info.color }}>{info.label}</p>
+                            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-muted)' }}>Transferencia bancaria</p>
                           </div>
-                          <svg style={{ marginLeft: 'auto', color: info.color }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                          <svg style={{ marginLeft: 'auto', color: info.color }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                         </button>
                       );
                     })}
                   </div>
+
+                  {/* Sección: Nequi Push */}
+                  <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📱 Pago instantáneo</p>
+                  <button
+                    disabled
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+                      padding: '14px 18px', border: '1.5px solid rgba(139,92,246,0.25)',
+                      borderRadius: 10, background: 'rgba(139,92,246,0.06)', cursor: 'not-allowed',
+                      textAlign: 'left', transition: 'all 0.15s', opacity: 0.7,
+                    }}
+                  >
+                    <span style={{ fontSize: 24 }}>📱</span>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: '#8B5CF6' }}>Nequi Push</p>
+                        <span style={{ fontSize: 9, background: 'rgba(139,92,246,0.15)', color: '#8B5CF6', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>PRÓXIMAMENTE</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-muted)' }}>Paga desde tu app Nequi — confirmación automática</p>
+                    </div>
+                  </button>
+
                   <button className="btn-ghost" style={{ marginTop: 16, width: '100%' }} onClick={() => setRechargeStudentId(null)}>
                     Cancelar
                   </button>

@@ -16,6 +16,12 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID es requerida'),
   GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET es requerida'),
   GOOGLE_CALLBACK_URL: z.string().default('http://localhost:3001/api/auth/google/callback'),
+  // Nequi Push Payments (opcional — se activa al configurar)
+  NEQUI_API_URL: z.string().default('https://api.sandbox.nequi.com'),
+  NEQUI_CLIENT_ID: z.string().default(''),
+  NEQUI_CLIENT_SECRET: z.string().default(''),
+  NEQUI_API_KEY: z.string().default(''),
+  NEQUI_CHANNEL: z.string().default('PNP04-C001'),
 });
 
 const parsed = envSchema.safeParse(process.env);

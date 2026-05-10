@@ -9,7 +9,13 @@ interface OrderItem {
   quantity: number;
   unit_price: string;
   subtotal: string;
-  product: { id: string; name: string; is_healthy: boolean };
+  // El backend retorna store_product.product (no product directamente)
+  store_product: {
+    id: string;
+    price: string | null;
+    product: { id: string; name: string; is_healthy: boolean };
+  } | null;
+  product?: { id: string; name: string; is_healthy: boolean }; // compatibilidad
 }
 
 interface Order {
@@ -366,7 +372,10 @@ export default function OrdersPage() {
                       </div>
                     </div>
                     <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
-                      {order.order_items.map((i) => `${i.product.name} ×${i.quantity}`).join(', ')}
+                      {order.order_items.map((i) => {
+                        const prod = i.product ?? i.store_product?.product;
+                        return `${prod?.name ?? 'Producto'} ×${i.quantity}`;
+                      }).join(', ')}
                     </p>
                   </div>
 

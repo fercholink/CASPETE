@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
 import QRCodeLib from 'react-qr-code';
+import QRScanner from '../components/QRScanner';
 
 // Fix para el problema de exportación en Vite
 const QRCode = (QRCodeLib as any).default || QRCodeLib;
@@ -73,6 +74,7 @@ export default function OrderDetailPage() {
   const [otp, setOtp] = useState('');
   const [delivering, setDelivering] = useState(false);
   const [otpError, setOtpError] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -99,6 +101,55 @@ export default function OrderDetailPage() {
     } finally {
       setDelivering(false);
     }
+  }
+
+  async function handleQRScan(decodedText: string) {
+    setIsScanning(false);
+    setOtpError('');
+
+    // Formato: CASPETE:STUDENT:studentId:deliveryCode
+    if (decodedText.startsWith('CASPETE:STUDENT:')) {
+      const parts = decodedText.split(':');
+      if (parts.length < 4) { setOtpError('Formato de QR incorrecto'); return; }
+      const studentId = parts[2];
+      const deliveryCode = parts[3];
+      setDelivering(true);
+      try {
+        const r = await apiClient.post<{ data: { delivered: number; orders: Order[] } }>('/orders/deliver-student', {
+          student_id: studentId,
+          delivery_code: deliveryCode,
+        });
+        if (r.data.data.orders.length > 0) {
+          setOrder(r.data.data.orders.find(o => o.id === id) ?? r.data.data.orders[0]);
+        }
+        alert(`✅ Entregado exitosamente`);
+      } catch (err) {
+        setOtpError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al entregar');
+      } finally {
+        setDelivering(false);
+      }
+      return;
+    }
+
+    // Formato: CASPETE:ORDER:orderId:otpCode
+    if (decodedText.startsWith('CASPETE:ORDER:')) {
+      const parts = decodedText.split(':');
+      if (parts.length < 4) { setOtpError('Formato de QR incorrecto'); return; }
+      const otpCode = parts[3];
+      setOtp(otpCode);
+      setDelivering(true);
+      try {
+        const r = await apiClient.post<{ data: Order }>(`/orders/${id}/deliver`, { otp_code: otpCode });
+        setOrder(r.data.data);
+      } catch (err) {
+        setOtpError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Código inválido');
+      } finally {
+        setDelivering(false);
+      }
+      return;
+    }
+
+    setOtpError('QR inválido para esta plataforma');
   }
 
   if (loading) return <div className="auth-page"><div className="roadmap-note" style={{ maxWidth: 560, width: '100%' }}>Cargando...</div></div>;
@@ -222,17 +273,44 @@ export default function OrderDetailPage() {
           </div>
         )}
 
+        {/* QR Scanner modal para vendor */}
+        {isScanning && (
+          <QRScanner
+            onScan={handleQRScan}
+            onClose={() => setIsScanning(false)}
+          />
+        )}
+
         {/* Formulario de entrega para VENDOR */}
         {isVendor && order.status === 'CONFIRMED' && (
           <div className="user-card" style={{ marginBottom: 12 }}>
             <p className="dashboard-label" style={{ marginBottom: 8 }}>Verificar entrega</p>
-            <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-text-muted)' }}>
-              Ingresa el PIN de 6 dígitos del estudiante
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--color-text-muted)' }}>
+              Escanea el QR del estudiante o ingresa el código de 6 dígitos
             </p>
+
+            {/* Botón escanear QR */}
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ width: '100%', marginBottom: 12, background: '#3772cf', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              onClick={() => setIsScanning(true)}
+              disabled={delivering}
+            >
+              <span style={{ fontSize: 18 }}>📷</span> Escanear QR
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, color: 'var(--color-text-muted)', fontSize: 12 }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+              <span>o ingresa el código</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+            </div>
+
             <form onSubmit={handleDeliver} style={{ display: 'flex', gap: 10 }}>
               <input
                 className="form-input"
                 type="text"
+                inputMode="numeric"
                 maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}

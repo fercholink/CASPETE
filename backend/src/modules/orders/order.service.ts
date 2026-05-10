@@ -255,8 +255,16 @@ export async function confirmOrder(id: string, actor: JwtPayload) {
   if (!order) throw new AppError('Pedido no encontrado', 404);
   await assertAccess(order, actor);
   if (order.status !== 'PENDING') throw new AppError('Solo se pueden confirmar pedidos pendientes', 400);
+
+  // Si el estudiante no tiene delivery_code, generarlo ahora
+  if (!order.student.delivery_code) {
+    const code = String(Math.floor(100000 + Math.random() * 900000)).substring(0, 6);
+    await prisma.student.update({ where: { id: order.student.id }, data: { delivery_code: code } });
+  }
+
   return prisma.lunchOrder.update({ where: { id }, data: { status: 'CONFIRMED' }, select: orderSelect });
 }
+
 
 export async function cancelOrder(id: string, actor: JwtPayload) {
   const order = await prisma.lunchOrder.findUnique({ where: { id }, select: orderSelect });

@@ -69,6 +69,11 @@ export async function topup(req: Request, res: Response) {
   sendSuccess(res, student, 'Saldo recargado');
 }
 
+export async function getStats(req: Request, res: Response) {
+  const stats = await orderService.getOrderStats(req.user!);
+  sendSuccess(res, stats);
+}
+
 export async function deleteOne(req: Request, res: Response) {
   const id = req.params['id'] as string;
   await orderService.deleteOrder(id, req.user!);

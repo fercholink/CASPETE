@@ -158,40 +158,45 @@ export async function listOrders(
   const take = Math.min(Math.max(limit, 1), 100);
   const skip = (Math.max(page, 1) - 1) * take;
 
-  const statusFilter = status ? { status: status as OrderStatus } : {};
-  const dateFilter = scheduled_date ? { scheduled_date: new Date(scheduled_date) } : {};
-  const searchFilter = search
-    ? { student: { full_name: { contains: search, mode: 'insensitive' as const } } }
-    : {};
-
-  if (actor.role === 'SUPER_ADMIN') {
-    return prisma.lunchOrder.findMany({
-      where: { ...statusFilter, ...dateFilter, ...searchFilter },
-      orderBy: [{ scheduled_date: 'desc' }, { created_at: 'desc' }],
-      skip,
-      take,
-      select: orderSelect,
-    });
-  }
+  const where: Record<string, unknown> = {};
+  if (status) where.status = status as OrderStatus;
+  if (scheduled_date) where.scheduled_date = new Date(scheduled_date);
+  if (search) where.student = { full_name: { contains: search, mode: 'insensitive' } };
 
   if (actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') {
     if (!actor.schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
-    return prisma.lunchOrder.findMany({
-      where: { school_id: actor.schoolId, ...statusFilter, ...dateFilter, ...searchFilter },
-      orderBy: [{ scheduled_date: 'desc' }, { created_at: 'desc' }],
-      skip,
-      take,
-      select: orderSelect,
-    });
+    where.school_id = actor.schoolId;
+  } else if (actor.role === 'PARENT') {
+    where.student = { ...(where.student as object || {}), parent_id: actor.sub };
+  }
+  // SUPER_ADMIN: no extra filter
+
+  const [orders, total] = await Promise.all([
+    prisma.lunchOrder.findMany({ where, orderBy: [{ scheduled_date: 'desc' }, { created_at: 'desc' }], skip, take, select: orderSelect }),
+    prisma.lunchOrder.count({ where }),
+  ]);
+
+  return { orders, total, page: Math.max(page, 1), pages: Math.ceil(total / take) };
+}
+
+export async function getOrderStats(actor: JwtPayload) {
+  const base: Record<string, unknown> = {};
+  if (actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') {
+    if (!actor.schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
+    base.school_id = actor.schoolId;
+  } else if (actor.role === 'PARENT') {
+    base.student = { parent_id: actor.sub };
   }
 
-  return prisma.lunchOrder.findMany({
-    where: { student: { parent_id: actor.sub }, ...statusFilter, ...dateFilter },
-    orderBy: [{ scheduled_date: 'desc' }, { created_at: 'desc' }],
-    skip,
-    take,
-    select: orderSelect,
-  });
+  const [total, pending, confirmed, delivered, cancelled] = await Promise.all([
+    prisma.lunchOrder.count({ where: base }),
+    prisma.lunchOrder.count({ where: { ...base, status: 'PENDING' } }),
+    prisma.lunchOrder.count({ where: { ...base, status: 'CONFIRMED' } }),
+    prisma.lunchOrder.count({ where: { ...base, status: 'DELIVERED' } }),
+    prisma.lunchOrder.count({ where: { ...base, status: 'CANCELLED' } }),
+  ]);
+
+  return { total, pending, confirmed, delivered, cancelled };
 }
 
 export async function bulkConfirmOrders(actor: JwtPayload, scheduledDate?: string) {

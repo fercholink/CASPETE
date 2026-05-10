@@ -46,12 +46,21 @@ function fmtDate(iso: string) {
 }
 function today() { return new Date().toISOString().slice(0, 10); }
 
+interface OrderStats { total: number; pending: number; confirmed: number; delivered: number; cancelled: number }
+
 export default function OrdersPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState<OrderStats | null>(null);
+
+  // Delete modal
+  const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const isParent  = user?.role === 'PARENT';
   const isAdmin   = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -64,18 +73,19 @@ export default function OrdersPage() {
   const [search, setSearch]             = useState('');
   const [isScanning, setIsScanning]     = useState(false);
 
-  const fetchOrders = useCallback((isBackground = false) => {
+  const fetchOrders = useCallback((isBackground = false, pg = page) => {
     if (!isBackground) setLoading(true);
     const params = new URLSearchParams();
+    params.set('page', String(pg)); params.set('limit', '20');
     if (statusFilter) params.set('status', statusFilter);
     if (dateFilter)   params.set('scheduled_date', dateFilter);
     if (search)       params.set('search', search);
     apiClient
-      .get<{ data: Order[] }>(`/orders?${params.toString()}`)
-      .then((r) => { setOrders(r.data.data); setError(''); })
-      .catch((e) => setError((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al cargar pedidos'))
+      .get<{ data: { orders: Order[]; total: number; page: number; pages: number } }>(`/orders?${params.toString()}`)
+      .then((r) => { setOrders(r.data.data.orders); setTotalPages(r.data.data.pages); setError(''); })
+      .catch((e) => setError((e as any).response?.data?.error ?? 'Error al cargar pedidos'))
       .finally(() => setLoading(false));
-  }, [statusFilter, dateFilter, search]);
+  }, [statusFilter, dateFilter, search, page]);
 
   useEffect(() => { 
     fetchOrders(false); 
@@ -84,6 +94,8 @@ export default function OrdersPage() {
     }, 5000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
+
+  useEffect(() => { apiClient.get<{ data: OrderStats }>('/orders/stats').then(r => setStats(r.data.data)).catch(() => {}); }, []);
 
   async function handleConfirm(id: string) {
     try {
@@ -105,22 +117,22 @@ export default function OrdersPage() {
   }
 
   async function handleCancel(id: string) {
-    if (!confirm('¿Cancelar este pedido? El saldo será reembolsado.')) return;
     try {
       const r = await apiClient.patch<{ data: Order }>(`/orders/${id}/cancel`);
       setOrders((prev) => prev.map((o) => (o.id === id ? r.data.data : o)));
     } catch { alert('No se pudo cancelar el pedido'); }
   }
 
-  async function handleDeleteOrder(order: Order) {
-    if (!confirm(`⚠️ ¿Eliminar permanentemente el pedido de "${order.student.full_name}"?\n\nEsta acción NO se puede deshacer y no reembolsa saldo.`)) return;
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
-      await apiClient.delete(`/orders/${order.id}/permanent`);
-      setOrders((prev) => prev.filter((o) => o.id !== order.id));
+      await apiClient.delete(`/orders/${deleteTarget.id}/permanent`);
+      setDeleteTarget(null);
+      fetchOrders(false, page);
     } catch (e: any) {
-      const msg = e?.response?.data?.error ?? e?.message ?? 'Error desconocido';
-      alert(`No se pudo eliminar: ${msg}`);
-    }
+      alert(`No se pudo eliminar: ${e?.response?.data?.error ?? 'Error'}`);
+    } finally { setDeleteLoading(false); }
   }
 
   async function handleQRScan(decodedText: string) {
@@ -201,6 +213,24 @@ export default function OrdersPage() {
             )}
           </div>
         </div>
+
+        {/* Stats cards */}
+        {stats && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 20 }}>
+            {[
+              { label: 'Pendientes', value: stats.pending, icon: '⏳', color: '#c37d0d' },
+              { label: 'Confirmados', value: stats.confirmed, icon: '✅', color: '#059669' },
+              { label: 'Entregados', value: stats.delivered, icon: '📦', color: '#3772cf' },
+              { label: 'Cancelados', value: stats.cancelled, icon: '❌', color: '#dc2626' },
+            ].map(s => (
+              <div key={s.label} className="user-card" style={{ padding: '12px 14px', marginBottom: 0, textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: 20 }}>{s.icon}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 20, fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)' }}>{s.value}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {isScanning && (
           <QRScanner
@@ -370,19 +400,9 @@ export default function OrdersPage() {
                           Cancelar
                         </button>
                       )}
-                      <button
-                          className="btn-ghost"
-                          style={{
-                            fontSize: 12, padding: '4px 12px',
-                            color: '#dc2626',
-                            borderColor: 'rgba(220,38,38,0.3)',
-                            background: 'rgba(220,38,38,0.05)',
-                          }}
-                          onClick={() => handleDeleteOrder(order)}
-                          title="Eliminar permanentemente"
-                        >
-                          🗑 Eliminar
-                        </button>
+                      {isSuperAdmin && (
+                        <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 12px', color: '#dc2626' }} onClick={() => setDeleteTarget(order)}>🗑</button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -391,12 +411,37 @@ export default function OrdersPage() {
           </div>
         )}
 
-        {!loading && (
-          <p style={{ marginTop: 16, fontSize: 13, color: 'var(--color-text-muted)' }}>
-            {orders.length} pedido{orders.length !== 1 ? 's' : ''}
-          </p>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 20 }}>
+            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ fontSize: 13, padding: '6px 14px' }}>← Anterior</button>
+            <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>{page} / {totalPages}</span>
+            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ fontSize: 13, padding: '6px 14px' }}>Siguiente →</button>
+          </div>
         )}
       </main>
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }} onClick={() => !deleteLoading && setDeleteTarget(null)}>
+          <div className="user-card" style={{ maxWidth: 440, width: '100%', padding: '32px 28px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <p style={{ fontSize: 40, margin: '0 0 12px' }}>⚠️</p>
+              <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 600 }}>¿Eliminar pedido?</h2>
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                Se eliminará el pedido de <strong>"{deleteTarget.student.full_name}"</strong> por <strong>{fmt(deleteTarget.total_amount)}</strong>. No se reembolsará saldo.
+              </p>
+              <p style={{ margin: '12px 0 0', fontSize: 13, color: '#dc2626', fontWeight: 500 }}>Esta acción NO se puede deshacer.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn-ghost" style={{ flex: 1 }} disabled={deleteLoading} onClick={() => setDeleteTarget(null)}>Cancelar</button>
+              <button style={{ flex: 1, padding: '10px 20px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 'var(--radius-pill)', fontWeight: 600, fontSize: 14, cursor: deleteLoading ? 'wait' : 'pointer', opacity: deleteLoading ? 0.7 : 1 }} disabled={deleteLoading} onClick={confirmDelete}>
+                {deleteLoading ? 'Eliminando...' : '🗑 Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

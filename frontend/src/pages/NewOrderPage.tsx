@@ -94,8 +94,8 @@ export default function NewOrderPage() {
     setStoreId('');
     setStoreProducts([]);
     apiClient
-      .get<{ data: Store[] }>(`/stores?school_id=${schoolId}`)
-      .then((r) => setStores(r.data.data))
+      .get<{ data: { stores: Store[]; total: number; page: number; pages: number } }>(`/stores?school_id=${schoolId}&active=true&limit=100`)
+      .then((r) => setStores(r.data.data.stores ?? []))
       .catch(() => setError('Error al cargar las tiendas'))
       .finally(() => setLoadingStudent(false));
   }, []);
@@ -105,7 +105,7 @@ export default function NewOrderPage() {
     setCart([]);
     apiClient
       .get<{ data: StoreProduct[] }>(`/stores/${sid}/products?active=true`)
-      .then((r) => setStoreProducts(r.data.data))
+      .then((r) => setStoreProducts(Array.isArray(r.data.data) ? r.data.data : []))
       .catch(() => setError('Error al cargar los productos'))
       .finally(() => setLoadingProducts(false));
   }, []);

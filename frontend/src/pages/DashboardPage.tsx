@@ -50,28 +50,45 @@ function StatCard({ label, value, color = 'var(--color-text)', icon, sub, onClic
   const navigate = useNavigate();
   const handleClick = onClick ?? (to ? () => navigate(to) : undefined);
   const isClickable = !!handleClick;
+  const iconBg = color === 'var(--color-text)' ? 'rgba(0,0,0,0.06)' : `${color}18`;
 
   return (
     <div
       className="user-card"
       onClick={handleClick}
       style={{
-        padding: '18px 20px', marginBottom: 0,
+        padding: '16px 18px', marginBottom: 0,
         cursor: isClickable ? 'pointer' : 'default',
-        transition: 'transform 0.15s, border-color 0.15s',
-        ...(isClickable ? { borderColor: color === 'var(--color-text)' ? undefined : `${color}40` } : {}),
+        transition: 'transform 0.15s, box-shadow 0.15s',
       }}
-      onMouseEnter={isClickable ? (e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; } : undefined}
-      onMouseLeave={isClickable ? (e) => { (e.currentTarget as HTMLElement).style.transform = 'none'; } : undefined}
+      onMouseEnter={isClickable ? (e) => {
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)';
+      } : undefined}
+      onMouseLeave={isClickable ? (e) => {
+        (e.currentTarget as HTMLElement).style.transform = 'none';
+        (e.currentTarget as HTMLElement).style.boxShadow = '';
+      } : undefined}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
-          <p style={{ margin: 0, fontSize: 26, fontWeight: 700, fontFamily: 'var(--font-mono)', color, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</p>
-          {sub && <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>{sub}</p>}
-        </div>
-        <span style={{ fontSize: 28, opacity: 0.85 }}>{icon}</span>
+      {/* Fila superior: icono */}
+      <div style={{
+        width: 40, height: 40, borderRadius: 12,
+        background: iconBg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 12, fontSize: 20, lineHeight: 1,
+        flexShrink: 0,
+      }}>
+        {icon}
       </div>
+
+      {/* Valor */}
+      <p style={{ margin: '0 0 2px', fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-mono)', color, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</p>
+
+      {/* Label */}
+      <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: 1.3 }}>{label}</p>
+
+      {sub && <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>{sub}</p>}
+
       {isClickable && (
         <p style={{ margin: '8px 0 0', fontSize: 10, color, opacity: 0.7, letterSpacing: '0.3px', textTransform: 'uppercase' }}>Ver detalles →</p>
       )}

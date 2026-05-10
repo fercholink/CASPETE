@@ -192,7 +192,7 @@ export default function RegisterPage() {
 
         {/* Botón de Google */}
         <a
-          href="http://localhost:3001/api/auth/google"
+          href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api'}/auth/google`}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             width: '100%', padding: '10px 16px', border: '1px solid #e5e7eb',

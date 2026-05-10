@@ -21,6 +21,7 @@ const QUICK_LINKS: Partial<Record<string, QuickLink[]>> = {
     { to: '/products', label: 'Productos', description: 'Ver catálogo de productos' },
     { to: '/orders', label: 'Pedidos', description: 'Ver todos los pedidos' },
     { to: '/topup-requests', label: 'Recargas', description: 'Validar comprobantes' },
+    { to: '/payment-methods', label: 'Métodos de pago', description: 'Configurar cuentas bancarias' },
   ],
   SCHOOL_ADMIN: [
     { to: '/students', label: 'Estudiantes', description: 'Ver y recargar saldo' },

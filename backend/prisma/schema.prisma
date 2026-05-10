@@ -262,3 +262,17 @@ model TopupRequest {
   student Student @relation(fields: [student_id], references: [id])
   parent  User    @relation(fields: [parent_id], references: [id])
 }
+
+// Métodos de pago configurables por SUPER_ADMIN
+model PaymentMethod {
+  id         String   @id @default(uuid()) @db.Uuid
+  key        String   @unique @db.VarChar(30) // NEQUI, BANCOLOMBIA, DAVIVIENDA
+  label      String   @db.VarChar(50)         // "Nequi", "Bancolombia"
+  icon       String   @db.VarChar(10)         // emoji
+  color      String   @db.VarChar(20)         // hex color
+  fields     Json     @default("[]")          // [{label, value}]
+  active     Boolean  @default(true)
+  sort_order Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}

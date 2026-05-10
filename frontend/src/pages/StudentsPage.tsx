@@ -18,45 +18,13 @@ interface Student {
   parent: { id: string; full_name: string; email: string };
 }
 
-// Datos de pago de CASPETE — reemplaza con los datos reales de la empresa
-const PAYMENT_INFO = {
-  NEQUI: {
-    label: 'Nequi',
-    color: '#8B5CF6',
-    bg: 'rgba(139,92,246,0.08)',
-    icon: '📱',
-    fields: [
-      { label: 'Número de celular', value: '310 000 0000' },
-      { label: 'Nombre', value: 'CASPETE S.A.S.' },
-    ],
-  },
-  BANCOLOMBIA: {
-    label: 'Bancolombia',
-    color: '#F59E0B',
-    bg: 'rgba(245,158,11,0.08)',
-    icon: '🏦',
-    fields: [
-      { label: 'Tipo de cuenta', value: 'Ahorros' },
-      { label: 'Número de cuenta', value: '000-000000-00' },
-      { label: 'Nombre', value: 'CASPETE S.A.S.' },
-      { label: 'NIT', value: '000.000.000-0' },
-    ],
-  },
-  DAVIVIENDA: {
-    label: 'Davivienda',
-    color: '#EF4444',
-    bg: 'rgba(239,68,68,0.08)',
-    icon: '🏛️',
-    fields: [
-      { label: 'Tipo de cuenta', value: 'Ahorros' },
-      { label: 'Número de cuenta', value: '0000000000000' },
-      { label: 'Nombre', value: 'CASPETE S.A.S.' },
-      { label: 'NIT', value: '000.000.000-0' },
-    ],
-  },
-} as const;
+// Datos de pago de CASPETE — ahora se cargan dinámicamente desde la API
+interface PaymentMethodField { label: string; value: string }
+interface PaymentMethodInfo {
+  id: string; key: string; label: string; icon: string; color: string;
+  fields: PaymentMethodField[]; active: boolean; sort_order: number;
+}
 
-type PaymentBank = keyof typeof PAYMENT_INFO;
 
 interface Stats { total: number; active: number; inactive: number; totalBalance: string }
 
@@ -85,10 +53,11 @@ export default function StudentsPage() {
   // Simulador de recarga para padres
   const [rechargeStudentId, setRechargeStudentId] = useState<string | null>(null);
   const [rechargeStep, setRechargeStep] = useState<1 | 2>(1);
-  const [rechargeBank, setRechargeBank] = useState<PaymentBank | null>(null);
+  const [rechargeBank, setRechargeBank] = useState<PaymentMethodInfo | null>(null);
   const [rechargeAmount, setRechargeAmount] = useState('');
   const [rechargeScreenshot, setRechargeScreenshot] = useState('');
   const [rechargeLoading, setRechargeLoading] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodInfo[]>([]);
 
   const isParent = user?.role === 'PARENT';
   const isAdmin = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -109,6 +78,11 @@ export default function StudentsPage() {
   useEffect(() => { fetchStudents(page); }, [fetchStudents, page]);
   useEffect(() => { const t = setTimeout(() => { setPage(1); fetchStudents(1); }, 350); return () => clearTimeout(t); }, [search]);
   useEffect(() => { if (isAdmin) apiClient.get<{ data: Stats }>('/students/stats').then(r => setStats(r.data.data)).catch(() => {}); }, [isAdmin]);
+
+  // Cargar métodos de pago dinámicamente
+  useEffect(() => {
+    if (isParent) apiClient.get<{ data: PaymentMethodInfo[] }>('/payment-methods').then(r => setPaymentMethods(r.data.data)).catch(() => {});
+  }, [isParent]);
 
   async function handleDeactivate(id: string) {
     try {
@@ -433,7 +407,7 @@ export default function StudentsPage() {
       {rechargeStudentId && (() => {
         const rechargeStudent = students.find((s) => s.id === rechargeStudentId);
         if (!rechargeStudent) return null;
-        const bankInfo = rechargeBank ? PAYMENT_INFO[rechargeBank] : null;
+        const bankInfo = rechargeBank;
 
         return (
           <div
@@ -481,28 +455,25 @@ export default function StudentsPage() {
                   {/* Sección: Transferencia manual */}
                   <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🏦 Transferencia manual</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-                    {(Object.keys(PAYMENT_INFO) as PaymentBank[]).map((bank) => {
-                      const info = PAYMENT_INFO[bank];
-                      return (
-                        <button
-                          key={bank}
-                          onClick={() => { setRechargeBank(bank); setRechargeStep(2); }}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 14,
-                            padding: '14px 18px', border: `1.5px solid ${info.color}30`,
-                            borderRadius: 10, background: info.bg, cursor: 'pointer',
-                            textAlign: 'left', transition: 'all 0.15s',
-                          }}
-                        >
-                          <span style={{ fontSize: 24 }}>{info.icon}</span>
-                          <div>
-                            <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: info.color }}>{info.label}</p>
-                            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-muted)' }}>Transferencia bancaria</p>
-                          </div>
-                          <svg style={{ marginLeft: 'auto', color: info.color }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-                        </button>
-                      );
-                    })}
+                    {paymentMethods.map((pm) => (
+                      <button
+                        key={pm.key}
+                        onClick={() => { setRechargeBank(pm); setRechargeStep(2); }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 14,
+                          padding: '14px 18px', border: `1.5px solid ${pm.color}30`,
+                          borderRadius: 10, background: `${pm.color}08`, cursor: 'pointer',
+                          textAlign: 'left', transition: 'all 0.15s',
+                        }}
+                      >
+                        <span style={{ fontSize: 24 }}>{pm.icon}</span>
+                        <div>
+                          <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: pm.color }}>{pm.label}</p>
+                          <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-muted)' }}>Transferencia bancaria</p>
+                        </div>
+                        <svg style={{ marginLeft: 'auto', color: pm.color }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                      </button>
+                    ))}
                   </div>
 
                   {/* Sección: Nequi Push */}
@@ -536,7 +507,7 @@ export default function StudentsPage() {
               {rechargeStep === 2 && bankInfo && (
                 <div>
                   {/* Datos de la cuenta */}
-                  <div style={{ background: bankInfo.bg, border: `1.5px solid ${bankInfo.color}25`, borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
+                  <div style={{ background: `${bankInfo.color}08`, border: `1.5px solid ${bankInfo.color}25`, borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                       <span style={{ fontSize: 22 }}>{bankInfo.icon}</span>
                       <span style={{ fontWeight: 700, fontSize: 15, color: bankInfo.color }}>{bankInfo.label}</span>

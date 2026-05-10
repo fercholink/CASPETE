@@ -22,6 +22,7 @@ import UsersPage from '../pages/UsersPage';
 import ProfilePage from '../pages/ProfilePage';
 import LandingPage from '../pages/LandingPage';
 import TopupRequestsPage from '../pages/TopupRequestsPage';
+import PaymentMethodsPage from '../pages/PaymentMethodsPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -178,6 +179,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']}>
         <TopupRequestsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/payment-methods',
+    element: (
+      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+        <PaymentMethodsPage />
       </ProtectedRoute>
     ),
   },

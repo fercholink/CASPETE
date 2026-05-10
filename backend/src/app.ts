@@ -15,6 +15,7 @@ import userRouter from './modules/users/user.router.js';
 import reportRouter from './modules/reports/report.router.js';
 import topupRequestRouter from './modules/topup-requests/topup-request.router.js';
 import categoryRouter from './modules/categories/category.router.js';
+import paymentMethodRouter from './modules/payment-methods/payment-method.router.js';
 
 const app = express();
  
@@ -55,6 +56,7 @@ app.use('/api/users', userRouter);
 app.use('/api/reports', reportRouter);
 app.use('/api/topup-requests', topupRequestRouter);
 app.use('/api/categories', categoryRouter);
+app.use('/api/payment-methods', paymentMethodRouter);
 
 app.use(errorHandler);
 

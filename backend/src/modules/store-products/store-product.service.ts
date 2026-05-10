@@ -38,10 +38,27 @@ async function assertStoreAccess(storeId: string, actor: JwtPayload) {
   });
   if (!store?.active) throw new AppError('Tienda no encontrada o inactiva', 404);
   if (actor.role === 'SUPER_ADMIN') return store;
-  if (!actor.schoolId || actor.schoolId !== store.school_id) {
-    throw new AppError('No tienes permiso sobre esta tienda', 403);
+
+  // Si el actor tiene schoolId en el JWT, verificar directamente
+  if (actor.schoolId) {
+    if (actor.schoolId !== store.school_id) {
+      throw new AppError('No tienes permiso sobre esta tienda', 403);
+    }
+    return store;
   }
-  return store;
+
+  // Fallback: si el VENDOR no tiene schoolId en JWT, verificar en BD
+  if (actor.role === 'VENDOR' || actor.role === 'SCHOOL_ADMIN') {
+    const user = await prisma.user.findUnique({
+      where: { id: actor.sub },
+      select: { school_id: true },
+    });
+    if (user?.school_id && user.school_id === store.school_id) {
+      return store;
+    }
+  }
+
+  throw new AppError('No tienes permiso sobre esta tienda', 403);
 }
 
 /** Agregar un producto del catálogo global a una tienda */
@@ -138,7 +155,11 @@ export async function updateStoreProduct(
 
   // Verificar acceso
   if (actor.role !== 'SUPER_ADMIN') {
-    if (!actor.schoolId || actor.schoolId !== sp.store.school_id) {
+    const storeSchoolId = sp.store.school_id;
+    const actorSchoolId = actor.schoolId ?? (await prisma.user.findUnique({
+      where: { id: actor.sub }, select: { school_id: true },
+    }))?.school_id;
+    if (!actorSchoolId || actorSchoolId !== storeSchoolId) {
       throw new AppError('No tienes permiso sobre esta tienda', 403);
     }
   }
@@ -163,7 +184,11 @@ export async function removeProductFromStore(storeProductId: string, actor: JwtP
   if (!sp) throw new AppError('Asignación no encontrada', 404);
 
   if (actor.role !== 'SUPER_ADMIN') {
-    if (!actor.schoolId || actor.schoolId !== sp.store.school_id) {
+    const storeSchoolId = sp.store.school_id;
+    const actorSchoolId = actor.schoolId ?? (await prisma.user.findUnique({
+      where: { id: actor.sub }, select: { school_id: true },
+    }))?.school_id;
+    if (!actorSchoolId || actorSchoolId !== storeSchoolId) {
       throw new AppError('No tienes permiso sobre esta tienda', 403);
     }
   }

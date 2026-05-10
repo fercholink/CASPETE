@@ -45,17 +45,20 @@ model School {
   name       String   @db.VarChar(200)
   nit        String?  @unique @db.VarChar(20)
   city       String   @db.VarChar(100)
+  department String?  @db.VarChar(100) // Departamento (e.g. "Antioquia")
   address    String?  @db.Text
+  phone      String?  @db.VarChar(20)
+  email      String?  @db.VarChar(255)
+  logo_url   String?  @db.Text
   plan       PlanType @default(BASIC)
   active     Boolean  @default(true)
   created_at DateTime @default(now())
 
-  users        User[]
-  students     Student[]
-  stores       Store[]
-  lunch_orders LunchOrder[]
+  users          User[]
+  students       Student[]
+  stores         Store[]
+  lunch_orders   LunchOrder[]
   transactions   Transaction[]
-  products       Product[]
   topup_requests TopupRequest[]
 }
 
@@ -64,7 +67,9 @@ model User {
   school_id     String?  @db.Uuid
   email         String   @unique @db.VarChar(255)
   phone         String?  @db.VarChar(20)
-  password_hash String   @db.Text
+  password_hash String?  @db.Text
+  google_id     String?  @unique @db.VarChar(100)
+  auth_provider String   @default("local") @db.VarChar(20)
   role          UserRole
   full_name     String   @db.VarChar(200)
   avatar_url    String?  @db.Text
@@ -122,25 +127,54 @@ model Store {
   active     Boolean  @default(true)
   created_at DateTime @default(now())
 
-  school       School       @relation(fields: [school_id], references: [id])
-  lunch_orders LunchOrder[]
+  school         School         @relation(fields: [school_id], references: [id])
+  lunch_orders   LunchOrder[]
+  store_products StoreProduct[]
 }
 
-model Product {
-  id          String   @id @default(uuid()) @db.Uuid
-  school_id   String   @db.Uuid
-  name        String   @db.VarChar(200)
-  description String?  @db.Text
-  price               Decimal  @db.Decimal(10, 2)
-  image_url           String?  @db.Text
-  is_healthy          Boolean  @default(true)
-  active              Boolean  @default(true)
-  stock               Int?     // Si es null, el stock es infinito
-  customizable_options String[] @default([]) // Ej: ["Sin cebolla", "Doble queso", "Sin salsas"]
-  created_at          DateTime @default(now())
+// Categorías de productos — CRUD dinámico
+model ProductCategory {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @unique @db.VarChar(50)   // slug: "almuerzo", "bebida", etc.
+  label      String   @db.VarChar(100)           // display: "Almuerzos", "Bebidas"
+  icon       String?  @db.VarChar(10)            // emoji icon
+  color      String?  @db.VarChar(20)            // hex color
+  sort_order Int      @default(0)
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+}
 
-  school      School      @relation(fields: [school_id], references: [id])
+// Catálogo maestro global — administrado por SUPER_ADMIN
+model Product {
+  id                   String         @id @default(uuid()) @db.Uuid
+  name                 String         @db.VarChar(200)
+  description          String?        @db.Text
+  base_price           Decimal        @db.Decimal(10, 2)
+  image_url            String?        @db.Text
+  category             String?        @db.VarChar(50) // references ProductCategory.name
+  is_healthy           Boolean        @default(true)
+  customizable_options String[]       @default([])
+  active               Boolean        @default(true)  // SUPER_ADMIN puede deshabilitar globalmente
+  created_at           DateTime       @default(now())
+
+  store_products StoreProduct[]
+}
+
+// Pivot: qué productos ofrece cada tienda, con precio y stock propios
+model StoreProduct {
+  id         String   @id @default(uuid()) @db.Uuid
+  store_id   String   @db.Uuid
+  product_id String   @db.Uuid
+  price      Decimal? @db.Decimal(10, 2)  // null = usar base_price del catálogo
+  stock      Int?                          // null = sin límite
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  store       Store       @relation(fields: [store_id], references: [id])
+  product     Product     @relation(fields: [product_id], references: [id])
   order_items OrderItem[]
+
+  @@unique([store_id, product_id])
 }
 
 model LunchOrder {
@@ -169,16 +203,16 @@ model LunchOrder {
 }
 
 model OrderItem {
-  id         String  @id @default(uuid()) @db.Uuid
-  order_id   String  @db.Uuid
-  product_id String  @db.Uuid
-  quantity       Int      @default(1) @db.SmallInt
-  unit_price     Decimal  @db.Decimal(10, 2)
-  subtotal       Decimal  @db.Decimal(10, 2)
-  customizations String[] @default([])
+  id               String  @id @default(uuid()) @db.Uuid
+  order_id         String  @db.Uuid
+  store_product_id String  @db.Uuid
+  quantity         Int     @default(1) @db.SmallInt
+  unit_price       Decimal @db.Decimal(10, 2)
+  subtotal         Decimal @db.Decimal(10, 2)
+  customizations   String[] @default([])
 
-  order   LunchOrder @relation(fields: [order_id], references: [id])
-  product Product    @relation(fields: [product_id], references: [id])
+  order         LunchOrder   @relation(fields: [order_id], references: [id])
+  store_product StoreProduct @relation(fields: [store_product_id], references: [id])
 }
 
 model Transaction {

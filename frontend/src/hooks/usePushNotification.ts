@@ -2,13 +2,13 @@ import { useEffect, useRef } from 'react';
 import { apiClient } from '../api/client';
 import { useAuth } from './useAuth';
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = atob(base64);
   const output = new Uint8Array(rawData.length);
   for (let i = 0; i < rawData.length; ++i) output[i] = rawData.charCodeAt(i);
-  return output;
+  return output.buffer.slice(0); // slice() garantiza ArrayBuffer (no ArrayBufferLike)
 }
 
 export function usePushNotification() {
@@ -35,7 +35,7 @@ export function usePushNotification() {
 
         // 3. Obtener clave VAPID del backend
         const { data } = await apiClient.get<{ data: { publicKey: string } }>('/push/vapid-key');
-        const applicationServerKey = urlBase64ToUint8Array(data.data.publicKey);
+        const applicationServerKey = urlBase64ToArrayBuffer(data.data.publicKey);
 
         // 4. Suscribirse al Push Manager
         let sub = await registration.pushManager.getSubscription();

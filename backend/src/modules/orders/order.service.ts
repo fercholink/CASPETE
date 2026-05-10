@@ -49,10 +49,20 @@ type OrderRow = {
   school: { id: string };
 };
 
-function assertAccess(order: OrderRow, actor: JwtPayload) {
+async function assertAccess(order: OrderRow, actor: JwtPayload) {
   if (actor.role === 'SUPER_ADMIN') return;
-  if ((actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') && actor.schoolId && actor.schoolId === order.school.id) return;
   if (actor.role === 'PARENT' && actor.sub === order.student.parent_id) return;
+
+  if (actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') {
+    if (actor.schoolId && actor.schoolId === order.school.id) return;
+    // Fallback: JWT sin schoolId → consultar BD
+    const userFromDb = await prisma.user.findUnique({
+      where: { id: actor.sub },
+      select: { school_id: true },
+    });
+    if (userFromDb?.school_id && userFromDb.school_id === order.school.id) return;
+  }
+
   throw new AppError('No tienes permiso para acceder a este pedido', 403);
 }
 
@@ -164,8 +174,11 @@ export async function listOrders(
   if (search) where.student = { full_name: { contains: search, mode: 'insensitive' } };
 
   if (actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') {
-    if (!actor.schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
-    where.school_id = actor.schoolId;
+    const schoolId = actor.schoolId ?? (await prisma.user.findUnique({
+      where: { id: actor.sub }, select: { school_id: true },
+    }))?.school_id;
+    if (!schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
+    where.school_id = schoolId;
   } else if (actor.role === 'PARENT') {
     where.student = { ...(where.student as object || {}), parent_id: actor.sub };
   }
@@ -182,8 +195,11 @@ export async function listOrders(
 export async function getOrderStats(actor: JwtPayload) {
   const base: Record<string, unknown> = {};
   if (actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') {
-    if (!actor.schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
-    base.school_id = actor.schoolId;
+    const schoolId = actor.schoolId ?? (await prisma.user.findUnique({
+      where: { id: actor.sub }, select: { school_id: true },
+    }))?.school_id;
+    if (!schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
+    base.school_id = schoolId;
   } else if (actor.role === 'PARENT') {
     base.student = { parent_id: actor.sub };
   }

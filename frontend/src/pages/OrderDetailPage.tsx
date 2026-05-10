@@ -27,7 +27,14 @@ interface Order {
     unit_price: string;
     subtotal: string;
     customizations: string[];
-    product: { id: string; name: string; is_healthy: boolean };
+    // El backend retorna store_product.product (no product directamente)
+    store_product: {
+      id: string;
+      price: string | null;
+      product: { id: string; name: string; is_healthy: boolean; base_price: string; image_url?: string | null };
+    } | null;
+    // Compatibilidad: algunos endpoints pueden retornar product directo
+    product?: { id: string; name: string; is_healthy: boolean };
   }[];
 }
 
@@ -152,23 +159,27 @@ export default function OrderDetailPage() {
         {/* Items */}
         <div className="user-card" style={{ marginBottom: 12 }}>
           <p className="dashboard-label" style={{ marginBottom: 12 }}>Productos</p>
-          {order.order_items.map((item) => (
-            <div key={item.id} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid var(--color-border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 14 }}>
-                <span>
-                  {item.product.name}
-                  {item.product.is_healthy && <span className="role-badge" style={{ marginLeft: 8, fontSize: 11 }}>Saludable</span>}
-                  <span style={{ color: 'var(--color-text-muted)', marginLeft: 6 }}>×{item.quantity}</span>
-                </span>
-                <span style={{ fontWeight: 500, fontFamily: 'var(--font-mono)' }}>{fmt(item.subtotal)}</span>
+          {order.order_items.map((item) => {
+            // El backend retorna store_product.product; soportar ambas estructuras
+            const prod = item.product ?? item.store_product?.product;
+            return (
+              <div key={item.id} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid var(--color-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 14 }}>
+                  <span>
+                    {prod?.name ?? 'Producto'}
+                    {prod?.is_healthy && <span className="role-badge" style={{ marginLeft: 8, fontSize: 11 }}>Saludable</span>}
+                    <span style={{ color: 'var(--color-text-muted)', marginLeft: 6 }}>×{item.quantity}</span>
+                  </span>
+                  <span style={{ fontWeight: 500, fontFamily: 'var(--font-mono)' }}>{fmt(item.subtotal)}</span>
+                </div>
+                {item.customizations && item.customizations.length > 0 && (
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>
+                    <strong style={{ fontWeight: 500 }}>Personalización:</strong> {item.customizations.join(', ')}
+                  </p>
+                )}
               </div>
-              {item.customizations && item.customizations.length > 0 && (
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>
-                  <strong style={{ fontWeight: 500 }}>Personalización:</strong> {item.customizations.join(', ')}
-                </p>
-              )}
-            </div>
-          ))}
+            );
+          })}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
             <span style={{ fontWeight: 600 }}>Total</span>
             <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.36px' }}>{fmt(order.total_amount)}</span>

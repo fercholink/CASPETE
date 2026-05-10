@@ -32,7 +32,7 @@ const PLAN_CFG: Record<string, { label: string; color: string; bg: string; icon:
 };
 
 export default function SchoolsPage() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState<SchoolsResponse | null>(null);
   const [loading, setLoading] = useState(true);

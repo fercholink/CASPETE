@@ -49,7 +49,7 @@ function fmtDate(iso: string) {
 export default function TransactionsPage() {
   const [params] = useSearchParams();
   const studentId = params.get('student_id') ?? '';
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const [student, setStudent] = useState<Student | null>(null);

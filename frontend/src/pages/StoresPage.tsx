@@ -240,30 +240,43 @@ export default function StoresPage() {
 
                   {/* Right: Actions */}
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Link to={`/stores/${store.id}/edit`} className="btn-ghost" style={{ fontSize: 13, padding: '5px 14px', textDecoration: 'none' }}>✏️ Editar</Link>
-                    <button
-                      className="btn-ghost"
-                      style={{
-                        fontSize: 13, padding: '5px 14px',
-                        color: store.active ? '#c37d0d' : 'var(--color-brand-deep)',
-                        borderColor: store.active ? 'rgba(195,125,13,0.2)' : 'rgba(24,226,153,0.3)',
-                      }}
-                      onClick={() => handleToggle(store)}
+                    <Link
+                      to={`/stores/${store.id}/products`}
+                      className="btn-primary"
+                      style={{ fontSize: 13, padding: '5px 14px', textDecoration: 'none', width: 'auto' }}
                     >
-                      {store.active ? '⏸ Desactivar' : '▶ Activar'}
-                    </button>
-                    <button
-                      className="btn-ghost"
-                      style={{
-                        fontSize: 13, padding: '5px 14px',
-                        color: '#dc2626',
-                        borderColor: 'rgba(220,38,38,0.3)',
-                        background: 'rgba(220,38,38,0.05)',
-                      }}
-                      onClick={() => setDeleteTarget(store)}
-                    >
-                      🗑 Eliminar
-                    </button>
+                      📦 Productos
+                    </Link>
+                    {isAdmin && (
+                      <Link to={`/stores/${store.id}/edit`} className="btn-ghost" style={{ fontSize: 13, padding: '5px 14px', textDecoration: 'none' }}>✏️ Editar</Link>
+                    )}
+                    {isAdmin && (
+                      <button
+                        className="btn-ghost"
+                        style={{
+                          fontSize: 13, padding: '5px 14px',
+                          color: store.active ? '#c37d0d' : 'var(--color-brand-deep)',
+                          borderColor: store.active ? 'rgba(195,125,13,0.2)' : 'rgba(24,226,153,0.3)',
+                        }}
+                        onClick={() => handleToggle(store)}
+                      >
+                        {store.active ? '⏸ Desactivar' : '▶ Activar'}
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        className="btn-ghost"
+                        style={{
+                          fontSize: 13, padding: '5px 14px',
+                          color: '#dc2626',
+                          borderColor: 'rgba(220,38,38,0.3)',
+                          background: 'rgba(220,38,38,0.05)',
+                        }}
+                        onClick={() => setDeleteTarget(store)}
+                      >
+                        🗑 Eliminar
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

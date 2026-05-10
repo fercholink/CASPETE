@@ -17,6 +17,7 @@ import NewOrderPage from '../pages/NewOrderPage';
 import OrderDetailPage from '../pages/OrderDetailPage';
 import StoresPage from '../pages/StoresPage';
 import StoreFormPage from '../pages/StoreFormPage';
+import StoreProductsPage from '../pages/StoreProductsPage';
 import TransactionsPage from '../pages/TransactionsPage';
 import UsersPage from '../pages/UsersPage';
 import ProfilePage from '../pages/ProfilePage';
@@ -161,6 +162,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']}>
         <StoreFormPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/stores/:id/products',
+    element: (
+      <ProtectedRoute allowedRoles={['VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <StoreProductsPage />
       </ProtectedRoute>
     ),
   },

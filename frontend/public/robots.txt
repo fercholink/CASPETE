@@ -1,0 +1,27 @@
+# robots.txt — CASPETE
+# https://caspete.com/robots.txt
+
+User-agent: *
+
+# Rutas públicas permitidas
+Allow: /$
+Allow: /login
+Allow: /register
+Allow: /forgot-password
+
+# Rutas privadas — no indexar
+Disallow: /dashboard
+Disallow: /orders
+Disallow: /students
+Disallow: /schools
+Disallow: /products
+Disallow: /stores
+Disallow: /transactions
+Disallow: /topup-requests
+Disallow: /users
+Disallow: /reports
+Disallow: /profile
+Disallow: /no-autorizado
+
+# Sitemap
+Sitemap: https://caspete.com/sitemap.xml

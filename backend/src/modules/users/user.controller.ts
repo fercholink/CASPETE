@@ -10,9 +10,14 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function list(req: Request, res: Response) {
-  const schoolId = req.query['school_id'] as string | undefined;
-  const users = await userService.listUsers(req.user!, schoolId);
-  sendSuccess(res, users);
+  const search = req.query['search'] as string | undefined;
+  const role = req.query['role'] as string | undefined;
+  const active = req.query['active'] as string | undefined;
+  const school_id = req.query['school_id'] as string | undefined;
+  const page = Number(req.query['page']) || 1;
+  const limit = Number(req.query['limit']) || 50;
+  const result = await userService.listUsers(req.user!, { search, role, active, school_id, page, limit });
+  sendSuccess(res, result);
 }
 
 export async function getOne(req: Request, res: Response) {

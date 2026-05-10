@@ -12,6 +12,7 @@ export const createUserSchema = z.object({
 export const updateUserSchema = z.object({
   full_name: z.string().min(2).max(200).optional(),
   phone: z.string().max(20).optional(),
+  role: z.enum(['VENDOR', 'SCHOOL_ADMIN']).optional(),
   active: z.boolean().optional(),
 });
 

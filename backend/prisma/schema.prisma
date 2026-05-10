@@ -83,6 +83,7 @@ model User {
   refresh_tokens   RefreshToken[]
   reset_tokens     PasswordResetToken[]
   topup_requests   TopupRequest[]
+  push_subscriptions PushSubscription[]
 }
 
 model RefreshToken {
@@ -275,4 +276,18 @@ model PaymentMethod {
   sort_order Int      @default(0)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+// Suscripciones Web Push para notificaciones al padre
+model PushSubscription {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  endpoint   String   @unique @db.Text
+  p256dh     String   @db.Text
+  auth       String   @db.Text
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
 }

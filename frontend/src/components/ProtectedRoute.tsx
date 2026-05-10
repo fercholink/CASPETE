@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import type { AuthUser } from '../context/AuthContext';
+import { usePushNotification } from '../hooks/usePushNotification';
 
 interface Props {
   children: ReactNode;
@@ -10,6 +11,9 @@ interface Props {
 
 export function ProtectedRoute({ children, allowedRoles }: Props) {
   const { user, isLoading } = useAuth();
+
+  // Registrar notificaciones push para padres
+  usePushNotification();
 
   if (isLoading) {
     return (

@@ -3,6 +3,7 @@ import { AppError } from '../../middleware/error.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { CreateOrderInput, TopupInput } from './order.schemas.js';
 import type { OrderStatus } from '@prisma/client';
+import { sendPushToUser } from '../push/push.service.js';
 
 const OTP_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas
 
@@ -322,11 +323,22 @@ export async function deliverOrder(id: string, otpCode: string, actor: JwtPayloa
   if (!order.student.delivery_code) throw new AppError('El estudiante no tiene un código de entrega asignado.', 400);
   if (otpCode !== order.student.delivery_code) throw new AppError('Código de entrega inválido', 400);
 
-  return prisma.lunchOrder.update({
+  const delivered = await prisma.lunchOrder.update({
     where: { id },
     data: { status: 'DELIVERED', otp_verified: true, delivered_at: new Date(), delivered_by: actor.sub, otp_code: null, otp_expires_at: null },
     select: orderSelect,
   });
+
+  // Notificar al padre por push
+  sendPushToUser(order.student.parent_id, {
+    title: '✅ Lonchera entregada',
+    body:  `El pedido de ${order.student.full_name} fue entregado correctamente.`,
+    icon:  '/favicon.png',
+    tag:   `order-delivered-${id}`,
+    url:   `/orders/${id}`,
+  }).catch(() => {});
+
+  return delivered;
 }
 
 export async function deliverStudentOrders(studentId: string, deliveryCode: string, actor: JwtPayload) {
@@ -370,6 +382,19 @@ export async function deliverStudentOrders(studentId: string, deliveryCode: stri
     where: { id: { in: orderIds } },
     select: orderSelect,
   });
+
+  // Notificar al padre por push
+  if (updatedOrders.length > 0) {
+    const parentId = student.parent_id;
+    const names = updatedOrders.map((o) => o.student.full_name).join(', ');
+    sendPushToUser(parentId, {
+      title: '✅ Lonchera(s) entregada(s)',
+      body:  `Se entregaron ${result.count} pedido(s) de ${names}.`,
+      icon:  '/favicon.png',
+      tag:   `order-delivered-student-${studentId}`,
+      url:   '/orders',
+    }).catch(() => {});
+  }
 
   return { delivered: result.count, orders: updatedOrders };
 }

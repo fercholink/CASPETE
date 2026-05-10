@@ -73,9 +73,9 @@ export default function OrdersPage() {
   const isVendor  = user?.role === 'VENDOR';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  // Filtros — VENDOR arranca con hoy + CONFIRMED
+  // Filtros — VENDOR arranca con CONFIRMED (sin filtro de fecha)
   const [statusFilter, setStatusFilter] = useState(isVendor ? 'CONFIRMED' : '');
-  const [dateFilter, setDateFilter]     = useState(isVendor ? today() : '');
+  const [dateFilter, setDateFilter]     = useState('');
   const [search, setSearch]             = useState('');
   const [isScanning, setIsScanning]     = useState(false);
 
@@ -224,17 +224,31 @@ export default function OrdersPage() {
         {stats && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 20 }}>
             {[
-              { label: 'Pendientes', value: stats.pending, icon: '⏳', color: '#c37d0d' },
-              { label: 'Confirmados', value: stats.confirmed, icon: '✅', color: '#059669' },
-              { label: 'Entregados', value: stats.delivered, icon: '📦', color: '#3772cf' },
-              { label: 'Cancelados', value: stats.cancelled, icon: '❌', color: '#dc2626' },
-            ].map(s => (
-              <div key={s.label} className="user-card" style={{ padding: '12px 14px', marginBottom: 0, textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: 20 }}>{s.icon}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 20, fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)' }}>{s.value}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>{s.label}</p>
-              </div>
-            ))}
+              { label: 'Pendientes', value: stats.pending,   icon: '⏳', color: '#c37d0d', status: 'PENDING' },
+              { label: 'Confirmados', value: stats.confirmed, icon: '✅', color: '#059669', status: 'CONFIRMED' },
+              { label: 'Entregados', value: stats.delivered, icon: '📦', color: '#3772cf', status: 'DELIVERED' },
+              { label: 'Cancelados', value: stats.cancelled, icon: '❌', color: '#dc2626', status: 'CANCELLED' },
+            ].map(s => {
+              const isActive = statusFilter === s.status;
+              return (
+                <div
+                  key={s.label}
+                  className="user-card"
+                  onClick={() => { setStatusFilter(isActive ? '' : s.status); setDateFilter(''); }}
+                  style={{
+                    padding: '12px 14px', marginBottom: 0, textAlign: 'center',
+                    cursor: 'pointer',
+                    border: isActive ? `2px solid ${s.color}` : '1px solid var(--color-border)',
+                    background: isActive ? `${s.color}10` : undefined,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: 20 }}>{s.icon}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 20, fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)' }}>{s.value}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: isActive ? s.color : 'var(--color-text-muted)', fontWeight: isActive ? 600 : 400 }}>{s.label}</p>
+                </div>
+              );
+            })}
           </div>
         )}
 

@@ -219,7 +219,11 @@ export async function bulkConfirmOrders(actor: JwtPayload, scheduledDate?: strin
   if (actor.role === 'PARENT') {
     throw new AppError('No tienes permiso para confirmar pedidos masivamente', 403);
   }
-  const schoolFilter = actor.role === 'SUPER_ADMIN' ? {} : { school_id: actor.schoolId! };
+  let schoolId: string | null | undefined = actor.schoolId;
+  if (!schoolId && actor.role !== 'SUPER_ADMIN') {
+    schoolId = (await prisma.user.findUnique({ where: { id: actor.sub }, select: { school_id: true } }))?.school_id;
+  }
+  const schoolFilter = actor.role === 'SUPER_ADMIN' ? {} : schoolId ? { school_id: schoolId } : {};
   const dateFilter = scheduledDate ? { scheduled_date: new Date(scheduledDate) } : {};
 
   const result = await prisma.lunchOrder.updateMany({
@@ -235,7 +239,7 @@ export async function getOrder(id: string, actor: JwtPayload) {
     select: { ...orderSelect },
   });
   if (!order) throw new AppError('Pedido no encontrado', 404);
-  assertAccess(order, actor);
+  await assertAccess(order, actor);
 
   let otpCode: string | null = null;
   if (actor.role === 'PARENT' && order.status === 'CONFIRMED') {
@@ -248,7 +252,7 @@ export async function getOrder(id: string, actor: JwtPayload) {
 export async function confirmOrder(id: string, actor: JwtPayload) {
   const order = await prisma.lunchOrder.findUnique({ where: { id }, select: orderSelect });
   if (!order) throw new AppError('Pedido no encontrado', 404);
-  assertAccess(order, actor);
+  await assertAccess(order, actor);
   if (order.status !== 'PENDING') throw new AppError('Solo se pueden confirmar pedidos pendientes', 400);
   return prisma.lunchOrder.update({ where: { id }, data: { status: 'CONFIRMED' }, select: orderSelect });
 }
@@ -256,7 +260,7 @@ export async function confirmOrder(id: string, actor: JwtPayload) {
 export async function cancelOrder(id: string, actor: JwtPayload) {
   const order = await prisma.lunchOrder.findUnique({ where: { id }, select: orderSelect });
   if (!order) throw new AppError('Pedido no encontrado', 404);
-  assertAccess(order, actor);
+  await assertAccess(order, actor);
   if (order.status === 'DELIVERED' || order.status === 'REFUNDED' || order.status === 'CANCELLED')
     throw new AppError('Este pedido no se puede cancelar', 400);
   if (actor.role === 'PARENT' && order.status !== 'PENDING')
@@ -313,7 +317,7 @@ export async function deliverOrder(id: string, otpCode: string, actor: JwtPayloa
     select: { ...orderSelect },
   });
   if (!order) throw new AppError('Pedido no encontrado', 404);
-  assertAccess(order, actor);
+  await assertAccess(order, actor);
   if (order.status !== 'CONFIRMED') throw new AppError('Solo se pueden entregar pedidos confirmados', 400);
   if (!order.student.delivery_code) throw new AppError('El estudiante no tiene un código de entrega asignado.', 400);
   if (otpCode !== order.student.delivery_code) throw new AppError('Código de entrega inválido', 400);
@@ -331,11 +335,15 @@ export async function deliverStudentOrders(studentId: string, deliveryCode: stri
   if (!student.delivery_code) throw new AppError('El estudiante no tiene código de entrega asignado.', 400);
   if (deliveryCode !== student.delivery_code) throw new AppError('Código de entrega inválido', 400);
 
+  const vendorSchoolId = actor.role === 'VENDOR'
+    ? (actor.schoolId ?? (await prisma.user.findUnique({ where: { id: actor.sub }, select: { school_id: true } }))?.school_id)
+    : null;
+
   const pendingDeliveries = await prisma.lunchOrder.findMany({
     where: {
       student_id: studentId,
       status: 'CONFIRMED',
-      ...(actor.role === 'VENDOR' ? { store: { school_id: actor.schoolId! } } : {}),
+      ...(actor.role === 'VENDOR' && vendorSchoolId ? { store: { school_id: vendorSchoolId } } : {}),
     },
     select: { id: true }
   });

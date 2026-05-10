@@ -131,11 +131,11 @@ export default function StudentFormPage() {
 
     const payload = {
       full_name: form.full_name,
+      school_id: form.school_id,
       ...(form.national_id ? { national_id: form.national_id } : {}),
       ...(form.grade ? { grade: form.grade } : {}),
       ...(form.delivery_code ? { delivery_code: form.delivery_code } : {}),
       ...(form.photo_url ? { photo_url: form.photo_url } : {}),
-      ...(!isEdit && { school_id: form.school_id }),
     };
 
     try {
@@ -215,33 +215,36 @@ export default function StudentFormPage() {
             />
           </div>
 
-          {!isEdit && (
-            <div className="form-group">
-              <label className="form-label" htmlFor="school_id">
-                Colegio
-              </label>
-              <select
-                id="school_id"
-                name="school_id"
-                className="form-select"
-                value={form.school_id}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Selecciona un colegio...</option>
-                {schools.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} — {s.city}
-                  </option>
-                ))}
-              </select>
-              {schools.length === 0 && (
-                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
-                  No hay colegios activos disponibles.
-                </p>
+          <div className="form-group">
+            <label className="form-label" htmlFor="school_id">
+              Colegio
+              {isEdit && (
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, fontSize: 12, marginLeft: 6 }}>
+                  (puedes cambiarlo)
+                </span>
               )}
-            </div>
-          )}
+            </label>
+            <select
+              id="school_id"
+              name="school_id"
+              className="form-select"
+              value={form.school_id}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecciona un colegio...</option>
+              {schools.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} — {s.city}
+                </option>
+              ))}
+            </select>
+            {schools.length === 0 && (
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                No hay colegios activos disponibles.
+              </p>
+            )}
+          </div>
 
           <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>

@@ -12,8 +12,14 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function list(req: Request, res: Response) {
-  const students = await studentService.listStudents(req.user!);
-  sendSuccess(res, students);
+  const page = Math.max(1, Number(req.query['page']) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query['limit']) || 20));
+  const search = req.query['search'] as string | undefined;
+  const school_id = req.query['school_id'] as string | undefined;
+  const grade = req.query['grade'] as string | undefined;
+  const active = req.query['active'] as string | undefined;
+  const result = await studentService.listStudents(req.user!, { page, limit, search, school_id, grade, active });
+  sendSuccess(res, result);
 }
 
 export async function getOne(req: Request, res: Response) {
@@ -35,11 +41,22 @@ export async function deactivate(req: Request, res: Response) {
   sendSuccess(res, student, 'Estudiante desactivado');
 }
 
+export async function reactivate(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  const student = await studentService.reactivateStudent(id, req.user!);
+  sendSuccess(res, student, 'Estudiante reactivado');
+}
+
 export async function topup(req: Request, res: Response) {
   const id = req.params['id'] as string;
   const input = topupSchema.parse(req.body);
   const student = await topupStudent(id, input, req.user!);
   sendSuccess(res, student, 'Saldo recargado');
+}
+
+export async function getStats(req: Request, res: Response) {
+  const stats = await studentService.getStudentStats(req.user!);
+  sendSuccess(res, stats);
 }
 
 export async function deleteOne(req: Request, res: Response) {

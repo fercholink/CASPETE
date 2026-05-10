@@ -82,8 +82,8 @@ export default function NewOrderPage() {
 
   useEffect(() => {
     apiClient
-      .get<{ data: Student[] }>('/students')
-      .then((r) => setStudents(r.data.data.filter((s) => s.active)))
+      .get<{ data: { students: Student[]; total: number; page: number; pages: number } }>('/students?limit=100')
+      .then((r) => setStudents((r.data.data.students ?? []).filter((s) => s.active)))
       .catch(() => setError('No se pudieron cargar los estudiantes'))
       .finally(() => setFetching(false));
   }, []);

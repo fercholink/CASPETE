@@ -26,7 +26,8 @@ interface GlobalStats {
 }
 interface ParentSummary {
   students: { id: string; full_name: string; grade: string | null; balance: string; school: { name: string } }[];
-  total_balance: number; recent_orders: { id: string; status: string; total: string; created_at: string; student: { full_name: string } }[];
+  total_balance: number;
+  recent_orders: { id: string; status: string; total_amount: string; created_at: string; student: { full_name: string } }[];
   pending_topups: number; today_orders: number;
 }
 interface VendorSummary {
@@ -338,7 +339,7 @@ function ParentDashboard() {
                       <span className="role-badge" style={{ fontSize: 10, background: `${st.color}18`, color: st.color, marginBottom: 4, display: 'inline-block' }}>{st.label}</span>
                       <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--color-text-muted)' }}>{o.student.full_name}</p>
                     </div>
-                    <p style={{ margin: 0, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-text)' }}>{fmt(parseFloat(o.total))}</p>
+                    <p style={{ margin: 0, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-text)' }}>{fmt(parseFloat(o.total_amount))}</p>
                   </div>
                 </div>
               );

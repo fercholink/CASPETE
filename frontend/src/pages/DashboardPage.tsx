@@ -4,82 +4,338 @@ import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
 
 const ROLE_LABELS: Record<string, string> = {
-  PARENT: 'Padre / Madre de familia',
-  VENDOR: 'Tendero',
-  SCHOOL_ADMIN: 'Administrador de colegio',
-  SUPER_ADMIN: 'Super Administrador',
+  PARENT: 'Padre / Madre de familia', VENDOR: 'Tendero',
+  SCHOOL_ADMIN: 'Administrador de colegio', SUPER_ADMIN: 'Super Administrador',
 };
 
-interface QuickLink { to: string; label: string; description: string }
+function fmt(n: number) { return `$${n.toLocaleString('es-CO', { minimumFractionDigits: 0 })}`; }
 
-const QUICK_LINKS: Partial<Record<string, QuickLink[]>> = {
+// ─── Tipos ────────────────────────────────────────────────────
+interface AdminSummary {
+  orders_today: number; orders_pending: number; orders_confirmed: number;
+  orders_delivered_today: number; revenue_today: number; active_students: number;
+  top_products: { product_id: string; name: string; total_qty: number }[];
+}
+interface GlobalStats {
+  schools: { total: number; active: number };
+  students: { total: number; active: number };
+  pending_topups: number;
+  revenue: { today: number; month: number };
+  orders_today: number;
+  top_schools: { school_id: string; name: string; revenue: number }[];
+}
+interface ParentSummary {
+  students: { id: string; full_name: string; grade: string | null; balance: string; school: { name: string } }[];
+  total_balance: number; recent_orders: { id: string; status: string; total: string; created_at: string; student: { full_name: string } }[];
+  pending_topups: number; today_orders: number;
+}
+interface VendorSummary {
+  pending_orders: number; confirmed_orders: number; delivered_today: number;
+  revenue_today: number; top_products_today: { name: string; qty: number }[];
+}
+
+const ORDER_STATUS: Record<string, { label: string; color: string }> = {
+  PENDING:   { label: 'Pendiente', color: '#c37d0d' },
+  CONFIRMED: { label: 'Confirmado', color: '#6366f1' },
+  DELIVERED: { label: 'Entregado', color: '#059669' },
+  CANCELLED: { label: 'Cancelado', color: '#dc2626' },
+};
+
+// ─── Componente StatCard ──────────────────────────────────────
+function StatCard({ label, value, color = 'var(--color-text)', icon, sub }: {
+  label: string; value: string | number; color?: string; icon: string; sub?: string;
+}) {
+  return (
+    <div className="user-card" style={{ padding: '18px 20px', marginBottom: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
+          <p style={{ margin: 0, fontSize: 26, fontWeight: 700, fontFamily: 'var(--font-mono)', color, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</p>
+          {sub && <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>{sub}</p>}
+        </div>
+        <span style={{ fontSize: 28, opacity: 0.85 }}>{icon}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Accesos rápidos ──────────────────────────────────────────
+const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: string }[]>> = {
   SUPER_ADMIN: [
-    { to: '/schools', label: 'Colegios', description: 'Gestionar colegios registrados' },
-    { to: '/users', label: 'Usuarios', description: 'Gestionar equipo y accesos' },
-    { to: '/students', label: 'Estudiantes', description: 'Ver todos los estudiantes' },
-    { to: '/stores', label: 'Tiendas', description: 'Gestionar tiendas' },
-    { to: '/products', label: 'Productos', description: 'Ver catálogo de productos' },
-    { to: '/orders', label: 'Pedidos', description: 'Ver todos los pedidos' },
-    { to: '/topup-requests', label: 'Recargas', description: 'Validar comprobantes' },
-    { to: '/payment-methods', label: 'Métodos de pago', description: 'Configurar cuentas bancarias' },
+    { to: '/schools',         label: 'Colegios',          icon: '🏫' },
+    { to: '/users',           label: 'Usuarios',           icon: '👥' },
+    { to: '/students',        label: 'Estudiantes',        icon: '🎒' },
+    { to: '/stores',          label: 'Tiendas',            icon: '🏪' },
+    { to: '/products',        label: 'Productos',          icon: '🍱' },
+    { to: '/orders',          label: 'Pedidos',            icon: '📋' },
+    { to: '/topup-requests',  label: 'Recargas',           icon: '💰' },
+    { to: '/transactions',    label: 'Transacciones',      icon: '📊' },
+    { to: '/payment-methods', label: 'Métodos de pago',   icon: '🏦' },
   ],
   SCHOOL_ADMIN: [
-    { to: '/students', label: 'Estudiantes', description: 'Ver y recargar saldo' },
-    { to: '/users', label: 'Usuarios', description: 'Gestionar equipo del colegio' },
-    { to: '/stores', label: 'Tiendas', description: 'Gestionar tiendas del colegio' },
-    { to: '/products', label: 'Productos', description: 'Ver catálogo del colegio' },
-    { to: '/orders', label: 'Pedidos', description: 'Gestionar pedidos del colegio' },
-    { to: '/topup-requests', label: 'Recargas', description: 'Validar comprobantes' },
+    { to: '/students',       label: 'Estudiantes',   icon: '🎒' },
+    { to: '/users',          label: 'Usuarios',      icon: '👥' },
+    { to: '/stores',         label: 'Tiendas',       icon: '🏪' },
+    { to: '/products',       label: 'Productos',     icon: '🍱' },
+    { to: '/orders',         label: 'Pedidos',       icon: '📋' },
+    { to: '/topup-requests', label: 'Recargas',      icon: '💰' },
+    { to: '/transactions',   label: 'Transacciones', icon: '📊' },
   ],
   VENDOR: [
-    { to: '/products', label: 'Mis productos', description: 'Gestionar tu catálogo' },
-    { to: '/stores', label: 'Tiendas', description: 'Ver tiendas del colegio' },
-    { to: '/orders', label: 'Pedidos del día', description: 'Ver y entregar pedidos' },
+    { to: '/products', label: 'Mis productos',   icon: '🍱' },
+    { to: '/stores',   label: 'Tiendas',         icon: '🏪' },
+    { to: '/orders',   label: 'Pedidos del día', icon: '📋' },
   ],
   PARENT: [
-    { to: '/students', label: 'Mis hijos', description: 'Ver y gestionar a tus hijos' },
-    { to: '/orders', label: 'Mis pedidos', description: 'Ver pedidos activos' },
-    { to: '/orders/new', label: 'Nuevo pedido', description: 'Pedir lonchera para hoy' },
+    { to: '/students',    label: 'Mis hijos',     icon: '🎒' },
+    { to: '/orders',      label: 'Mis pedidos',   icon: '📋' },
+    { to: '/orders/new',  label: 'Nuevo pedido',  icon: '✨' },
+    { to: '/transactions',label: 'Transacciones', icon: '📊' },
   ],
 };
 
-interface Summary {
-  orders_today: number;
-  orders_pending: number;
-  orders_confirmed: number;
-  orders_delivered_today: number;
-  revenue_today: number;
-  active_students: number;
-  top_products: { product_id: string; name: string; price: string; total_qty: number }[];
+// ─── Vista SUPER ADMIN ────────────────────────────────────────
+function SuperAdminDashboard() {
+  const [global, setGlobal] = useState<GlobalStats | null>(null);
+  const [admin, setAdmin] = useState<AdminSummary | null>(null);
+
+  const fetchAll = useCallback(() => {
+    apiClient.get<{ data: GlobalStats }>('/reports/global').then(r => setGlobal(r.data.data)).catch(() => {});
+    apiClient.get<{ data: AdminSummary }>('/reports/summary').then(r => setAdmin(r.data.data)).catch(() => {});
+  }, []);
+
+  useEffect(() => { fetchAll(); const i = setInterval(fetchAll, 30_000); return () => clearInterval(i); }, [fetchAll]);
+
+  return (
+    <>
+      {global && (
+        <>
+          <p className="dashboard-label" style={{ marginBottom: 10 }}>Sistema global</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
+            <StatCard label="Colegios activos"  value={global.schools.active}                     icon="🏫" sub={`${global.schools.total} total`} />
+            <StatCard label="Estudiantes activos" value={global.students.active}                  icon="🎒" sub={`${global.students.total} total`} color="var(--color-brand-deep)" />
+            <StatCard label="Recargas pendientes" value={global.pending_topups}                   icon="⏳" color={global.pending_topups > 0 ? '#c37d0d' : 'var(--color-text)'} />
+            <StatCard label="Ingresos hoy"        value={fmt(global.revenue.today)}               icon="💵" color="#059669" />
+            <StatCard label="Ingresos del mes"    value={fmt(global.revenue.month)}               icon="📈" color="#6366f1" />
+            <StatCard label="Pedidos hoy"         value={global.orders_today}                     icon="📋" />
+          </div>
+
+          {global.top_schools.length > 0 && (
+            <div className="user-card" style={{ marginBottom: 20 }}>
+              <p className="dashboard-label" style={{ marginBottom: 12 }}>Top colegios — ingresos del mes</p>
+              {global.top_schools.map((s, i) => (
+                <div key={s.school_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < global.top_schools.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--color-brand-light)', color: 'var(--color-brand-deep)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{s.name}</span>
+                  </div>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, color: '#059669' }}>{fmt(s.revenue)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {admin && (
+        <>
+          <p className="dashboard-label" style={{ marginBottom: 10 }}>Hoy (todos los colegios)</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
+            <StatCard label="Pedidos creados"  value={admin.orders_today}          icon="📋" />
+            <StatCard label="Pendientes"        value={admin.orders_pending}        icon="⏳" color="#c37d0d" />
+            <StatCard label="Confirmados"       value={admin.orders_confirmed}      icon="✅" color="#6366f1" />
+            <StatCard label="Entregados"        value={admin.orders_delivered_today}icon="🚀" color="#059669" />
+          </div>
+
+          {admin.top_products.length > 0 && (
+            <div className="user-card" style={{ marginBottom: 20 }}>
+              <p className="dashboard-label" style={{ marginBottom: 12 }}>Top productos (últimos 30 días)</p>
+              {admin.top_products.map((p, i) => (
+                <div key={p.product_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < admin.top_products.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--color-brand-light)', color: 'var(--color-brand-deep)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+                    <span style={{ fontSize: 14 }}>{p.name}</span>
+                  </div>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--color-text-muted)' }}>×{p.total_qty}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
 }
 
-function fmt(n: number) {
-  return `$${n.toLocaleString('es-CO', { minimumFractionDigits: 0 })}`;
+// ─── Vista SCHOOL ADMIN ───────────────────────────────────────
+function SchoolAdminDashboard() {
+  const [data, setData] = useState<AdminSummary | null>(null);
+
+  const fetch = useCallback(() => {
+    apiClient.get<{ data: AdminSummary }>('/reports/summary').then(r => setData(r.data.data)).catch(() => {});
+  }, []);
+
+  useEffect(() => { fetch(); const i = setInterval(fetch, 15_000); return () => clearInterval(i); }, [fetch]);
+
+  if (!data) return <div className="roadmap-note">Cargando métricas...</div>;
+
+  return (
+    <>
+      <p className="dashboard-label" style={{ marginBottom: 10 }}>Hoy en tu colegio</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
+        <StatCard label="Pedidos hoy"       value={data.orders_today}           icon="📋" />
+        <StatCard label="Pendientes"         value={data.orders_pending}         icon="⏳" color="#c37d0d" />
+        <StatCard label="Confirmados"        value={data.orders_confirmed}       icon="✅" color="#6366f1" />
+        <StatCard label="Entregados hoy"     value={data.orders_delivered_today} icon="🚀" color="#059669" />
+        <StatCard label="Ingresos hoy"       value={fmt(data.revenue_today)}     icon="💵" color="#059669" />
+        <StatCard label="Estudiantes activos"value={data.active_students}        icon="🎒" />
+      </div>
+
+      {data.top_products.length > 0 && (
+        <div className="user-card" style={{ marginBottom: 20 }}>
+          <p className="dashboard-label" style={{ marginBottom: 12 }}>Top productos (últimos 30 días)</p>
+          {data.top_products.map((p, i) => (
+            <div key={p.product_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < data.top_products.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--color-brand-light)', color: 'var(--color-brand-deep)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+                <span style={{ fontSize: 14 }}>{p.name}</span>
+              </div>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--color-text-muted)' }}>×{p.total_qty}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
 }
 
+// ─── Vista VENDOR ─────────────────────────────────────────────
+function VendorDashboard() {
+  const [data, setData] = useState<VendorSummary | null>(null);
+  const navigate = useNavigate();
+
+  const fetch = useCallback(() => {
+    apiClient.get<{ data: VendorSummary }>('/reports/vendor').then(r => setData(r.data.data)).catch(() => {});
+  }, []);
+
+  useEffect(() => { fetch(); const i = setInterval(fetch, 10_000); return () => clearInterval(i); }, [fetch]);
+
+  if (!data) return <div className="roadmap-note">Cargando métricas...</div>;
+
+  return (
+    <>
+      <p className="dashboard-label" style={{ marginBottom: 10 }}>Tu turno hoy</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
+        <StatCard label="Pendientes"     value={data.pending_orders}   icon="⏳" color={data.pending_orders > 0 ? '#c37d0d' : 'var(--color-text)'} />
+        <StatCard label="Confirmados"    value={data.confirmed_orders} icon="✅" color="#6366f1" />
+        <StatCard label="Entregados hoy" value={data.delivered_today}  icon="🚀" color="#059669" />
+        <StatCard label="Ingresos hoy"   value={fmt(data.revenue_today)} icon="💵" color="#059669" />
+      </div>
+
+      {data.pending_orders > 0 && (
+        <button className="btn-primary" style={{ marginBottom: 16, width: '100%' }} onClick={() => navigate('/orders')}>
+          📋 Ver {data.pending_orders} pedido{data.pending_orders !== 1 ? 's' : ''} pendiente{data.pending_orders !== 1 ? 's' : ''}
+        </button>
+      )}
+
+      {data.top_products_today.length > 0 && (
+        <div className="user-card" style={{ marginBottom: 20 }}>
+          <p className="dashboard-label" style={{ marginBottom: 12 }}>Más pedidos hoy</p>
+          {data.top_products_today.map((p, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < data.top_products_today.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+              <span style={{ fontSize: 14 }}>{p.name}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--color-text-muted)' }}>×{p.qty}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Vista PARENT ─────────────────────────────────────────────
+function ParentDashboard() {
+  const [data, setData] = useState<ParentSummary | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    apiClient.get<{ data: ParentSummary }>('/reports/parent').then(r => setData(r.data.data)).catch(() => {});
+  }, []);
+
+  if (!data) return <div className="roadmap-note">Cargando...</div>;
+
+  return (
+    <>
+      {/* Saldo total */}
+      <div className="user-card" style={{ padding: '20px 24px', marginBottom: 20, background: 'linear-gradient(135deg, var(--color-brand-deep) 0%, #5b5df6 100%)', border: 'none' }}>
+        <p style={{ margin: '0 0 4px', fontSize: 12, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Saldo total de tus hijos</p>
+        <p style={{ margin: 0, fontSize: 36, fontWeight: 800, color: '#fff', fontFamily: 'var(--font-mono)', letterSpacing: '-1px' }}>{fmt(data.total_balance)}</p>
+        {data.pending_topups > 0 && (
+          <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>⏳ {data.pending_topups} recarga{data.pending_topups > 1 ? 's' : ''} pendiente{data.pending_topups > 1 ? 's' : ''} de aprobación</p>
+        )}
+      </div>
+
+      {/* Hijos */}
+      {data.students.length > 0 && (
+        <>
+          <p className="dashboard-label" style={{ marginBottom: 10 }}>Mis hijos</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+            {data.students.map(s => (
+              <div key={s.id} className="user-card" style={{ padding: '14px 18px', marginBottom: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: 15 }}>{s.full_name}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>{s.school.name}{s.grade ? ` · ${s.grade}` : ''}</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: 18, fontFamily: 'var(--font-mono)', color: parseFloat(s.balance) < 5000 ? '#dc2626' : '#059669' }}>{fmt(parseFloat(s.balance))}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--color-text-muted)' }}>saldo</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Acción rápida */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+        <button className="btn-primary" style={{ flex: 1 }} onClick={() => navigate('/orders/new')}>✨ Nuevo pedido</button>
+        <button className="btn-ghost" style={{ flex: 1 }} onClick={() => navigate('/students')}>💰 Recargar saldo</button>
+      </div>
+
+      {/* Últimos pedidos */}
+      {data.recent_orders.length > 0 && (
+        <>
+          <p className="dashboard-label" style={{ marginBottom: 10 }}>Últimos pedidos</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+            {data.recent_orders.map(o => {
+              const st = ORDER_STATUS[o.status] ?? { label: o.status, color: 'var(--color-text-muted)' };
+              return (
+                <div key={o.id} className="user-card" style={{ padding: '12px 16px', marginBottom: 0 }}
+                  onClick={() => navigate(`/orders/${o.id}`)} role="button" style={{ padding: '12px 16px', marginBottom: 0, cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span className="role-badge" style={{ fontSize: 10, background: `${st.color}18`, color: st.color, marginBottom: 4, display: 'inline-block' }}>{st.label}</span>
+                      <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--color-text-muted)' }}>{o.student.full_name}</p>
+                    </div>
+                    <p style={{ margin: 0, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-text)' }}>{fmt(parseFloat(o.total))}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+// ─── Dashboard principal ───────────────────────────────────────
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const quickLinks = QUICK_LINKS[user?.role ?? ''] ?? [];
-  const isAdmin = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
-
-  const [summary, setSummary] = useState<Summary | null>(null);
-
-  const fetchSummary = useCallback(() => {
-    if (!isAdmin) return;
-    apiClient
-      .get<{ data: Summary }>('/reports/summary')
-      .then((r) => setSummary(r.data.data))
-      .catch(() => { /* métricas opcionales, no bloquear la página */ });
-  }, [isAdmin]);
-
-  useEffect(() => {
-    fetchSummary();
-    const interval = setInterval(() => {
-      fetchSummary();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [fetchSummary]);
 
   return (
     <>
@@ -98,83 +354,42 @@ export default function DashboardPage() {
       </nav>
 
       <main className="dashboard-body">
-        <p className="dashboard-label">Panel principal</p>
-
-        <div className="user-card">
-          <h1 className="user-name">{user?.full_name}</h1>
-          <p className="user-email">{user?.email}</p>
-          <span className="role-badge">{ROLE_LABELS[user?.role ?? ''] ?? user?.role}</span>
-          {user?.school && (
-            <div className="school-info">
-              <strong>{user.school.name}</strong> &mdash; {user.school.city}
+        {/* Header usuario */}
+        <div style={{ marginBottom: 24 }}>
+          <p className="dashboard-label">Panel principal</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <div>
+              <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px' }}>
+                Hola, {user?.full_name?.split(' ')[0]} 👋
+              </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                <span className="role-badge" style={{ fontSize: 11 }}>{ROLE_LABELS[user?.role ?? ''] ?? user?.role}</span>
+                {user?.school && (
+                  <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>🏫 {user.school.name}</span>
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Métricas del día — solo admins */}
-        {isAdmin && summary && (
-          <div style={{ marginBottom: 8 }}>
-            <p className="dashboard-label" style={{ marginBottom: 12 }}>Hoy</p>
-            <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginBottom: 16 }}>
-              {[
-                { label: 'Pedidos creados', value: summary.orders_today, color: 'var(--color-text)' },
-                { label: 'Pendientes', value: summary.orders_pending, color: '#c37d0d' },
-                { label: 'Confirmados', value: summary.orders_confirmed, color: 'var(--color-brand-deep)' },
-                { label: 'Entregados hoy', value: summary.orders_delivered_today, color: '#3772cf' },
-                { label: 'Ingresos hoy', value: fmt(summary.revenue_today), color: 'var(--color-brand-deep)' },
-                { label: 'Estudiantes activos', value: summary.active_students, color: 'var(--color-text)' },
-              ].map((stat) => (
-                <div key={stat.label} className="user-card" style={{ padding: '16px 18px', marginBottom: 0 }}>
-                  <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    {stat.label}
-                  </p>
-                  <p style={{ margin: 0, fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-mono)', color: stat.color, letterSpacing: '-0.5px' }}>
-                    {stat.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {summary.top_products.length > 0 && (
-              <div className="user-card" style={{ marginBottom: 16 }}>
-                <p className="dashboard-label" style={{ marginBottom: 12 }}>Top productos (últimos 30 días)</p>
-                {summary.top_products.map((p, i) => (
-                  <div key={p.product_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: i < summary.top_products.length - 1 ? 10 : 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--color-brand-light)', color: 'var(--color-brand-deep)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {i + 1}
-                      </span>
-                      <span style={{ fontSize: 14, fontWeight: 500 }}>{p.name}</span>
-                    </div>
-                    <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
-                      ×{p.total_qty}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Métricas por rol */}
+        {user?.role === 'SUPER_ADMIN'  && <SuperAdminDashboard />}
+        {user?.role === 'SCHOOL_ADMIN' && <SchoolAdminDashboard />}
+        {user?.role === 'VENDOR'       && <VendorDashboard />}
+        {user?.role === 'PARENT'       && <ParentDashboard />}
 
         {/* Accesos rápidos */}
         {quickLinks.length > 0 && (
           <>
-            <p className="dashboard-label" style={{ marginBottom: 12 }}>Accesos rápidos</p>
-            <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-              {quickLinks.map((link) => (
+            <p className="dashboard-label" style={{ marginBottom: 10 }}>Accesos rápidos</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
+              {quickLinks.map(link => (
                 <Link key={link.to} to={link.to} style={{ textDecoration: 'none' }}>
-                  <div
-                    className="user-card"
-                    style={{ padding: '20px 24px', marginBottom: 0, cursor: 'pointer', transition: 'border-color 0.15s' }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,0,0,0.12)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)'; }}
-                  >
-                    <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
-                      {link.label}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
-                      {link.description}
-                    </p>
+                  <div className="user-card" style={{ padding: '16px 14px', marginBottom: 0, cursor: 'pointer', textAlign: 'center', transition: 'border-color 0.15s, transform 0.15s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
+                    <p style={{ margin: '0 0 6px', fontSize: 26 }}>{link.icon}</p>
+                    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--color-text)' }}>{link.label}</p>
                   </div>
                 </Link>
               ))}

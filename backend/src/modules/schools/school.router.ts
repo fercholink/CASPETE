@@ -13,14 +13,20 @@ router.get('/active', schoolController.listActive);
 // POST   /api/schools         — crear colegio
 router.post('/', requireRole('SUPER_ADMIN'), schoolController.create);
 
-// GET    /api/schools         — listar colegios
+// GET    /api/schools         — listar colegios con búsqueda y filtros
 router.get('/', requireRole('SUPER_ADMIN'), schoolController.list);
 
 // GET    /api/schools/:id     — ver colegio (SUPER_ADMIN o propio SCHOOL_ADMIN)
 router.get('/:id', requireRole('SUPER_ADMIN', 'SCHOOL_ADMIN'), schoolController.getOne);
 
+// GET    /api/schools/:id/stats — estadísticas del colegio
+router.get('/:id/stats', requireRole('SUPER_ADMIN', 'SCHOOL_ADMIN'), schoolController.getStats);
+
 // PATCH  /api/schools/:id     — actualizar colegio
 router.patch('/:id', requireRole('SUPER_ADMIN'), schoolController.update);
+
+// PATCH  /api/schools/:id/reactivate — reactivar colegio
+router.patch('/:id/reactivate', requireRole('SUPER_ADMIN'), schoolController.reactivate);
 
 // DELETE /api/schools/:id     — desactivar colegio (soft delete)
 router.delete('/:id', requireRole('SUPER_ADMIN'), schoolController.deactivate);

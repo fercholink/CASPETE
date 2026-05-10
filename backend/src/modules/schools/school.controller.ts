@@ -13,7 +13,11 @@ export async function create(req: Request, res: Response) {
 export async function list(req: Request, res: Response) {
   const page = Math.max(1, Number(req.query['page']) || 1);
   const limit = Math.min(100, Math.max(1, Number(req.query['limit']) || 20));
-  const result = await schoolService.listSchools(page, limit);
+  const search = req.query['search'] as string | undefined;
+  const city = req.query['city'] as string | undefined;
+  const plan = req.query['plan'] as string | undefined;
+  const active = req.query['active'] as string | undefined;
+  const result = await schoolService.listSchools(page, limit, { search, city, plan, active });
   sendSuccess(res, result);
 }
 
@@ -24,6 +28,15 @@ export async function getOne(req: Request, res: Response) {
   }
   const school = await schoolService.getSchool(id);
   sendSuccess(res, school);
+}
+
+export async function getStats(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  if (req.user!.role === 'SCHOOL_ADMIN' && req.user!.schoolId !== id) {
+    throw new AppError('No tienes permiso para ver estas estadísticas', 403);
+  }
+  const stats = await schoolService.getSchoolStats(id);
+  sendSuccess(res, stats);
 }
 
 export async function update(req: Request, res: Response) {
@@ -42,6 +55,12 @@ export async function deactivate(req: Request, res: Response) {
   const id = req.params['id'] as string;
   const school = await schoolService.deactivateSchool(id);
   sendSuccess(res, school, 'Colegio desactivado');
+}
+
+export async function reactivate(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  const school = await schoolService.reactivateSchool(id);
+  sendSuccess(res, school, 'Colegio reactivado');
 }
 
 export async function deleteOne(req: Request, res: Response) {

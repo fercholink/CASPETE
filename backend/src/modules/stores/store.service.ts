@@ -9,7 +9,13 @@ const storeSelect = {
   name: true,
   active: true,
   created_at: true,
-  school: { select: { id: true, name: true, city: true } },
+  school: { select: { id: true, name: true, city: true, plan: true } },
+  _count: {
+    select: {
+      store_products: true,
+      lunch_orders: true,
+    },
+  },
 } as const;
 
 function resolveSchoolId(actor: JwtPayload, inputSchoolId?: string): string {
@@ -27,6 +33,8 @@ function assertAccess(store: { school_id: string }, actor: JwtPayload) {
   throw new AppError('No tienes permiso para modificar esta tienda', 403);
 }
 
+// ─── CRUD ────────────────────────────────────────────────────────
+
 export async function createStore(input: CreateStoreInput, actor: JwtPayload) {
   const schoolId = resolveSchoolId(actor, input.school_id);
   const school = await prisma.school.findUnique({ where: { id: schoolId } });
@@ -38,29 +46,60 @@ export async function createStore(input: CreateStoreInput, actor: JwtPayload) {
   });
 }
 
-export async function listStores(actor: JwtPayload, schoolId?: string) {
+export async function listStores(
+  actor: JwtPayload,
+  opts: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    school_id?: string;
+    active?: string;
+  } = {},
+) {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
+  const skip = (page - 1) * limit;
+
+  // Build where clause based on actor role
+  const where: Record<string, unknown> = {};
+
   if (actor.role === 'SUPER_ADMIN') {
-    return prisma.store.findMany({
-      where: schoolId ? { school_id: schoolId } : {},
-      orderBy: { created_at: 'desc' },
-      select: storeSelect,
-    });
-  }
-  if (actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') {
+    if (opts.school_id) where.school_id = opts.school_id;
+  } else if (actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') {
     if (!actor.schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
-    return prisma.store.findMany({
-      where: { school_id: actor.schoolId, active: true },
-      orderBy: { name: 'asc' },
-      select: storeSelect,
-    });
+    where.school_id = actor.schoolId;
+  } else {
+    // PARENT — requires school_id
+    if (!opts.school_id) throw new AppError('Indica school_id para ver tiendas', 400);
+    where.school_id = opts.school_id;
+    where.active = true; // parents only see active stores
   }
-  // PARENT necesita school_id explícito
-  if (!schoolId) throw new AppError('Indica school_id para ver tiendas', 400);
-  return prisma.store.findMany({
-    where: { school_id: schoolId, active: true },
-    orderBy: { name: 'asc' },
-    select: storeSelect,
-  });
+
+  // Search filter
+  if (opts.search) {
+    where.OR = [
+      { name: { contains: opts.search, mode: 'insensitive' } },
+      { school: { name: { contains: opts.search, mode: 'insensitive' } } },
+    ];
+  }
+
+  // Active filter (only for admins)
+  if (opts.active !== undefined && actor.role !== 'PARENT') {
+    where.active = opts.active === 'true';
+  }
+
+  const [stores, total] = await Promise.all([
+    prisma.store.findMany({
+      where,
+      orderBy: { created_at: 'desc' },
+      skip,
+      take: limit,
+      select: storeSelect,
+    }),
+    prisma.store.count({ where }),
+  ]);
+
+  return { stores, total, page, pages: Math.ceil(total / limit) };
 }
 
 export async function getStore(id: string) {
@@ -88,6 +127,12 @@ export async function deactivateStore(id: string, actor: JwtPayload) {
   return prisma.store.update({ where: { id }, data: { active: false }, select: storeSelect });
 }
 
+export async function reactivateStore(id: string, actor: JwtPayload) {
+  const store = await getStore(id);
+  assertAccess(store, actor);
+  return prisma.store.update({ where: { id }, data: { active: true }, select: storeSelect });
+}
+
 export async function deleteStore(id: string, actor: JwtPayload) {
   const store = await getStore(id);
   assertAccess(store, actor);
@@ -97,9 +142,41 @@ export async function deleteStore(id: string, actor: JwtPayload) {
   }
 
   await prisma.$transaction([
+    // 1. OrderItems de pedidos de esta tienda
     prisma.orderItem.deleteMany({ where: { order: { store_id: id } } }),
+    // 2. Transacciones vinculadas a pedidos de esta tienda
     prisma.transaction.deleteMany({ where: { order: { store_id: id } } }),
+    // 3. Pedidos de esta tienda
     prisma.lunchOrder.deleteMany({ where: { store_id: id } }),
+    // 4. StoreProducts de esta tienda
+    prisma.storeProduct.deleteMany({ where: { store_id: id } }),
+    // 5. La tienda
     prisma.store.delete({ where: { id } }),
   ]);
+}
+
+// ─── Stats ───────────────────────────────────────────────────────
+
+export async function getStoreStats(actor: JwtPayload) {
+  const where: Record<string, unknown> = {};
+  if (actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') {
+    if (!actor.schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
+    where.school_id = actor.schoolId;
+  } else if (actor.role !== 'SUPER_ADMIN') {
+    throw new AppError('No tienes permiso', 403);
+  }
+
+  const [total, active, inactive, productsCount, ordersCount] = await Promise.all([
+    prisma.store.count({ where }),
+    prisma.store.count({ where: { ...where, active: true } }),
+    prisma.store.count({ where: { ...where, active: false } }),
+    prisma.storeProduct.count({
+      where: where.school_id ? { store: { school_id: where.school_id as string } } : {},
+    }),
+    prisma.lunchOrder.count({
+      where: where.school_id ? { store: { school_id: where.school_id as string } } : {},
+    }),
+  ]);
+
+  return { total, active, inactive, products: productsCount, orders: ordersCount };
 }

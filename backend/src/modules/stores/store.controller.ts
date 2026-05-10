@@ -10,9 +10,13 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function list(req: Request, res: Response) {
-  const schoolId = req.query['school_id'] as string | undefined;
-  const stores = await storeService.listStores(req.user!, schoolId);
-  sendSuccess(res, stores);
+  const page = Math.max(1, Number(req.query['page']) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query['limit']) || 20));
+  const search = req.query['search'] as string | undefined;
+  const school_id = req.query['school_id'] as string | undefined;
+  const active = req.query['active'] as string | undefined;
+  const result = await storeService.listStores(req.user!, { page, limit, search, school_id, active });
+  sendSuccess(res, result);
 }
 
 export async function getOne(req: Request, res: Response) {
@@ -32,6 +36,17 @@ export async function deactivate(req: Request, res: Response) {
   const id = req.params['id'] as string;
   const store = await storeService.deactivateStore(id, req.user!);
   sendSuccess(res, store, 'Tienda desactivada');
+}
+
+export async function reactivate(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  const store = await storeService.reactivateStore(id, req.user!);
+  sendSuccess(res, store, 'Tienda reactivada');
+}
+
+export async function getStats(req: Request, res: Response) {
+  const stats = await storeService.getStoreStats(req.user!);
+  sendSuccess(res, stats);
 }
 
 export async function deleteOne(req: Request, res: Response) {

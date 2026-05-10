@@ -22,6 +22,7 @@ interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUser: (partial: Partial<AuthUser>) => void;
+  setAuthFromTokens: (token: string, refreshToken: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -81,8 +82,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((prev) => prev.user ? { ...prev, user: { ...prev.user, ...partial } } : prev);
   }, []);
 
+  // Usado por el callback de Google OAuth para guardar tokens y cargar el usuario
+  const setAuthFromTokens = useCallback(async (token: string, refreshToken: string): Promise<void> => {
+    localStorage.setItem('caspete_token', token);
+    localStorage.setItem('caspete_refresh_token', refreshToken);
+    try {
+      const res = await apiClient.get<{ success: true; data: AuthUser }>('/auth/me');
+      setState({ user: res.data.data, token, isLoading: false });
+    } catch {
+      localStorage.removeItem('caspete_token');
+      localStorage.removeItem('caspete_refresh_token');
+      setState({ user: null, token: null, isLoading: false });
+      throw new Error('No se pudo cargar el usuario');
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ ...state, login, logout, updateUser, setAuthFromTokens }}>
       {children}
     </AuthContext.Provider>
   );

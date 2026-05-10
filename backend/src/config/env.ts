@@ -13,6 +13,9 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().default('info@caspete.com'),
   N8N_WEBHOOK_SECRET: z.string().min(16).default('placeholder_secret_key_for_n8n_webhooks_123'),
   PAYMENT_EMAIL: z.string().default('pagos@caspete.com'),
+  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID es requerida'),
+  GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET es requerida'),
+  GOOGLE_CALLBACK_URL: z.string().default('http://localhost:3001/api/auth/google/callback'),
 });
 
 const parsed = envSchema.safeParse(process.env);

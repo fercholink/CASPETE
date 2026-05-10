@@ -28,6 +28,61 @@ async function issueRefreshToken(userId: string): Promise<string> {
   return raw;
 }
 
+export async function loginOrCreateGoogleUser(input: {
+  google_id: string;
+  email: string;
+  full_name: string;
+  avatar_url: string | null;
+}) {
+  // Buscar por google_id o email
+  let user = await prisma.user.findFirst({
+    where: { OR: [{ google_id: input.google_id }, { email: input.email }] },
+    select: {
+      id: true, email: true, full_name: true, role: true,
+      school_id: true, active: true, google_id: true,
+    },
+  });
+
+  if (user && !user.active) {
+    throw new AppError('Cuenta desactivada. Contacta al administrador.', 403);
+  }
+
+  if (user) {
+    // Vincular google_id si el usuario se registró previamente con email/pass
+    if (!user.google_id) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          google_id: input.google_id,
+          auth_provider: 'google',
+          avatar_url: input.avatar_url ?? undefined,
+        },
+      });
+    }
+  } else {
+    // Crear nuevo usuario
+    user = await prisma.user.create({
+      data: {
+        email: input.email,
+        full_name: input.full_name,
+        google_id: input.google_id,
+        avatar_url: input.avatar_url,
+        auth_provider: 'google',
+        role: 'PARENT',
+        password_hash: null,
+      },
+      select: {
+        id: true, email: true, full_name: true, role: true,
+        school_id: true, active: true, google_id: true,
+      },
+    });
+  }
+
+  const token = signToken(user);
+  const refresh_token = await issueRefreshToken(user.id);
+  return { user, token, refresh_token };
+}
+
 export async function registerUser(input: RegisterInput) {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) {

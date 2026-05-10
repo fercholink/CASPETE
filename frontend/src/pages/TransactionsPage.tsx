@@ -82,7 +82,31 @@ export default function TransactionsPage() {
 
   const isParent = user?.role === 'PARENT';
 
-  if (!studentId) return <div className="auth-page"><p className="form-error" style={{ maxWidth: 560 }}>Falta student_id en la URL</p></div>;
+  if (!studentId) {
+    return (
+      <>
+        <nav className="dashboard-nav">
+          <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn-ghost" onClick={() => navigate('/dashboard')}>Inicio</button>
+            <button className="btn-ghost" onClick={logout}>Salir</button>
+          </div>
+        </nav>
+        <main className="dashboard-body">
+          <div className="user-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
+            <p style={{ fontSize: 40, margin: '0 0 12px' }}>📊</p>
+            <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 600 }}>Selecciona un estudiante</h2>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--color-text-muted)' }}>
+              Para ver el historial de movimientos, debes seleccionar un estudiante específico.
+            </p>
+            <button className="btn-primary" style={{ width: 'auto', display: 'inline-block' }} onClick={() => navigate('/students')}>
+              Ver estudiantes
+            </button>
+          </div>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>

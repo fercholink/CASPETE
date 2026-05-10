@@ -8,24 +8,30 @@ const router = Router();
 router.use(authenticate);
 
 const allRoles = requireRole('PARENT', 'VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN');
-const canWrite = requireRole('VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN');
+const superOnly = requireRole('SUPER_ADMIN');
 
-// POST   /api/products
-router.post('/', canWrite, productController.create);
+// GET    /api/products/stats — estadísticas globales
+router.get('/stats', superOnly, productController.getStats);
 
-// GET    /api/products?school_id=
+// GET    /api/products?category=&active=&search=&is_healthy=&page=&limit=
 router.get('/', allRoles, productController.list);
 
 // GET    /api/products/:id
 router.get('/:id', allRoles, productController.getOne);
 
-// PATCH  /api/products/:id
-router.patch('/:id', canWrite, productController.update);
+// POST   /api/products  — solo SUPER_ADMIN
+router.post('/', superOnly, productController.create);
 
-// DELETE /api/products/:id  — soft delete
-router.delete('/:id', canWrite, productController.deactivate);
+// PATCH  /api/products/:id  — solo SUPER_ADMIN
+router.patch('/:id', superOnly, productController.update);
 
-// DELETE /api/products/:id/permanent — eliminar permanentemente (solo SUPER_ADMIN)
-router.delete('/:id/permanent', requireRole('SUPER_ADMIN'), productController.deleteOne);
+// PATCH  /api/products/:id/reactivate  — reactivar
+router.patch('/:id/reactivate', superOnly, productController.reactivate);
+
+// DELETE /api/products/:id  — soft delete (solo SUPER_ADMIN)
+router.delete('/:id', superOnly, productController.deactivate);
+
+// DELETE /api/products/:id/permanent — hard delete (solo SUPER_ADMIN)
+router.delete('/:id/permanent', superOnly, productController.deleteOne);
 
 export default router;

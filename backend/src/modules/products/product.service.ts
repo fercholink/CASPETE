@@ -3,83 +3,97 @@ import { AppError } from '../../middleware/error.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { CreateProductInput, UpdateProductInput } from './product.schemas.js';
 
+// ─── Catálogo global de productos (solo SUPER_ADMIN gestiona) ───
+
 const productSelect = {
   id: true,
-  school_id: true,
   name: true,
   description: true,
-  price: true,
+  base_price: true,
   image_url: true,
+  category: true,
   is_healthy: true,
   active: true,
-  stock: true,
   customizable_options: true,
   created_at: true,
-  school: { select: { id: true, name: true, city: true } },
-  _count: { select: { order_items: true } },
+  _count: { select: { store_products: true } },
 } as const;
 
-function resolveSchoolId(actor: JwtPayload, inputSchoolId?: string): string {
-  if (actor.role === 'SUPER_ADMIN') {
-    if (!inputSchoolId) throw new AppError('school_id es requerido', 400);
-    return inputSchoolId;
-  }
-  if (!actor.schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
-  return actor.schoolId;
-}
-
-function assertAccess(product: { school_id: string }, actor: JwtPayload) {
-  if (actor.role === 'SUPER_ADMIN') return;
-  if (actor.schoolId === product.school_id) return;
-  throw new AppError('No tienes permiso para modificar este producto', 403);
-}
-
 export async function createProduct(input: CreateProductInput, actor: JwtPayload) {
-  const schoolId = resolveSchoolId(actor, input.school_id);
-  const school = await prisma.school.findUnique({ where: { id: schoolId } });
-  if (!school?.active) throw new AppError('El colegio no existe o está inactivo', 404);
+  if (actor.role !== 'SUPER_ADMIN') {
+    throw new AppError('Solo el Super Administrador puede crear productos en el catálogo global', 403);
+  }
 
   return prisma.product.create({
     data: {
-      school_id: schoolId,
       name: input.name,
-      price: input.price,
+      base_price: input.base_price,
       is_healthy: input.is_healthy,
       description: input.description ?? null,
       image_url: input.image_url ?? null,
-      stock: input.stock ?? null,
+      category: input.category ?? null,
       customizable_options: input.customizable_options ?? [],
     },
     select: productSelect,
   });
 }
 
-export async function listProducts(actor: JwtPayload, schoolId?: string) {
-  if (actor.role === 'SUPER_ADMIN') {
-    return prisma.product.findMany({
-      where: schoolId ? { school_id: schoolId } : {},
-      orderBy: { created_at: 'desc' },
-      select: productSelect,
-    });
+export async function listProducts(
+  actor: JwtPayload,
+  opts: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    category?: string;
+    active?: string;
+    is_healthy?: string;
+  } = {},
+) {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 50));
+  const skip = (page - 1) * limit;
+
+  const where: Record<string, unknown> = {};
+
+  if (opts.category) where.category = opts.category;
+  if (opts.active !== undefined) where.active = opts.active === 'true';
+  if (opts.is_healthy !== undefined) where.is_healthy = opts.is_healthy === 'true';
+
+  if (opts.search) {
+    where.OR = [
+      { name: { contains: opts.search, mode: 'insensitive' } },
+      { description: { contains: opts.search, mode: 'insensitive' } },
+    ];
   }
 
-  if (actor.role === 'SCHOOL_ADMIN' || actor.role === 'VENDOR') {
-    if (!actor.schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
-    return prisma.product.findMany({
-      where: { school_id: actor.schoolId },
-      orderBy: { created_at: 'desc' },
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+      skip,
+      take: limit,
       select: productSelect,
-    });
-  }
+    }),
+    prisma.product.count({ where }),
+  ]);
 
-  // PARENT — necesita school_id explícito para ver productos
-  const sid = schoolId;
-  if (!sid) throw new AppError('Indica school_id para consultar el catálogo', 400);
-  return prisma.product.findMany({
-    where: { school_id: sid, active: true },
-    orderBy: { name: 'asc' },
-    select: productSelect,
+  // Get category counts for sidebar
+  const categoryStats = await prisma.product.groupBy({
+    by: ['category'],
+    _count: true,
+    where: opts.active !== undefined ? { active: opts.active === 'true' } : {},
   });
+
+  return {
+    products,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+    categories: categoryStats.map(c => ({
+      name: c.category ?? 'otro',
+      count: c._count,
+    })),
+  };
 }
 
 export async function getProduct(id: string) {
@@ -88,24 +102,22 @@ export async function getProduct(id: string) {
   return product;
 }
 
-export async function updateProduct(
-  id: string,
-  input: UpdateProductInput,
-  actor: JwtPayload,
-) {
-  const product = await getProduct(id);
-  assertAccess(product, actor);
+export async function updateProduct(id: string, input: UpdateProductInput, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') {
+    throw new AppError('Solo el Super Administrador puede editar el catálogo global', 403);
+  }
+  await getProduct(id);
 
   return prisma.product.update({
     where: { id },
     data: {
       ...(input.name !== undefined && { name: input.name }),
       ...(input.description !== undefined && { description: input.description }),
-      ...(input.price !== undefined && { price: input.price }),
+      ...(input.base_price !== undefined && { base_price: input.base_price }),
       ...(input.image_url !== undefined && { image_url: input.image_url }),
+      ...(input.category !== undefined && { category: input.category }),
       ...(input.is_healthy !== undefined && { is_healthy: input.is_healthy }),
       ...(input.active !== undefined && { active: input.active }),
-      ...(input.stock !== undefined && { stock: input.stock }),
       ...(input.customizable_options !== undefined && { customizable_options: input.customizable_options }),
     },
     select: productSelect,
@@ -113,8 +125,10 @@ export async function updateProduct(
 }
 
 export async function deactivateProduct(id: string, actor: JwtPayload) {
-  const product = await getProduct(id);
-  assertAccess(product, actor);
+  if (actor.role !== 'SUPER_ADMIN') {
+    throw new AppError('Solo el Super Administrador puede desactivar productos globales', 403);
+  }
+  await getProduct(id);
   return prisma.product.update({
     where: { id },
     data: { active: false },
@@ -122,16 +136,39 @@ export async function deactivateProduct(id: string, actor: JwtPayload) {
   });
 }
 
-export async function deleteProduct(id: string, actor: JwtPayload) {
-  const product = await getProduct(id);
-  assertAccess(product, actor);
+export async function reactivateProduct(id: string, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') {
+    throw new AppError('Solo el Super Administrador puede reactivar productos globales', 403);
+  }
+  await getProduct(id);
+  return prisma.product.update({
+    where: { id },
+    data: { active: true },
+    select: productSelect,
+  });
+}
 
+export async function deleteProduct(id: string, actor: JwtPayload) {
   if (actor.role !== 'SUPER_ADMIN') {
     throw new AppError('Solo el Super Administrador puede eliminar productos permanentemente', 403);
   }
+  await getProduct(id);
 
   await prisma.$transaction([
-    prisma.orderItem.deleteMany({ where: { product_id: id } }),
+    prisma.orderItem.deleteMany({
+      where: { store_product: { product_id: id } },
+    }),
+    prisma.storeProduct.deleteMany({ where: { product_id: id } }),
     prisma.product.delete({ where: { id } }),
   ]);
+}
+
+export async function getProductStats() {
+  const [total, active, healthy, categories] = await Promise.all([
+    prisma.product.count(),
+    prisma.product.count({ where: { active: true } }),
+    prisma.product.count({ where: { is_healthy: true, active: true } }),
+    prisma.product.groupBy({ by: ['category'], _count: true }),
+  ]);
+  return { total, active, healthy, categories: categories.map(c => ({ name: c.category ?? 'otro', count: c._count })) };
 }

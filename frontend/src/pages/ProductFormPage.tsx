@@ -1,92 +1,62 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
 
-interface ActiveSchool {
-  id: string;
-  name: string;
-  city: string;
-}
+interface CategoryOption { id: string; name: string; label: string; icon: string | null; }
 
 interface ProductData {
   id: string;
   name: string;
   description: string | null;
-  price: string;
+  base_price: string;
   image_url: string | null;
+  category: string | null;
   is_healthy: boolean;
-  stock: number | null;
   customizable_options: string[];
-  school: ActiveSchool;
 }
 
-const emptyForm: {
-  school_id: string;
-  name: string;
-  description: string;
-  price: string;
-  image_url: string;
-  is_healthy: boolean;
-  stock: string;
-  customizable_options: string;
-} = {
-  school_id: '',
+const emptyForm = {
   name: '',
   description: '',
-  price: '',
+  base_price: '',
   image_url: '',
+  category: '',
   is_healthy: true,
-  stock: '',
   customizable_options: '',
 };
 
 export default function ProductFormPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
   const isEdit = Boolean(id);
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const [form, setForm] = useState(emptyForm);
-  const [schools, setSchools] = useState<ActiveSchool[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
+  const [fetching, setFetching] = useState(!!id);
   const [error, setError] = useState('');
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
 
   useEffect(() => {
-    const tasks: Promise<unknown>[] = [];
+    apiClient.get<{ data: CategoryOption[] }>('/categories').then(r => setCategories(r.data.data)).catch(() => {});
+  }, []);
 
-    if (isSuperAdmin) {
-      tasks.push(
-        apiClient
-          .get<{ data: ActiveSchool[] }>('/schools/active')
-          .then((res) => setSchools(res.data.data)),
-      );
-    }
-
-    if (id) {
-      tasks.push(
-        apiClient.get<{ data: ProductData }>(`/products/${id}`).then((res) => {
-          const p = res.data.data;
-          setForm({
-            school_id: p.school.id,
-            name: p.name,
-            description: p.description ?? '',
-            price: parseFloat(p.price).toString(),
-            image_url: p.image_url ?? '',
-            is_healthy: p.is_healthy,
-            stock: p.stock !== null ? String(p.stock) : '',
-            customizable_options: p.customizable_options?.join(', ') ?? '',
-          });
-        }),
-      );
-    }
-
-    Promise.all(tasks)
+  useEffect(() => {
+    if (!id) return;
+    apiClient.get<{ data: ProductData }>(`/products/${id}`).then((res) => {
+      const p = res.data.data;
+      setForm({
+        name: p.name,
+        description: p.description ?? '',
+        base_price: parseFloat(p.base_price).toString(),
+        image_url: p.image_url ?? '',
+        category: p.category ?? '',
+        is_healthy: p.is_healthy,
+        customizable_options: p.customizable_options?.join(', ') ?? '',
+      });
+    })
       .catch(() => setError('Error al cargar datos'))
       .finally(() => setFetching(false));
-  }, [id, isSuperAdmin]);
+  }, [id]);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
@@ -101,8 +71,8 @@ export default function ProductFormPage() {
     setLoading(true);
     setError('');
 
-    const price = parseFloat(form.price);
-    if (isNaN(price) || price <= 0) {
+    const base_price = parseFloat(form.base_price);
+    if (isNaN(base_price) || base_price <= 0) {
       setError('El precio debe ser un número positivo');
       setLoading(false);
       return;
@@ -110,13 +80,12 @@ export default function ProductFormPage() {
 
     const payload = {
       name: form.name,
-      price,
+      base_price,
       is_healthy: form.is_healthy,
-      stock: form.stock.trim() === '' ? null : parseInt(form.stock, 10),
       customizable_options: form.customizable_options.split(',').map(s => s.trim()).filter(s => s.length > 0),
       ...(form.description ? { description: form.description } : {}),
       ...(form.image_url ? { image_url: form.image_url } : {}),
-      ...(!isEdit && isSuperAdmin && form.school_id ? { school_id: form.school_id } : {}),
+      ...(form.category ? { category: form.category } : {}),
     };
 
     try {
@@ -174,7 +143,7 @@ export default function ProductFormPage() {
           {isEdit ? 'Editar producto' : 'Nuevo producto'}
         </h1>
         <p className="auth-subtitle">
-          {isEdit ? 'Actualiza los datos del producto' : 'Agrega un producto al catálogo'}
+          {isEdit ? 'Actualiza los datos del producto en el catálogo global' : 'Agrega un producto al catálogo global'}
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -187,53 +156,36 @@ export default function ProductFormPage() {
             />
           </div>
 
-          {!isEdit && isSuperAdmin && (
-            <div className="form-group">
-              <label className="form-label" htmlFor="school_id">Colegio</label>
-              <select
-                id="school_id" name="school_id" className="form-select"
-                value={form.school_id} onChange={handleChange} required
-              >
-                <option value="">Selecciona un colegio...</option>
-                {schools.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name} — {s.city}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
           <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="price">Precio (COP)</label>
+              <label className="form-label" htmlFor="base_price">Precio base (COP)</label>
               <input
-                id="price" name="price" className="form-input" type="number"
-                value={form.price} onChange={handleChange}
+                id="base_price" name="base_price" className="form-input" type="number"
+                value={form.base_price} onChange={handleChange}
                 required min="0.01" step="0.01" placeholder="1500"
               />
             </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="category">Categoría</label>
+              <select
+                id="category" name="category" className="form-select"
+                value={form.category} onChange={handleChange}
+              >
+                <option value="">Sin categoría</option>
+                {categories.map(c => <option key={c.id} value={c.name}>{c.icon || '📦'} {c.label}</option>)}
+              </select>
+            </div>
           </div>
 
-          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="stock">
-                Stock disponible <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(vacío = infinito)</span>
-              </label>
+          <div style={{ marginTop: 14 }}>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
               <input
-                id="stock" name="stock" className="form-input" type="number"
-                value={form.stock} onChange={handleChange}
-                min="0" placeholder="Ej: 50"
+                id="is_healthy" name="is_healthy" type="checkbox"
+                checked={form.is_healthy} onChange={handleChange}
+                style={{ width: 16, height: 16, accentColor: 'var(--color-brand)', cursor: 'pointer' }}
               />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0, display: 'flex', alignItems: 'center' }}>
-              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginTop: 24 }}>
-                <input
-                  id="is_healthy" name="is_healthy" type="checkbox"
-                  checked={form.is_healthy} onChange={handleChange}
-                  style={{ width: 16, height: 16, accentColor: 'var(--color-brand)', cursor: 'pointer' }}
-                />
-                <span>¿Saludable?</span>
-              </label>
-            </div>
+              <span>¿Saludable?</span>
+            </label>
           </div>
 
           <div className="form-group" style={{ marginTop: 14 }}>

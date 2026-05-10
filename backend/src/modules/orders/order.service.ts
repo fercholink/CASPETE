@@ -33,7 +33,13 @@ const orderSelect = {
       unit_price: true,
       subtotal: true,
       customizations: true,
-      product: { select: { id: true, name: true, is_healthy: true } },
+      store_product: {
+        select: {
+          id: true,
+          price: true,
+          product: { select: { id: true, name: true, is_healthy: true, base_price: true, image_url: true } },
+        },
+      },
     },
   },
 } as const;
@@ -64,30 +70,32 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   if (store.school_id !== student.school_id)
     throw new AppError('La tienda no pertenece al colegio del estudiante', 400);
 
-  const productIds = input.items.map((i) => i.product_id);
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds }, active: true, school_id: student.school_id },
-    select: { id: true, price: true, stock: true, name: true },
+  // Cargar los StoreProducts solicitados
+  const storeProductIds = input.items.map((i) => i.store_product_id);
+  const storeProducts = await prisma.storeProduct.findMany({
+    where: { id: { in: storeProductIds }, active: true, store_id: input.store_id, product: { active: true } },
+    select: { id: true, price: true, stock: true, product: { select: { id: true, name: true, base_price: true } } },
   });
-  if (products.length !== new Set(productIds).size)
-    throw new AppError('Uno o más productos no están disponibles en este colegio', 400);
+  if (storeProducts.length !== new Set(storeProductIds).size)
+    throw new AppError('Uno o más productos no están disponibles en esta tienda', 400);
 
-  const productMap = new Map(products.map((p) => [p.id, p]));
+  const spMap = new Map(storeProducts.map((sp) => [sp.id, sp]));
   let totalAmount = 0;
   const orderItemsData = input.items.map((item) => {
-    const product = productMap.get(item.product_id)!;
-    if (product.stock !== null && product.stock < item.quantity) {
-      throw new AppError(`Stock insuficiente para "${product.name}". (Quedan ${product.stock})`, 400);
+    const sp = spMap.get(item.store_product_id)!;
+    if (sp.stock !== null && sp.stock < item.quantity) {
+      throw new AppError(`Stock insuficiente para "${sp.product.name}". (Quedan ${sp.stock})`, 400);
     }
-    const unitPrice = product.price.toNumber();
+    // Usar precio de la tienda si existe, si no el precio base del catálogo
+    const unitPrice = sp.price ? sp.price.toNumber() : sp.product.base_price.toNumber();
     const subtotal = Math.round(unitPrice * item.quantity * 100) / 100;
     totalAmount += subtotal;
-    return { 
-      product_id: item.product_id, 
-      quantity: item.quantity, 
-      unit_price: unitPrice, 
+    return {
+      store_product_id: item.store_product_id,
+      quantity: item.quantity,
+      unit_price: unitPrice,
       subtotal,
-      customizations: item.customizations ?? []
+      customizations: item.customizations ?? [],
     };
   });
   totalAmount = Math.round(totalAmount * 100) / 100;
@@ -114,11 +122,12 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
       select: orderSelect,
     });
 
+    // Decrementar stock de StoreProducts
     for (const item of orderItemsData) {
-      const product = productMap.get(item.product_id)!;
-      if (product.stock !== null) {
-        await tx.product.update({
-          where: { id: item.product_id },
+      const sp = spMap.get(item.store_product_id)!;
+      if (sp.stock !== null) {
+        await tx.storeProduct.update({
+          where: { id: item.store_product_id },
           data: { stock: { decrement: item.quantity } },
         });
       }
@@ -260,16 +269,16 @@ export async function cancelOrder(id: string, actor: JwtPayload) {
       },
     });
 
+    // Restaurar stock de StoreProducts
     for (const item of order.order_items) {
-      // Check if product tracking is enabled? 
-      // We can just increment it blindly? If stock was null, increment will fail if we just do { increment }. We need to check if it's null first, but we can't fetch all products again easily inside tx without extra queries.
-      // So let's fetch products:
-      const product = await tx.product.findUnique({ where: { id: item.product.id }, select: { stock: true } });
-      if (product?.stock !== null) {
-        await tx.product.update({
-          where: { id: item.product.id },
-          data: { stock: { increment: item.quantity } },
-        });
+      if (item.store_product) {
+        const sp = await tx.storeProduct.findUnique({ where: { id: item.store_product.id }, select: { stock: true } });
+        if (sp?.stock !== null) {
+          await tx.storeProduct.update({
+            where: { id: item.store_product.id },
+            data: { stock: { increment: item.quantity } },
+          });
+        }
       }
     }
 
@@ -301,7 +310,6 @@ export async function deliverStudentOrders(studentId: string, deliveryCode: stri
   if (!student.delivery_code) throw new AppError('El estudiante no tiene código de entrega asignado.', 400);
   if (deliveryCode !== student.delivery_code) throw new AppError('Código de entrega inválido', 400);
 
-  // Consider all CONFIRMED orders for today or earlier, or just any CONFIRMED order for this student.
   const pendingDeliveries = await prisma.lunchOrder.findMany({
     where: {
       student_id: studentId,
@@ -329,7 +337,6 @@ export async function deliverStudentOrders(studentId: string, deliveryCode: stri
     }
   });
 
-  // Return the updated orders
   const updatedOrders = await prisma.lunchOrder.findMany({
     where: { id: { in: orderIds } },
     select: orderSelect,

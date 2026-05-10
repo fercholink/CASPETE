@@ -113,13 +113,13 @@ export default function OrdersPage() {
   }
 
   async function handleDeleteOrder(order: Order) {
-    if (!confirm(`⚠️ ¿Eliminar permanentemente el pedido de "${order.student.full_name}"?\n\nEsta acción NO se puede deshacer y no reembolsa saldo automáticamente.`)) return;
-    if (!confirm(`Confirma: eliminar pedido "${order.id}" para siempre.`)) return;
+    if (!confirm(`⚠️ ¿Eliminar permanentemente el pedido de "${order.student.full_name}"?\n\nEsta acción NO se puede deshacer y no reembolsa saldo.`)) return;
     try {
       await apiClient.delete(`/orders/${order.id}/permanent`);
       setOrders((prev) => prev.filter((o) => o.id !== order.id));
-    } catch (e) {
-      alert((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo eliminar el pedido');
+    } catch (e: any) {
+      const msg = e?.response?.data?.error ?? e?.message ?? 'Error desconocido';
+      alert(`No se pudo eliminar: ${msg}`);
     }
   }
 
@@ -370,8 +370,7 @@ export default function OrdersPage() {
                           Cancelar
                         </button>
                       )}
-                      {isSuperAdmin && (
-                        <button
+                      <button
                           className="btn-ghost"
                           style={{
                             fontSize: 12, padding: '4px 12px',
@@ -384,7 +383,6 @@ export default function OrdersPage() {
                         >
                           🗑 Eliminar
                         </button>
-                      )}
                     </div>
                   </div>
                 </div>

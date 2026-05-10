@@ -16,37 +16,57 @@ interface Store {
   name: string;
 }
 
-interface Product {
+interface StoreProduct {
   id: string;
-  name: string;
-  price: string;
-  description: string | null;
-  is_healthy: boolean;
-  active: boolean;
+  store_id: string;
+  product_id: string;
+  price: string | null;
   stock: number | null;
-  customizable_options: string[];
+  active: boolean;
+  product: {
+    id: string;
+    name: string;
+    description: string | null;
+    base_price: string;
+    image_url: string | null;
+    category: string | null;
+    is_healthy: boolean;
+    customizable_options: string[];
+  };
 }
 
 interface CartItem {
-  product: Product;
+  storeProduct: StoreProduct;
   quantity: number;
   customizations: string[];
 }
 
-function fmt(price: string) {
-  return `$${parseFloat(price).toLocaleString('es-CO', { minimumFractionDigits: 0 })}`;
+function getEffectivePrice(sp: StoreProduct): number {
+  return parseFloat(sp.price ?? sp.product.base_price);
+}
+
+function fmt(price: number | string) {
+  const n = typeof price === 'string' ? parseFloat(price) : price;
+  return `$${n.toLocaleString('es-CO', { minimumFractionDigits: 0 })}`;
 }
 
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const categoryLabels: Record<string, string> = {
+  almuerzo: '🍲 Almuerzos',
+  bebida: '🥤 Bebidas',
+  snack: '🍿 Snacks',
+  otro: '📦 Otros',
+};
+
 export default function NewOrderPage() {
   const navigate = useNavigate();
 
   const [students, setStudents] = useState<Student[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [storeProducts, setStoreProducts] = useState<StoreProduct[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -55,6 +75,7 @@ export default function NewOrderPage() {
   const [notes, setNotes] = useState('');
 
   const [loadingStudent, setLoadingStudent] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fetching, setFetching] = useState(true);
@@ -67,52 +88,76 @@ export default function NewOrderPage() {
       .finally(() => setFetching(false));
   }, []);
 
-  const loadSchoolData = useCallback((schoolId: string) => {
+  const loadStores = useCallback((schoolId: string) => {
     setLoadingStudent(true);
     setCart([]);
     setStoreId('');
-    Promise.all([
-      apiClient.get<{ data: Store[] }>(`/stores?school_id=${schoolId}`).then((r) => setStores(r.data.data)),
-      apiClient.get<{ data: Product[] }>(`/products?school_id=${schoolId}`).then((r) => setProducts(r.data.data.filter((p) => p.active))),
-    ])
-      .catch(() => setError('Error al cargar tiendas y productos'))
+    setStoreProducts([]);
+    apiClient
+      .get<{ data: Store[] }>(`/stores?school_id=${schoolId}`)
+      .then((r) => setStores(r.data.data))
+      .catch(() => setError('Error al cargar las tiendas'))
       .finally(() => setLoadingStudent(false));
+  }, []);
+
+  const loadStoreProducts = useCallback((sid: string) => {
+    setLoadingProducts(true);
+    setCart([]);
+    apiClient
+      .get<{ data: StoreProduct[] }>(`/stores/${sid}/products?active=true`)
+      .then((r) => setStoreProducts(r.data.data))
+      .catch(() => setError('Error al cargar los productos'))
+      .finally(() => setLoadingProducts(false));
   }, []);
 
   function handleStudentChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const student = students.find((s) => s.id === e.target.value) ?? null;
     setSelectedStudent(student);
-    if (student) loadSchoolData(student.school.id);
+    if (student) loadStores(student.school.id);
   }
 
-  function setQty(product: Product, qty: number) {
-    if (product.stock !== null && qty > product.stock) {
-      qty = product.stock;
+  function handleStoreChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const sid = e.target.value;
+    setStoreId(sid);
+    if (sid) loadStoreProducts(sid);
+    else setStoreProducts([]);
+  }
+
+  function setQty(sp: StoreProduct, qty: number) {
+    if (sp.stock !== null && qty > sp.stock) {
+      qty = sp.stock;
     }
     setCart((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
-      if (qty <= 0) return prev.filter((i) => i.product.id !== product.id);
-      if (existing) return prev.map((i) => i.product.id === product.id ? { ...i, quantity: qty } : i);
-      return [...prev, { product, quantity: qty, customizations: [] }];
+      const existing = prev.find((i) => i.storeProduct.id === sp.id);
+      if (qty <= 0) return prev.filter((i) => i.storeProduct.id !== sp.id);
+      if (existing) return prev.map((i) => i.storeProduct.id === sp.id ? { ...i, quantity: qty } : i);
+      return [...prev, { storeProduct: sp, quantity: qty, customizations: [] }];
     });
   }
 
-  function toggleCustomization(productId: string, option: string) {
+  function toggleCustomization(spId: string, option: string) {
     setCart((prev) => prev.map((i) => {
-      if (i.product.id !== productId) return i;
+      if (i.storeProduct.id !== spId) return i;
       const isSelected = i.customizations.includes(option);
       const newCust = isSelected ? i.customizations.filter((c) => c !== option) : [...i.customizations, option];
       return { ...i, customizations: newCust };
     }));
   }
 
-  function getQty(productId: string) {
-    return cart.find((i) => i.product.id === productId)?.quantity ?? 0;
+  function getQty(spId: string) {
+    return cart.find((i) => i.storeProduct.id === spId)?.quantity ?? 0;
   }
 
-  const total = cart.reduce((s, i) => s + parseFloat(i.product.price) * i.quantity, 0);
+  const total = cart.reduce((s, i) => s + getEffectivePrice(i.storeProduct) * i.quantity, 0);
   const balance = selectedStudent ? parseFloat(selectedStudent.balance) : 0;
   const hasEnough = balance >= total && total > 0;
+
+  // Agrupar por categoría
+  const grouped = storeProducts.reduce<Record<string, StoreProduct[]>>((acc, sp) => {
+    const cat = sp.product.category ?? 'otro';
+    (acc[cat] ??= []).push(sp);
+    return acc;
+  }, {});
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,7 +170,11 @@ export default function NewOrderPage() {
         store_id: storeId,
         scheduled_date: scheduledDate,
         notes: notes || undefined,
-        items: cart.map((i) => ({ product_id: i.product.id, quantity: i.quantity, customizations: i.customizations })),
+        items: cart.map((i) => ({
+          store_product_id: i.storeProduct.id,
+          quantity: i.quantity,
+          customizations: i.customizations,
+        })),
       });
       navigate(`/orders/${r.data.data.id}`);
     } catch (err: unknown) {
@@ -181,7 +230,7 @@ export default function NewOrderPage() {
                   {loadingStudent ? (
                     <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '8px 0' }}>Cargando...</p>
                   ) : (
-                    <select id="store" className="form-select" value={storeId} onChange={(e) => setStoreId(e.target.value)} required>
+                    <select id="store" className="form-select" value={storeId} onChange={handleStoreChange} required>
                       <option value="">Selecciona...</option>
                       {stores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
@@ -197,68 +246,96 @@ export default function NewOrderPage() {
                 </div>
               </div>
 
-              {/* Productos */}
-              {!loadingStudent && products.length > 0 && (
+              {/* Productos por categoría */}
+              {storeId && !loadingProducts && storeProducts.length > 0 && (
                 <div style={{ marginTop: 20 }}>
-                  <p className="form-label" style={{ marginBottom: 12 }}>Productos</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {products.map((product) => {
-                      const qty = getQty(product.id);
-                      return (
-                        <div key={product.id} className="user-card" style={{ padding: '14px 16px', marginBottom: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                            <div style={{ flex: 1 }}>
-                              <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 500 }}>
-                                {product.name}
-                                {product.is_healthy && (
-                                  <span className="role-badge" style={{ marginLeft: 8, fontSize: 11 }}>Saludable</span>
-                                )}
-                              </p>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>{fmt(product.price)}</p>
-                                {product.stock !== null && (
-                                  <span style={{ fontSize: 12, color: product.stock <= 5 ? 'var(--color-error)' : 'var(--color-text-muted)' }}>
-                                    📦 Quedan: {product.stock}
-                                  </span>
-                                )}
+                  {Object.entries(grouped).map(([cat, items]) => (
+                    <div key={cat} style={{ marginBottom: 20 }}>
+                      <p className="form-label" style={{ marginBottom: 10, fontSize: 15 }}>
+                        {categoryLabels[cat] ?? `📦 ${cat}`}
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {items.map((sp) => {
+                          const qty = getQty(sp.id);
+                          const price = getEffectivePrice(sp);
+                          const hasCustomPrice = sp.price !== null;
+                          return (
+                            <div key={sp.id} className="user-card" style={{ padding: '14px 16px', marginBottom: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                                <div style={{ flex: 1 }}>
+                                  <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 500 }}>
+                                    {sp.product.name}
+                                    {sp.product.is_healthy && (
+                                      <span className="role-badge" style={{ marginLeft: 8, fontSize: 11 }}>Saludable</span>
+                                    )}
+                                  </p>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
+                                      {fmt(price)}
+                                      {hasCustomPrice && (
+                                        <span style={{ textDecoration: 'line-through', marginLeft: 6, fontSize: 11, opacity: 0.5 }}>
+                                          {fmt(sp.product.base_price)}
+                                        </span>
+                                      )}
+                                    </p>
+                                    {sp.stock !== null && (
+                                      <span style={{ fontSize: 12, color: sp.stock <= 5 ? 'var(--color-error)' : 'var(--color-text-muted)' }}>
+                                        📦 Quedan: {sp.stock}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <button type="button" onClick={() => setQty(sp, qty - 1)}
+                                    style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid var(--color-border-md)', background: 'white', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                                  <span style={{ width: 24, textAlign: 'center', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 14 }}>{qty}</span>
+                                  <button type="button" onClick={() => setQty(sp, qty + 1)}
+                                    disabled={sp.stock !== null && qty >= sp.stock}
+                                    style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid var(--color-border-md)', background: 'white', cursor: (sp.stock !== null && qty >= sp.stock) ? 'not-allowed' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (sp.stock !== null && qty >= sp.stock) ? 0.5 : 1 }}>+</button>
+                                </div>
                               </div>
+                              
+                              {qty > 0 && sp.product.customizable_options && sp.product.customizable_options.length > 0 && (
+                                <div style={{ background: 'var(--color-gray-50)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--color-border)' }}>
+                                  <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: 'var(--color-text)' }}>Personalizar:</p>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                                    {sp.product.customizable_options.map((opt) => {
+                                      const isSelected = cart.find(i => i.storeProduct.id === sp.id)?.customizations.includes(opt);
+                                      return (
+                                        <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                          <input
+                                            type="checkbox"
+                                            checked={isSelected ?? false}
+                                            onChange={() => toggleCustomization(sp.id, opt)}
+                                            style={{ accentColor: 'var(--color-brand)' }}
+                                          />
+                                          {opt}
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <button type="button" onClick={() => setQty(product, qty - 1)}
-                                style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid var(--color-border-md)', background: 'white', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-                              <span style={{ width: 24, textAlign: 'center', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 14 }}>{qty}</span>
-                              <button type="button" onClick={() => setQty(product, qty + 1)}
-                                disabled={product.stock !== null && qty >= product.stock}
-                                style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid var(--color-border-md)', background: 'white', cursor: (product.stock !== null && qty >= product.stock) ? 'not-allowed' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (product.stock !== null && qty >= product.stock) ? 0.5 : 1 }}>+</button>
-                            </div>
-                          </div>
-                          
-                          {qty > 0 && product.customizable_options && product.customizable_options.length > 0 && (
-                            <div style={{ background: 'var(--color-gray-50)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--color-border)' }}>
-                              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: 'var(--color-text)' }}>Personalizar:</p>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                                {product.customizable_options.map((opt) => {
-                                  const isSelected = cart.find(i => i.product.id === product.id)?.customizations.includes(opt);
-                                  return (
-                                    <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                                      <input
-                                        type="checkbox"
-                                        checked={isSelected ?? false}
-                                        onChange={() => toggleCustomization(product.id, opt)}
-                                        style={{ accentColor: 'var(--color-brand)' }}
-                                      />
-                                      {opt}
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              )}
+
+              {storeId && !loadingProducts && storeProducts.length === 0 && (
+                <div className="roadmap-note" style={{ marginTop: 20 }}>
+                  <p style={{ margin: 0, fontSize: 14 }}>🛒 Esta tienda no tiene productos asignados aún.</p>
+                  <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--color-text-muted)' }}>
+                    El administrador de la tienda debe agregar productos desde el catálogo global.
+                  </p>
+                </div>
+              )}
+
+              {loadingProducts && (
+                <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 16 }}>Cargando productos de la tienda...</p>
               )}
 
               {/* Notas */}

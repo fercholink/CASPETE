@@ -312,7 +312,7 @@ function ParentDashboard() {
             {data.recent_orders.map(o => {
               const st = ORDER_STATUS[o.status] ?? { label: o.status, color: 'var(--color-text-muted)' };
               return (
-                <div key={o.id} className="user-card" style={{ padding: '12px 16px', marginBottom: 0 }}
+                <div key={o.id} className="user-card"
                   onClick={() => navigate(`/orders/${o.id}`)} role="button" style={{ padding: '12px 16px', marginBottom: 0, cursor: 'pointer' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>

@@ -48,7 +48,7 @@ export default function SchoolFormPage() {
           name: s.name, nit: s.nit ?? '', city: s.city,
           department: s.department ?? '', address: s.address ?? '',
           phone: s.phone ?? '', email: s.email ?? '',
-          logo_url: s.logo_url ?? '', plan: s.plan,
+          logo_url: s.logo_url ?? '', plan: s.plan as typeof emptyForm.plan,
         });
       })
       .catch(() => setError('No se pudo cargar el colegio'))

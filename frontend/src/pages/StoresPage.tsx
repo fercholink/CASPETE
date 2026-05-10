@@ -43,7 +43,7 @@ export default function StoresPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'SCHOOL_ADMIN';
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const _isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   // ─── Data fetching ──────────────────────────────────────────────
 

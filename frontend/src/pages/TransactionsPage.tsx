@@ -80,7 +80,7 @@ export default function TransactionsPage() {
 
   useEffect(() => { if (studentId) fetchTx(page); }, [fetchTx, page, studentId]);
 
-  const isParent = user?.role === 'PARENT';
+  const _isParent = user?.role === 'PARENT';
 
   if (!studentId) {
     return (

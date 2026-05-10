@@ -41,7 +41,7 @@ export default function SchoolsPage() {
   const [filterPlan, setFilterPlan] = useState('');
   const [filterActive, setFilterActive] = useState('');
   const [page, setPage] = useState(1);
-  const isSA = user?.role === 'SUPER_ADMIN';
+  const _isSA = user?.role === 'SUPER_ADMIN';
 
   const fetchSchools = useCallback((pg = 1) => {
     setLoading(true);

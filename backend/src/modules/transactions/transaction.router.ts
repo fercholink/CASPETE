@@ -6,7 +6,12 @@ import { requireRole } from '../../middleware/rbac.middleware.js';
 const router = Router();
 router.use(authenticate);
 
-// GET /api/transactions?student_id=  — historial de transacciones de un estudiante
-router.get('/', requireRole('PARENT', 'VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN'), txController.list);
+const allRoles = requireRole('PARENT', 'VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN');
+
+// GET /api/transactions/stats?student_id=
+router.get('/stats', allRoles, txController.getStats);
+
+// GET /api/transactions?student_id=&page=&limit=&type=
+router.get('/', allRoles, txController.list);
 
 export default router;

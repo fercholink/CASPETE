@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
@@ -21,8 +21,16 @@ interface Student {
   school: { name: string };
 }
 
+interface TxStats {
+  total: number; topups: number; charges: number; refunds: number;
+  totalTopup: string; totalCharge: string;
+}
+
 const TYPE_LABEL: Record<string, string> = {
   TOPUP: 'Recarga', CHARGE: 'Cobro', REFUND: 'Reembolso', ADJUSTMENT: 'Ajuste',
+};
+const TYPE_ICON: Record<string, string> = {
+  TOPUP: '💰', CHARGE: '🛒', REFUND: '↩️', ADJUSTMENT: '⚙️',
 };
 const TYPE_STYLE: Record<string, React.CSSProperties> = {
   TOPUP:      { background: 'var(--color-brand-light)', color: 'var(--color-brand-deep)' },
@@ -48,23 +56,33 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [typeFilter, setTypeFilter] = useState('');
+  const [stats, setStats] = useState<TxStats | null>(null);
+
+  const fetchTx = useCallback((pg = 1) => {
+    setLoading(true);
+    const p = new URLSearchParams();
+    p.set('student_id', studentId); p.set('page', String(pg)); p.set('limit', '30');
+    if (typeFilter) p.set('type', typeFilter);
+    apiClient.get<{ data: { transactions: Transaction[]; total: number; page: number; pages: number } }>(`/transactions?${p}`)
+      .then(r => { setTransactions(r.data.data.transactions); setTotalPages(r.data.data.pages); setError(''); })
+      .catch(e => setError((e as any).response?.data?.error ?? 'Error al cargar'))
+      .finally(() => setLoading(false));
+  }, [studentId, typeFilter]);
 
   useEffect(() => {
     if (!studentId) { setError('Falta student_id'); setLoading(false); return; }
-
-    Promise.all([
-      apiClient.get<{ data: Student }>(`/students/${studentId}`).then((r) => setStudent(r.data.data)),
-      apiClient.get<{ data: Transaction[] }>(`/transactions?student_id=${studentId}`).then((r) => setTransactions(r.data.data)),
-    ])
-      .catch((e) => setError((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al cargar'))
-      .finally(() => setLoading(false));
+    apiClient.get<{ data: Student }>(`/students/${studentId}`).then(r => setStudent(r.data.data)).catch(() => {});
+    apiClient.get<{ data: TxStats }>(`/transactions/stats?student_id=${studentId}`).then(r => setStats(r.data.data)).catch(() => {});
   }, [studentId]);
 
-  const isParent = user?.role === 'PARENT';
-  const backTo = isParent ? '/students' : '/students';
+  useEffect(() => { if (studentId) fetchTx(page); }, [fetchTx, page, studentId]);
 
-  if (loading) return <div className="auth-page"><div className="roadmap-note" style={{ maxWidth: 560, width: '100%' }}>Cargando...</div></div>;
-  if (error) return <div className="auth-page"><p className="form-error" style={{ maxWidth: 560, width: '100%' }}>{error}</p></div>;
+  const isParent = user?.role === 'PARENT';
+
+  if (!studentId) return <div className="auth-page"><p className="form-error" style={{ maxWidth: 560 }}>Falta student_id en la URL</p></div>;
 
   return (
     <>
@@ -73,17 +91,21 @@ export default function TransactionsPage() {
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Inicio
+            <span className="desktop-only">Inicio</span>
           </button>
-          <button className="btn-ghost" onClick={logout}>Cerrar sesión</button>
+          <button className="btn-ghost" onClick={logout}>
+            <span className="desktop-only">Cerrar sesión</span>
+            <span className="mobile-only">Salir</span>
+          </button>
         </div>
       </nav>
 
       <main className="dashboard-body">
-        <Link to={backTo} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-muted)', textDecoration: 'none', marginBottom: 24 }}>
+        <Link to="/students" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-muted)', textDecoration: 'none', marginBottom: 20 }}>
           ← Volver a estudiantes
         </Link>
 
+        {/* Student header card */}
         {student && (
           <div className="user-card" style={{ marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
@@ -104,33 +126,57 @@ export default function TransactionsPage() {
           </div>
         )}
 
-        <div style={{ marginBottom: 16 }}>
-          <p className="dashboard-label">Historial</p>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, letterSpacing: '-0.4px' }}>Movimientos de saldo</h2>
-        </div>
-
-        {transactions.length === 0 && (
-          <div className="roadmap-note">No hay movimientos registrados.</div>
+        {/* Stats cards */}
+        {stats && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 20 }}>
+            {[
+              { label: 'Total recargas', value: fmt(stats.totalTopup), sub: `${stats.topups} mov.`, icon: '💰', color: '#059669' },
+              { label: 'Total cobros', value: fmt(stats.totalCharge), sub: `${stats.charges} mov.`, icon: '🛒', color: '#c37d0d' },
+              { label: 'Reembolsos', value: stats.refunds, sub: 'movimientos', icon: '↩️', color: '#3772cf' },
+              { label: 'Movimientos', value: stats.total, sub: 'total', icon: '📊', color: '#6366f1' },
+            ].map(s => (
+              <div key={s.label} className="user-card" style={{ padding: '12px 14px', marginBottom: 0, textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: 18 }}>{s.icon}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 18, fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)' }}>{s.value}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
         )}
 
-        {transactions.length > 0 && (
+        {/* Filter bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, flex: 1 }}>Movimientos</h2>
+          <select className="form-select" value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); }} style={{ width: 150, marginBottom: 0 }}>
+            <option value="">Todos</option>
+            <option value="TOPUP">Recargas</option>
+            <option value="CHARGE">Cobros</option>
+            <option value="REFUND">Reembolsos</option>
+            <option value="ADJUSTMENT">Ajustes</option>
+          </select>
+        </div>
+
+        {loading && <div className="roadmap-note">Cargando movimientos...</div>}
+        {error && <p className="form-error">{error}</p>}
+
+        {!loading && !error && transactions.length === 0 && (
+          <div className="roadmap-note">No hay movimientos{typeFilter ? ' con este filtro' : ''}.</div>
+        )}
+
+        {!loading && transactions.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {transactions.map((tx) => (
-              <div key={tx.id} className="user-card" style={{ padding: '16px 20px', marginBottom: 0 }}>
+              <div key={tx.id} className="user-card" style={{ padding: '14px 18px', marginBottom: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-                    <span className="role-badge" style={{ ...TYPE_STYLE[tx.type], flexShrink: 0 }}>
-                      {TYPE_LABEL[tx.type]}
-                    </span>
+                    <span style={{ fontSize: 22, flexShrink: 0 }}>{TYPE_ICON[tx.type]}</span>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
-                        {fmtDate(tx.created_at)}
-                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span className="role-badge" style={{ ...TYPE_STYLE[tx.type], fontSize: 11 }}>{TYPE_LABEL[tx.type]}</span>
+                        <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>{fmtDate(tx.created_at)}</span>
+                      </div>
                       {tx.order && (
-                        <Link
-                          to={`/orders/${tx.order.id}`}
-                          style={{ fontSize: 12, color: 'var(--color-text-muted)', textDecoration: 'none' }}
-                        >
+                        <Link to={`/orders/${tx.order.id}`} style={{ fontSize: 12, color: 'var(--color-text-muted)', textDecoration: 'none' }}>
                           Pedido del {new Date(tx.order.scheduled_date).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })} →
                         </Link>
                       )}
@@ -139,9 +185,8 @@ export default function TransactionsPage() {
 
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <p style={{
-                      margin: '0 0 2px',
-                      fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)',
-                      color: tx.type === 'TOPUP' || tx.type === 'REFUND' ? 'var(--color-brand-deep)' : 'var(--color-text)',
+                      margin: '0 0 2px', fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                      color: tx.type === 'TOPUP' || tx.type === 'REFUND' ? '#059669' : '#c37d0d',
                     }}>
                       {tx.type === 'TOPUP' || tx.type === 'REFUND' ? '+' : '−'}{fmt(tx.amount)}
                     </p>
@@ -152,6 +197,15 @@ export default function TransactionsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 20 }}>
+            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ fontSize: 13, padding: '6px 14px' }}>← Anterior</button>
+            <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>{page} / {totalPages}</span>
+            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ fontSize: 13, padding: '6px 14px' }}>Siguiente →</button>
           </div>
         )}
       </main>

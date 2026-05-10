@@ -38,13 +38,13 @@ export async function getSummary(actor: JwtPayload) {
   const spIds = topProductsRaw.map(r => r.store_product_id);
   const storeProducts = await prisma.storeProduct.findMany({
     where: { id: { in: spIds } },
-    select: { id: true, product: { select: { id: true, name: true, price: true } } },
+    select: { id: true, product: { select: { id: true, name: true, base_price: true } } },
   });
   const spMap = new Map(storeProducts.map(sp => [sp.id, sp]));
   const topProducts = topProductsRaw.map(r => ({
     product_id: spMap.get(r.store_product_id)?.product.id ?? r.store_product_id,
     name: spMap.get(r.store_product_id)?.product.name ?? 'Desconocido',
-    price: spMap.get(r.store_product_id)?.product.price ?? '0',
+    price: spMap.get(r.store_product_id)?.product.base_price ?? '0',
     total_qty: r._sum?.quantity ?? 0,
   }));
 

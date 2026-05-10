@@ -89,6 +89,7 @@ export async function sendTopupConfirmationEmail(
     NEQUI: 'Nequi',
     BANCOLOMBIA: 'Bancolombia',
     DAVIVIENDA: 'Davivienda',
+    TRANSFERENCIA: 'Transferencia bancaria',
   };
 
   await resend.emails.send({
@@ -140,6 +141,68 @@ export async function sendTopupConfirmationEmail(
 
           <p style="color:#9ca3af;font-size:13px;line-height:1.6;margin:24px 0 0;">
             Ya puedes realizar pedidos para tu hijo/a desde la plataforma Caspete.
+          </p>
+        </td></tr>
+
+        <tr><td style="padding:24px 0;text-align:center;">
+          <p style="color:#9ca3af;font-size:12px;margin:0;">
+            © ${new Date().getFullYear()} Caspete · Loncheras Escolares Inteligentes<br/>
+            <a href="https://caspete.com" style="color:#1a4731;">caspete.com</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+    `,
+  });
+}
+
+export async function sendTopupRejectionEmail(
+  to: string,
+  parentName: string,
+  studentName: string,
+  amount: number,
+) {
+  await resend.emails.send({
+    from: `Caspete <${env.EMAIL_FROM}>`,
+    to,
+    subject: `❌ Solicitud de recarga no aprobada — ${fmtCOP(amount)} para ${studentName}`,
+    html: `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Recarga no aprobada - Caspete</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f0;padding:40px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+        <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
+          <div style="font-size:36px;margin-bottom:8px;">🎒</div>
+          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">CASPETE</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
+        </td></tr>
+
+        <tr><td style="background:#ffffff;padding:40px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 8px;">Hola, ${parentName} 👋</h1>
+          <p style="color:#6b7280;font-size:15px;line-height:1.6;margin:0 0 24px;">
+            Tu solicitud de recarga de <strong>${fmtCOP(amount)}</strong> para <strong>${studentName}</strong> no pudo ser aprobada en esta ocasión.
+          </p>
+
+          <div style="background:#fff5f5;border-left:4px solid #e53e3e;border-radius:4px;padding:16px;margin:24px 0;">
+            <p style="color:#742a2a;font-size:14px;margin:0;">
+              ⚠️ Si crees que esto es un error o tienes preguntas, por favor comunícate con la administración del colegio o escríbenos a <a href="mailto:info@caspete.com" style="color:#1a4731;">info@caspete.com</a>.
+            </p>
+          </div>
+
+          <p style="color:#9ca3af;font-size:13px;line-height:1.6;margin:24px 0 0;">
+            Puedes realizar una nueva solicitud de recarga desde la plataforma Caspete cuando lo desees.
           </p>
         </td></tr>
 

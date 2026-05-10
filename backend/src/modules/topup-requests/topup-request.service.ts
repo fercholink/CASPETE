@@ -1,7 +1,7 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
-import { sendTopupConfirmationEmail } from '../../lib/email.js';
+import { sendTopupConfirmationEmail, sendTopupRejectionEmail } from '../../lib/email.js';
 import * as nequi from '../../lib/nequi.js';
 
 export interface ConfirmTopupInput {
@@ -197,7 +197,24 @@ export async function processTopupRequest(id: string, action: 'APPROVED' | 'REJE
   }
 
   if (action === 'REJECTED') {
-    return prisma.topupRequest.update({ where: { id }, data: { status: 'REJECTED' }, select: topupSelect });
+    const rejected = await prisma.topupRequest.update({
+      where: { id },
+      data: { status: 'REJECTED' },
+      select: topupSelect,
+    });
+    // Notificar al padre
+    try {
+      await sendTopupRejectionEmail(
+        rejected.parent.email,
+        rejected.parent.full_name,
+        rejected.student.full_name,
+        rejected.amount.toNumber(),
+      );
+      console.log(`[Email] Notificación de rechazo enviada a ${rejected.parent.email}`);
+    } catch (emailErr) {
+      console.error(`[Email] Error al enviar notificación de rechazo:`, emailErr);
+    }
+    return rejected;
   }
 
   const result = await confirmTopup({

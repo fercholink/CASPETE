@@ -265,13 +265,55 @@ export default function OrderDetailPage() {
                 </span>
               ))}
             </div>
-            
+
             <p className="dashboard-label" style={{ marginBottom: 8 }}>O escanea este QR</p>
-            <div style={{ display: 'flex', justifyContent: 'center', background: '#fff', padding: 16, borderRadius: 16, border: '1px solid var(--color-border)', width: 'fit-content', margin: '0 auto' }}>
+            <div
+              id="qr-code-container"
+              style={{ display: 'flex', justifyContent: 'center', background: '#fff', padding: 16, borderRadius: 16, border: '1px solid var(--color-border)', width: 'fit-content', margin: '0 auto 16px' }}
+            >
               <QRCode value={`CASPETE:STUDENT:${order.student.id}:${order.otp_code}`} size={160} />
             </div>
+
+            {/* Botón descargar QR */}
+            <button
+              className="btn-ghost"
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              onClick={async () => {
+                try {
+                  const svgEl = document.querySelector('#qr-code-container svg') as SVGSVGElement | null;
+                  if (!svgEl) return;
+
+                  const svgData = new XMLSerializer().serializeToString(svgEl);
+                  const canvas  = document.createElement('canvas');
+                  const scale   = 3; // alta resolución para imprimir
+                  canvas.width  = 160 * scale;
+                  canvas.height = 160 * scale;
+                  const ctx = canvas.getContext('2d')!;
+                  ctx.fillStyle = '#ffffff';
+                  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                  const img = new Image();
+                  const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                  const url  = URL.createObjectURL(blob);
+
+                  img.onload = () => {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    URL.revokeObjectURL(url);
+
+                    const link = document.createElement('a');
+                    link.download = `QR-${order.student.full_name.replace(/\s+/g, '_')}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                  };
+                  img.src = url;
+                } catch { alert('No se pudo descargar el QR'); }
+              }}
+            >
+              <span>⬇️</span> Descargar QR para imprimir
+            </button>
           </div>
         )}
+
 
         {/* QR Scanner modal para vendor */}
         {isScanning && (

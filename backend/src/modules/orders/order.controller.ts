@@ -79,3 +79,9 @@ export async function deleteOne(req: Request, res: Response) {
   await orderService.deleteOrder(id, req.user!);
   sendSuccess(res, null, 'Pedido eliminado permanentemente');
 }
+
+export async function previewDelivery(req: Request, res: Response) {
+  const { student_id, delivery_code } = req.body;
+  const result = await orderService.previewStudentDelivery(student_id, delivery_code, req.user!);
+  sendSuccess(res, result);
+}

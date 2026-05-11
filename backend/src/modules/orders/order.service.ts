@@ -407,6 +407,58 @@ export async function deliverStudentOrders(studentId: string, deliveryCode: stri
   return { delivered: result.count, orders: updatedOrders };
 }
 
+export async function previewStudentDelivery(studentId: string, deliveryCode: string, actor: JwtPayload) {
+  if (!['VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(actor.role)) {
+    throw new AppError('No autorizado', 403);
+  }
+
+  const student = await prisma.student.findUnique({
+    where: { id: studentId },
+    select: {
+      id: true,
+      full_name: true,
+      grade: true,
+      photo_url: true,
+      delivery_code: true,
+      school: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!student) throw new AppError('Estudiante no encontrado', 404);
+  if (!student.delivery_code) throw new AppError('El estudiante no tiene código de entrega asignado', 400);
+  if (deliveryCode !== student.delivery_code) throw new AppError('Código de entrega inválido', 400);
+
+  // Pedidos CONFIRMED listos para entregar
+  const orders = await prisma.lunchOrder.findMany({
+    where: { student_id: studentId, status: 'CONFIRMED' },
+    orderBy: { scheduled_date: 'asc' },
+    select: {
+      id: true,
+      scheduled_date: true,
+      total_amount: true,
+      store: { select: { name: true } },
+      order_items: {
+        select: {
+          quantity: true,
+          store_product: { select: { product: { select: { name: true } } } },
+        },
+      },
+    },
+  });
+
+  return {
+    student: {
+      id: student.id,
+      full_name: student.full_name,
+      grade: student.grade,
+      photo_url: student.photo_url,
+      school: student.school,
+    },
+    orders,
+    ready_to_deliver: orders.length,
+  };
+}
+
 export async function topupStudent(studentId: string, input: TopupInput, actor: JwtPayload) {
   const student = await prisma.student.findUnique({
     where: { id: studentId },

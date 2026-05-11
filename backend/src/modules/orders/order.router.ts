@@ -31,6 +31,9 @@ router.patch('/:id/cancel', allRoles, orderController.cancel);
 // POST   /api/orders/:id/deliver             — entregar con OTP (VENDOR)
 router.post('/:id/deliver', deliveryLimiter, requireRole('VENDOR'), orderController.deliver);
 
+// POST   /api/orders/preview-delivery         — previsualizar entrega: info estudiante (VENDOR)
+router.post('/preview-delivery', requireRole('VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN'), orderController.previewDelivery);
+
 // POST   /api/orders/deliver-student         — entregar pedidos de un estudiante (VENDOR)
 router.post('/deliver-student', deliveryLimiter, requireRole('VENDOR'), orderController.deliverStudent);
 

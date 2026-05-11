@@ -25,7 +25,7 @@ export const createOrderSchema = z.object({
 });
 
 export const deliverOrderSchema = z.object({
-  otp_code: z.string().length(4),
+  otp_code: z.string().min(4).max(6),
 });
 
 export const topupSchema = z.object({

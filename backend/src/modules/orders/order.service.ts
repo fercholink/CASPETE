@@ -235,12 +235,20 @@ export async function bulkConfirmOrders(actor: JwtPayload, scheduledDate?: strin
 }
 
 export async function getOrder(id: string, actor: JwtPayload) {
-  const order = await prisma.lunchOrder.findUnique({
+  let order = await prisma.lunchOrder.findUnique({
     where: { id },
     select: { ...orderSelect },
   });
   if (!order) throw new AppError('Pedido no encontrado', 404);
   await assertAccess(order, actor);
+
+  // Si el pedido está confirmado y el estudiante no tiene delivery_code, generarlo ahora
+  if (order.status === 'CONFIRMED' && !order.student.delivery_code) {
+    const newCode = String(Math.floor(100000 + Math.random() * 900000)).substring(0, 6);
+    await prisma.student.update({ where: { id: order.student.id }, data: { delivery_code: newCode } });
+    // Re-fetch para que otp_code refleje el nuevo código
+    order = (await prisma.lunchOrder.findUnique({ where: { id }, select: { ...orderSelect } }))!;
+  }
 
   let otpCode: string | null = null;
   if (actor.role === 'PARENT' && order.status === 'CONFIRMED') {
@@ -321,15 +329,25 @@ export async function cancelOrder(id: string, actor: JwtPayload) {
 }
 
 export async function deliverOrder(id: string, otpCode: string, actor: JwtPayload) {
-  const order = await prisma.lunchOrder.findUnique({
+  let order = await prisma.lunchOrder.findUnique({
     where: { id },
     select: { ...orderSelect },
   });
   if (!order) throw new AppError('Pedido no encontrado', 404);
   await assertAccess(order, actor);
   if (order.status !== 'CONFIRMED') throw new AppError('Solo se pueden entregar pedidos confirmados', 400);
-  if (!order.student.delivery_code) throw new AppError('El estudiante no tiene un código de entrega asignado.', 400);
-  if (otpCode !== order.student.delivery_code) throw new AppError('Código de entrega inválido', 400);
+
+  // Auto-generar delivery_code si el estudiante no tiene uno
+  if (!order.student.delivery_code) {
+    const newCode = String(Math.floor(100000 + Math.random() * 900000)).substring(0, 6);
+    await prisma.student.update({ where: { id: order.student.id }, data: { delivery_code: newCode } });
+    throw new AppError(
+      `Se asignó un código nuevo al estudiante (${newCode}). Pide al padre que abra el pedido en la app para ver el código e intenta de nuevo.`,
+      400,
+    );
+  }
+
+  if (otpCode !== order.student.delivery_code) throw new AppError('Código de entrega inválido. Verifica el número de 6 dígitos.', 400);
 
   const delivered = await prisma.lunchOrder.update({
     where: { id },
@@ -350,10 +368,20 @@ export async function deliverOrder(id: string, otpCode: string, actor: JwtPayloa
 }
 
 export async function deliverStudentOrders(studentId: string, deliveryCode: string, actor: JwtPayload) {
-  const student = await prisma.student.findUnique({ where: { id: studentId } });
+  let student = await prisma.student.findUnique({ where: { id: studentId } });
   if (!student) throw new AppError('Estudiante no encontrado', 404);
-  if (!student.delivery_code) throw new AppError('El estudiante no tiene código de entrega asignado.', 400);
-  if (deliveryCode !== student.delivery_code) throw new AppError('Código de entrega inválido', 400);
+
+  // Auto-generar delivery_code si el estudiante no tiene uno
+  if (!student.delivery_code) {
+    const newCode = String(Math.floor(100000 + Math.random() * 900000)).substring(0, 6);
+    await prisma.student.update({ where: { id: studentId }, data: { delivery_code: newCode } });
+    throw new AppError(
+      `Se asignó un código nuevo al estudiante (${newCode}). Pide al padre que abra la app e intenta de nuevo.`,
+      400,
+    );
+  }
+
+  if (deliveryCode !== student.delivery_code) throw new AppError('Código de entrega inválido. Verifica el número de 6 dígitos.', 400);
 
   const vendorSchoolId = actor.role === 'VENDOR'
     ? (actor.schoolId ?? (await prisma.user.findUnique({ where: { id: actor.sub }, select: { school_id: true } }))?.school_id)
@@ -425,8 +453,19 @@ export async function previewStudentDelivery(studentId: string, deliveryCode: st
   });
 
   if (!student) throw new AppError('Estudiante no encontrado', 404);
-  if (!student.delivery_code) throw new AppError('El estudiante no tiene código de entrega asignado', 400);
+
+  // Auto-generar delivery_code si el estudiante no tiene uno
+  if (!student.delivery_code) {
+    const newCode = String(Math.floor(100000 + Math.random() * 900000)).substring(0, 6);
+    await prisma.student.update({ where: { id: studentId }, data: { delivery_code: newCode } });
+    throw new AppError(
+      `Se asignó un código nuevo al estudiante. Pide al padre que abra la app y vea el pedido para ver el código, luego intenta de nuevo.`,
+      400,
+    );
+  }
+
   if (deliveryCode !== student.delivery_code) throw new AppError('Código de entrega inválido', 400);
+
 
   // Pedidos CONFIRMED listos para entregar
   const orders = await prisma.lunchOrder.findMany({

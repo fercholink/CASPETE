@@ -75,6 +75,7 @@ export default function OrderDetailPage() {
   const [delivering, setDelivering] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [photoZoom, setPhotoZoom] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -326,7 +327,98 @@ export default function OrderDetailPage() {
         {/* Formulario de entrega para VENDOR */}
         {isVendor && order.status === 'CONFIRMED' && (
           <div className="user-card" style={{ marginBottom: 12 }}>
-            <p className="dashboard-label" style={{ marginBottom: 8 }}>Verificar entrega</p>
+            <p className="dashboard-label" style={{ marginBottom: 12 }}>Verificar entrega</p>
+
+            {/* Tarjeta del estudiante con foto ampliable */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16,
+              padding: 14, background: '#f0fdf4', borderRadius: 14,
+              border: '2px solid #bbf7d0',
+            }}>
+              {/* Foto clickeable */}
+              <div
+                onClick={() => order.student.photo_url && setPhotoZoom(true)}
+                style={{
+                  position: 'relative', flexShrink: 0,
+                  cursor: order.student.photo_url ? 'zoom-in' : 'default',
+                }}
+                title={order.student.photo_url ? 'Toca para ampliar' : ''}
+              >
+                {order.student.photo_url ? (
+                  <img
+                    src={order.student.photo_url}
+                    alt={order.student.full_name}
+                    style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid #1a4731', display: 'block' }}
+                  />
+                ) : (
+                  <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#1a4731', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: '#fff' }}>
+                    {order.student.full_name.charAt(0)}
+                  </div>
+                )}
+                {order.student.photo_url && (
+                  <div style={{
+                    position: 'absolute', bottom: 2, right: 2,
+                    background: 'rgba(26,71,49,0.85)', borderRadius: '50%',
+                    width: 20, height: 20,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10,
+                  }}>🔍</div>
+                )}
+              </div>
+
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0d1f16', lineHeight: 1.2 }}>
+                  {order.student.full_name}
+                </p>
+                {order.student.grade && (
+                  <p style={{ margin: '3px 0 0', fontSize: 13, color: '#6b7280' }}>
+                    Grado: <strong>{order.student.grade}</strong>
+                  </p>
+                )}
+                {order.student.photo_url && (
+                  <p style={{ margin: '4px 0 0', fontSize: 11, color: '#1a4731', fontWeight: 600 }}>
+                    👆 Toca la foto para ampliar
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Lightbox foto estudiante */}
+            {photoZoom && order.student.photo_url && (
+              <div
+                onClick={() => setPhotoZoom(false)}
+                style={{
+                  position: 'fixed', inset: 0, zIndex: 10000,
+                  background: 'rgba(0,0,0,0.92)',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  cursor: 'zoom-out',
+                }}
+              >
+                <img
+                  src={order.student.photo_url}
+                  alt={order.student.full_name}
+                  style={{
+                    maxWidth: '90vw', maxHeight: '75vh',
+                    borderRadius: 20, objectFit: 'contain',
+                    border: '4px solid #1a4731',
+                    boxShadow: '0 0 60px rgba(0,0,0,0.8)',
+                  }}
+                />
+                <p style={{ color: '#fff', marginTop: 16, fontSize: 20, fontWeight: 700 }}>
+                  {order.student.full_name}
+                </p>
+                {order.student.grade && (
+                  <p style={{ color: 'rgba(255,255,255,0.6)', margin: '4px 0 0', fontSize: 14 }}>
+                    Grado {order.student.grade}
+                  </p>
+                )}
+                <p style={{ color: 'rgba(255,255,255,0.4)', margin: '20px 0 0', fontSize: 12 }}>
+                  Toca en cualquier lugar para cerrar
+                </p>
+              </div>
+            )}
+
             <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--color-text-muted)' }}>
               Escanea el QR del estudiante o ingresa el código de 6 dígitos
             </p>

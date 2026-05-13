@@ -291,13 +291,15 @@ function VendorDashboard() {
 }
 
 // ─── Vista PARENT ─────────────────────────────────────────────
-function ParentDashboard() {
+function ParentDashboard({ onRefresh }: { onRefresh?: () => void }) {
   const [data, setData] = useState<ParentSummary | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     apiClient.get<{ data: ParentSummary }>('/reports/parent').then(r => setData(r.data.data)).catch(() => {});
   }, []);
+
+  useEffect(() => { fetchData(); const i = setInterval(fetchData, 30_000); return () => clearInterval(i); }, [fetchData]);
 
   if (!data) return <div className="roadmap-note">Cargando...</div>;
 
@@ -373,6 +375,14 @@ export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const quickLinks = QUICK_LINKS[user?.role ?? ''] ?? [];
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+
+  function handleRefresh() {
+    setRefreshing(true);
+    setRefreshKey(k => k + 1);
+    setTimeout(() => setRefreshing(false), 800);
+  }
 
   return (
     <>
@@ -406,6 +416,19 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
+            <button
+              className="btn-ghost"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, padding: '6px 14px' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                style={{ transition: 'transform 0.6s', transform: refreshing ? 'rotate(360deg)' : 'none' }}>
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              {refreshing ? 'Actualizando...' : 'Actualizar'}
+            </button>
           </div>
         </div>
 
@@ -429,10 +452,10 @@ export default function DashboardPage() {
         )}
 
         {/* Métricas por rol */}
-        {user?.role === 'SUPER_ADMIN'  && <SuperAdminDashboard />}
-        {user?.role === 'SCHOOL_ADMIN' && <SchoolAdminDashboard />}
-        {user?.role === 'VENDOR'       && <VendorDashboard />}
-        {user?.role === 'PARENT'       && <ParentDashboard />}
+        {user?.role === 'SUPER_ADMIN'  && <SuperAdminDashboard key={refreshKey} />}
+        {user?.role === 'SCHOOL_ADMIN' && <SchoolAdminDashboard key={refreshKey} />}
+        {user?.role === 'VENDOR'       && <VendorDashboard key={refreshKey} />}
+        {user?.role === 'PARENT'       && <ParentDashboard key={refreshKey} />}
       </main>
     </>
   );

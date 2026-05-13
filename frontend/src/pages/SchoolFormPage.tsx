@@ -39,6 +39,21 @@ export default function SchoolFormPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEdit);
   const [error, setError] = useState('');
+  const [logoMode, setLogoMode] = useState<'url' | 'file'>('url');
+  const [logoPreview, setLogoPreview] = useState<string>('');
+
+  function handleLogoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { setError('El logo no puede superar 2 MB'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setForm(p => ({ ...p, logo_url: base64 }));
+      setLogoPreview(base64);
+    };
+    reader.readAsDataURL(file);
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -53,7 +68,11 @@ export default function SchoolFormPage() {
         });
       })
       .catch(() => setError('No se pudo cargar el colegio'))
-      .finally(() => setFetching(false));
+      .finally(() => {
+        setFetching(false);
+        // Si ya tiene logo, detectar si es base64 o URL
+        if (id) setLogoPreview('');
+      });
   }, [id]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -172,14 +191,49 @@ export default function SchoolFormPage() {
 
           {/* Logo */}
           <div className="form-group" style={{ marginTop: 14 }}>
-            <label className="form-label" htmlFor="logo_url">
-              URL del logo <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span>
-            </label>
-            <input id="logo_url" name="logo_url" className="form-input" type="url" value={form.logo_url} onChange={handleChange} placeholder="https://..." />
-            {form.logo_url && (
-              <div style={{ marginTop: 8 }}>
-                <img src={form.logo_url} alt="Preview" style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover', border: '1px solid var(--color-border)' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>
+                Logo del colegio <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span>
+              </label>
+              <div style={{ display: 'flex', gap: 4, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 3 }}>
+                <button type="button" onClick={() => { setLogoMode('file'); }} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: logoMode === 'file' ? 'var(--color-brand-deep)' : 'transparent', color: logoMode === 'file' ? '#fff' : 'var(--color-text-muted)', fontWeight: 600, transition: 'all 0.15s' }}>📁 Archivo</button>
+                <button type="button" onClick={() => { setLogoMode('url'); }} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: logoMode === 'url' ? 'var(--color-brand-deep)' : 'transparent', color: logoMode === 'url' ? '#fff' : 'var(--color-text-muted)', fontWeight: 600, transition: 'all 0.15s' }}>🔗 URL</button>
               </div>
+            </div>
+
+            {logoMode === 'file' ? (
+              <div
+                style={{ border: '2px dashed var(--color-border)', borderRadius: 12, padding: '20px 16px', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-brand-deep)'; }}
+                onDragLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)'; }}
+                onDrop={e => {
+                  e.preventDefault();
+                  (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)';
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleLogoFile({ target: { files: e.dataTransfer.files } } as any);
+                }}
+                onClick={() => document.getElementById('logo-file-input')?.click()}
+              >
+                {(logoPreview || form.logo_url) ? (
+                  <img src={logoPreview || form.logo_url} alt="Logo" style={{ width: 80, height: 80, borderRadius: 12, objectFit: 'cover', border: '1px solid var(--color-border)', marginBottom: 8 }} />
+                ) : (
+                  <div style={{ fontSize: 36, marginBottom: 6 }}>🏫</div>
+                )}
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
+                  {(logoPreview || form.logo_url) ? 'Haz clic para cambiar la imagen' : 'Arrastra una imagen o haz clic para seleccionar'}
+                </p>
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-placeholder)' }}>PNG, JPG, WEBP · máx. 2 MB</p>
+                <input id="logo-file-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoFile} />
+              </div>
+            ) : (
+              <>
+                <input id="logo_url" name="logo_url" className="form-input" type="url" value={form.logo_url} onChange={e => { handleChange(e); setLogoPreview(''); }} placeholder="https://ejemplo.com/logo.png" />
+                {form.logo_url && (
+                  <div style={{ marginTop: 8 }}>
+                    <img src={form.logo_url} alt="Preview" style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover', border: '1px solid var(--color-border)' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                  </div>
+                )}
+              </>
             )}
           </div>
 

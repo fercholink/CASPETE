@@ -160,10 +160,8 @@ export default function SchoolFormPage() {
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="phone">Teléfono</label>
               <div style={{ display: 'flex', gap: 4 }}>
-                <select name="country_code" value={form.country_code} onChange={handleChange} className="form-select" style={{ width: 80, marginBottom: 0 }}>
-                  <option value="+57">+57</option>
-                </select>
-                <input id="phone" name="phone" className="form-input" type="tel" value={form.phone} onChange={handleChange} placeholder="3001234567" style={{ flex: 1, marginBottom: 0 }} />
+                <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', userSelect: 'none' }}>🇨🇴 +57</span>
+                <input id="phone" name="phone" className="form-input" type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="3001234567" style={{ flex: 1, marginBottom: 0 }} />
               </div>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>

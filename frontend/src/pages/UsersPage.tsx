@@ -326,10 +326,8 @@ export default function UsersPage() {
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" htmlFor="new-phone">Teléfono <span style={{ fontWeight: 400, color: 'var(--color-placeholder)' }}>(opc.)</span></label>
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <select value={form.country_code} onChange={e => setForm(p => ({ ...p, country_code: e.target.value }))} className="form-select" style={{ width: 80, marginBottom: 0 }}>
-                      <option value="+57">+57</option>
-                    </select>
-                    <input id="new-phone" className="form-input" type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="3001234567" style={{ flex: 1, marginBottom: 0 }} />
+                    <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', userSelect: 'none' }}>🇨🇴 +57</span>
+                    <input id="new-phone" className="form-input" type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="3001234567" style={{ flex: 1, marginBottom: 0 }} maxLength={10} />
                   </div>
                 </div>
               </div>
@@ -375,10 +373,8 @@ export default function UsersPage() {
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" htmlFor="edit-phone">Teléfono <span style={{ fontWeight: 400, color: 'var(--color-placeholder)' }}>(opc.)</span></label>
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <select value={editForm.country_code} onChange={e => setEditForm(p => ({ ...p, country_code: e.target.value }))} className="form-select" style={{ width: 80, marginBottom: 0 }}>
-                      <option value="+57">+57</option>
-                    </select>
-                    <input id="edit-phone" className="form-input" type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} placeholder="3001234567" style={{ flex: 1, marginBottom: 0 }} />
+                    <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', userSelect: 'none' }}>🇨🇴 +57</span>
+                    <input id="edit-phone" className="form-input" type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="3001234567" style={{ flex: 1, marginBottom: 0 }} maxLength={10} />
                   </div>
                 </div>
               </div>

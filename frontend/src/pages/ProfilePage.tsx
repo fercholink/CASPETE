@@ -15,7 +15,8 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState(user?.full_name ?? '');
-  const [phone, setPhone] = useState(user?.phone ?? '');
+  // Almacenar sólo los 10 dígitos; country_code siempre '+57'
+  const [phone, setPhone] = useState((user?.phone ?? '').replace(/^\+57/, ''));
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState('');
   const [profileError, setProfileError] = useState('');
@@ -35,7 +36,8 @@ export default function ProfilePage() {
     try {
       const r = await apiClient.patch<{ data: { full_name: string; phone: string | null } }>('/auth/profile', {
         full_name: fullName,
-        phone: phone || null,
+        phone: phone ? phone.replace(/\s/g, '') : null,
+        country_code: '+57',
       });
       updateUser({ full_name: r.data.data.full_name });
       setProfileMsg('Perfil actualizado correctamente');
@@ -111,13 +113,18 @@ export default function ProfilePage() {
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="phone">
-                Teléfono <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional, +57XXXXXXXXXX)</span>
+                Teléfono <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span>
               </label>
-              <input
-                id="phone" className="form-input" type="tel"
-                value={phone} onChange={(e) => setPhone(e.target.value)}
-                placeholder="+573001234567"
-              />
+              <div style={{ display: 'flex', gap: 4 }}>
+                <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', userSelect: 'none' }}>🇨🇴 +57</span>
+                <input
+                  id="phone" className="form-input" type="tel"
+                  value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="3001234567"
+                  maxLength={10}
+                  style={{ flex: 1, marginBottom: 0 }}
+                />
+              </div>
             </div>
             {profileMsg && <p style={{ fontSize: 13, color: 'var(--color-brand-deep)', margin: '0 0 12px' }}>{profileMsg}</p>}
             {profileError && <p className="form-error" style={{ marginTop: 0, marginBottom: 12 }}>{profileError}</p>}

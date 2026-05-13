@@ -137,9 +137,8 @@ export default function SchoolFormPage() {
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="plan">Plan</label>
               <select id="plan" name="plan" className="form-select" value={form.plan} onChange={handleChange}>
-                <option value="BASIC">⚡ Básico</option>
-                <option value="STANDARD">⭐ Estándar</option>
-                <option value="PREMIUM">👑 Premium</option>
+                <option value="BASIC">⚡ Plan Mensual</option>
+                <option value="STANDARD">⭐ Plan Comisión</option>
               </select>
             </div>
           </div>

@@ -26,9 +26,8 @@ interface SchoolsResponse {
 }
 
 const PLAN_CFG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  BASIC:    { label: 'Básico',   color: '#64748b', bg: 'rgba(100,116,139,0.08)', icon: '⚡' },
-  STANDARD: { label: 'Estándar', color: '#2563eb', bg: 'rgba(37,99,235,0.08)',  icon: '⭐' },
-  PREMIUM:  { label: 'Premium',  color: '#9333ea', bg: 'rgba(147,51,234,0.08)', icon: '👑' },
+  BASIC:    { label: 'Plan Mensual',   color: '#64748b', bg: 'rgba(100,116,139,0.08)', icon: '⚡' },
+  STANDARD: { label: 'Plan Comisión', color: '#2563eb', bg: 'rgba(37,99,235,0.08)',  icon: '⭐' },
 };
 
 export default function SchoolsPage() {
@@ -139,9 +138,8 @@ export default function SchoolsPage() {
           </div>
           <select className="form-select" value={filterPlan} onChange={e => { setFilterPlan(e.target.value); setPage(1); }} style={{ width: 'auto', minWidth: 130, marginBottom: 0 }}>
             <option value="">Todos los planes</option>
-            <option value="BASIC">⚡ Básico</option>
-            <option value="STANDARD">⭐ Estándar</option>
-            <option value="PREMIUM">👑 Premium</option>
+            <option value="BASIC">⚡ Plan Mensual</option>
+            <option value="STANDARD">⭐ Plan Comisión</option>
           </select>
           <select className="form-select" value={filterActive} onChange={e => { setFilterActive(e.target.value); setPage(1); }} style={{ width: 'auto', minWidth: 120, marginBottom: 0 }}>
             <option value="">Todos</option>

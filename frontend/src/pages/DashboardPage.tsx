@@ -409,17 +409,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Métricas por rol */}
-        {user?.role === 'SUPER_ADMIN'  && <SuperAdminDashboard />}
-        {user?.role === 'SCHOOL_ADMIN' && <SchoolAdminDashboard />}
-        {user?.role === 'VENDOR'       && <VendorDashboard />}
-        {user?.role === 'PARENT'       && <ParentDashboard />}
-
         {/* Accesos rápidos */}
         {quickLinks.length > 0 && (
           <>
             <p className="dashboard-label" style={{ marginBottom: 10 }}>Accesos rápidos</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10, marginBottom: 24 }}>
               {quickLinks.map(link => (
                 <Link key={link.to} to={link.to} style={{ textDecoration: 'none' }}>
                   <div className="user-card" style={{ padding: '16px 14px', marginBottom: 0, cursor: 'pointer', textAlign: 'center', transition: 'border-color 0.15s, transform 0.15s' }}
@@ -433,6 +427,12 @@ export default function DashboardPage() {
             </div>
           </>
         )}
+
+        {/* Métricas por rol */}
+        {user?.role === 'SUPER_ADMIN'  && <SuperAdminDashboard />}
+        {user?.role === 'SCHOOL_ADMIN' && <SchoolAdminDashboard />}
+        {user?.role === 'VENDOR'       && <VendorDashboard />}
+        {user?.role === 'PARENT'       && <ParentDashboard />}
       </main>
     </>
   );

@@ -291,7 +291,7 @@ function VendorDashboard() {
 }
 
 // ─── Vista PARENT ─────────────────────────────────────────────
-function ParentDashboard({ onRefresh }: { onRefresh?: () => void }) {
+function ParentDashboard() {
   const [data, setData] = useState<ParentSummary | null>(null);
   const navigate = useNavigate();
 

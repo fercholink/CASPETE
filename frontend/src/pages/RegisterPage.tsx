@@ -51,7 +51,8 @@ export default function RegisterPage() {
         password: form.password,
         full_name: `${form.firstName.trim()} ${form.lastName.trim()}`,
         role: selectedRole.value,
-        ...(form.phone ? { phone: `+57${form.phone.replace(/\s/g, '')}` } : {}),
+        ...(form.phone ? { phone: form.phone.replace(/\s/g, '') } : {}),
+        country_code: '+57',
       });
       await login(form.email, form.password);
       navigate('/dashboard');

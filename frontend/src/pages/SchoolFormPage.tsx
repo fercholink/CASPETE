@@ -10,6 +10,7 @@ interface SchoolData {
   department: string | null;
   address: string | null;
   phone: string | null;
+  country_code: string | null;
   email: string | null;
   logo_url: string | null;
   plan: 'BASIC' | 'STANDARD' | 'PREMIUM';
@@ -26,7 +27,7 @@ const DEPARTMENTS = [
 
 const emptyForm = {
   name: '', nit: '', city: '', department: '', address: '',
-  phone: '', email: '', logo_url: '', plan: 'BASIC' as const,
+  phone: '', country_code: '+57', email: '', logo_url: '', plan: 'BASIC' as const,
 };
 
 export default function SchoolFormPage() {
@@ -47,7 +48,7 @@ export default function SchoolFormPage() {
         setForm({
           name: s.name, nit: s.nit ?? '', city: s.city,
           department: s.department ?? '', address: s.address ?? '',
-          phone: s.phone ?? '', email: s.email ?? '',
+          phone: s.phone ?? '', country_code: s.country_code ?? '+57', email: s.email ?? '',
           logo_url: s.logo_url ?? '', plan: s.plan as typeof emptyForm.plan,
         });
       })
@@ -69,7 +70,8 @@ export default function SchoolFormPage() {
       ...(form.nit ? { nit: form.nit } : {}),
       ...(form.department ? { department: form.department } : {}),
       ...(form.address ? { address: form.address } : {}),
-      ...(form.phone ? { phone: form.phone } : {}),
+      ...(form.phone ? { phone: form.phone.replace(/\s/g, '') } : {}),
+      country_code: form.country_code,
       ...(form.email ? { email: form.email } : {}),
       ...(form.logo_url ? { logo_url: form.logo_url } : {}),
     };
@@ -157,7 +159,12 @@ export default function SchoolFormPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="phone">Teléfono</label>
-              <input id="phone" name="phone" className="form-input" type="tel" value={form.phone} onChange={handleChange} placeholder="+57 300 123 4567" />
+              <div style={{ display: 'flex', gap: 4 }}>
+                <select name="country_code" value={form.country_code} onChange={handleChange} className="form-select" style={{ width: 80, marginBottom: 0 }}>
+                  <option value="+57">+57</option>
+                </select>
+                <input id="phone" name="phone" className="form-input" type="tel" value={form.phone} onChange={handleChange} placeholder="3001234567" style={{ flex: 1, marginBottom: 0 }} />
+              </div>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="email">Correo</label>

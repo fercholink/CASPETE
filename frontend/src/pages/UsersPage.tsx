@@ -8,6 +8,7 @@ interface User {
   email: string;
   full_name: string;
   phone: string | null;
+  country_code: string | null;
   role: 'PARENT' | 'VENDOR' | 'SCHOOL_ADMIN' | 'SUPER_ADMIN';
   auth_provider: string;
   avatar_url: string | null;
@@ -30,8 +31,8 @@ const RS: Record<string, { bg: string; color: string; icon: string }> = {
 function initials(name: string) { return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase(); }
 function timeAgo(d: string) { const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : days < 30 ? `Hace ${days}d` : `Hace ${Math.floor(days/30)}m`; }
 
-const emptyForm = { full_name: '', email: '', password: '', phone: '', role: 'VENDOR' as 'VENDOR' | 'SCHOOL_ADMIN', school_id: '' };
-const emptyEditForm = { full_name: '', phone: '', role: '' as string, school_id: '' };
+const emptyForm = { full_name: '', email: '', password: '', phone: '', country_code: '+57', role: 'VENDOR' as 'VENDOR' | 'SCHOOL_ADMIN', school_id: '' };
+const emptyEditForm = { full_name: '', phone: '', country_code: '+57', role: '' as string, school_id: '' };
 
 export default function UsersPage() {
   const { user, logout } = useAuth();
@@ -109,7 +110,8 @@ export default function UsersPage() {
     try {
       const payload = {
         full_name: form.full_name, email: form.email, password: form.password, role: form.role,
-        ...(form.phone ? { phone: form.phone } : {}),
+        ...(form.phone ? { phone: form.phone.replace(/\s/g, '') } : {}),
+        country_code: form.country_code,
         ...(isSA && form.school_id ? { school_id: form.school_id } : {}),
       };
       const r = await apiClient.post<{ data: User }>('/users', payload);
@@ -136,6 +138,7 @@ export default function UsersPage() {
     setEditForm({
       full_name: u.full_name,
       phone: u.phone ?? '',
+      country_code: u.country_code ?? '+57',
       role: u.role,
       school_id: u.school?.id ?? '',
     });
@@ -149,7 +152,8 @@ export default function UsersPage() {
     try {
       const payload: Record<string, unknown> = {
         full_name: editForm.full_name,
-        phone: editForm.phone || null,
+        phone: editForm.phone ? editForm.phone.replace(/\s/g, '') : null,
+        country_code: editForm.country_code,
         role: editForm.role,
       };
       if (isSA && editForm.school_id) payload.school_id = editForm.school_id;
@@ -321,7 +325,12 @@ export default function UsersPage() {
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" htmlFor="new-phone">Teléfono <span style={{ fontWeight: 400, color: 'var(--color-placeholder)' }}>(opc.)</span></label>
-                  <input id="new-phone" className="form-input" type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="+573001234567" />
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <select value={form.country_code} onChange={e => setForm(p => ({ ...p, country_code: e.target.value }))} className="form-select" style={{ width: 80, marginBottom: 0 }}>
+                      <option value="+57">+57</option>
+                    </select>
+                    <input id="new-phone" className="form-input" type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="3001234567" style={{ flex: 1, marginBottom: 0 }} />
+                  </div>
                 </div>
               </div>
               {isSA && (
@@ -365,7 +374,12 @@ export default function UsersPage() {
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" htmlFor="edit-phone">Teléfono <span style={{ fontWeight: 400, color: 'var(--color-placeholder)' }}>(opc.)</span></label>
-                  <input id="edit-phone" className="form-input" type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} placeholder="+573001234567" />
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <select value={editForm.country_code} onChange={e => setEditForm(p => ({ ...p, country_code: e.target.value }))} className="form-select" style={{ width: 80, marginBottom: 0 }}>
+                      <option value="+57">+57</option>
+                    </select>
+                    <input id="edit-phone" className="form-input" type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} placeholder="3001234567" style={{ flex: 1, marginBottom: 0 }} />
+                  </div>
                 </div>
               </div>
               {isSA && (

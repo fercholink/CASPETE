@@ -9,8 +9,9 @@ export const registerSchema = z.object({
     .max(200),
   phone: z
     .string()
-    .regex(/^\+57[0-9]{10}$/, 'Teléfono colombiano inválido (+57XXXXXXXXXX)')
+    .regex(/^[0-9]{10}$/, 'Debe tener exactamente 10 dígitos numéricos')
     .optional(),
+  country_code: z.string().optional(),
   role: z.enum(['PARENT']),
   school_id: z.string().uuid('school_id debe ser un UUID válido').optional(),
 });
@@ -22,7 +23,8 @@ export const loginSchema = z.object({
 
 export const updateProfileSchema = z.object({
   full_name: z.string().min(2).max(200).optional(),
-  phone: z.string().regex(/^\+57[0-9]{10}$/, 'Teléfono colombiano inválido (+57XXXXXXXXXX)').optional().nullable(),
+  phone: z.string().regex(/^[0-9]{10}$/, 'Debe tener exactamente 10 dígitos numéricos').optional().nullable(),
+  country_code: z.string().optional().nullable(),
 });
 
 export const changePasswordSchema = z.object({

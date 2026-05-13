@@ -104,6 +104,7 @@ export async function registerUser(input: RegisterInput) {
       password_hash,
       full_name: input.full_name,
       phone: input.phone ?? null,
+      country_code: input.country_code ?? null,
       role: input.role as UserRole,
       school_id: input.school_id ?? null,
     },
@@ -219,9 +220,10 @@ export async function updateProfile(userId: string, input: import('./auth.schema
     data: {
       ...(input.full_name !== undefined && { full_name: input.full_name }),
       ...(input.phone !== undefined && { phone: input.phone }),
+      ...(input.country_code !== undefined && { country_code: input.country_code }),
     },
     select: {
-      id: true, email: true, full_name: true, phone: true,
+      id: true, email: true, full_name: true, phone: true, country_code: true,
       role: true, school_id: true, active: true, created_at: true,
       school: { select: { id: true, name: true, city: true } },
     },

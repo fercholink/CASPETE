@@ -4,7 +4,8 @@ export const createUserSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(8, 'Mínimo 8 caracteres'),
   full_name: z.string().min(2).max(200),
-  phone: z.string().regex(/^\+57[0-9]{10}$/, 'Formato: +57XXXXXXXXXX').optional(),
+  phone: z.string().regex(/^[0-9]{10}$/, 'Formato: 10 dígitos numéricos').optional(),
+  country_code: z.string().optional(),
   role: z.enum(['VENDOR', 'SCHOOL_ADMIN']),
   school_id: z.string().uuid().optional(),
 });
@@ -12,6 +13,7 @@ export const createUserSchema = z.object({
 export const updateUserSchema = z.object({
   full_name: z.string().min(2).max(200).optional(),
   phone: z.string().max(20).nullable().optional(),
+  country_code: z.string().nullable().optional(),
   role: z.enum(['PARENT', 'VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN']).optional(),
   active: z.boolean().optional(),
   school_id: z.string().uuid().nullable().optional(),

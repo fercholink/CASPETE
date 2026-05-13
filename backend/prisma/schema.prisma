@@ -47,8 +47,9 @@ model School {
   city       String   @db.VarChar(100)
   department String?  @db.VarChar(100) // Departamento (e.g. "Antioquia")
   address    String?  @db.Text
-  phone      String?  @db.VarChar(20)
-  email      String?  @db.VarChar(255)
+  phone        String?  @db.VarChar(20)
+  country_code String?  @default("+57") @db.VarChar(5)
+  email        String?  @db.VarChar(255)
   logo_url   String?  @db.Text
   plan       PlanType @default(BASIC)
   active     Boolean  @default(true)
@@ -67,6 +68,7 @@ model User {
   school_id     String?  @db.Uuid
   email         String   @unique @db.VarChar(255)
   phone         String?  @db.VarChar(20)
+  country_code  String?  @default("+57") @db.VarChar(5)
   password_hash String?  @db.Text
   google_id     String?  @unique @db.VarChar(100)
   auth_provider String   @default("local") @db.VarChar(20)

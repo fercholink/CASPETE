@@ -10,6 +10,7 @@ const userSelect = {
   email: true,
   full_name: true,
   phone: true,
+  country_code: true,
   role: true,
   auth_provider: true,
   avatar_url: true,
@@ -43,6 +44,7 @@ export async function createUser(input: CreateUserInput, actor: JwtPayload) {
       password_hash,
       full_name: input.full_name,
       phone: input.phone ?? null,
+      country_code: input.country_code ?? null,
       role: input.role as UserRole,
       school_id: schoolId,
     },
@@ -118,6 +120,7 @@ export async function updateUser(id: string, input: UpdateUserInput, actor: JwtP
     data: {
       ...(input.full_name !== undefined && { full_name: input.full_name }),
       ...(input.phone !== undefined && { phone: input.phone }),
+      ...(input.country_code !== undefined && { country_code: input.country_code }),
       ...(input.active !== undefined && { active: input.active }),
       ...(input.role !== undefined && { role: input.role as UserRole }),
       ...(input.school_id !== undefined && actor.role === 'SUPER_ADMIN' && { school_id: input.school_id || null }),

@@ -1,15 +1,21 @@
 # Etapa 1: Construcción
 FROM node:20-alpine as build-stage
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+
+# Habilitar pnpm (gestor de paquetes seguro)
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copiar manifiesto de dependencias
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile
+
 COPY . .
 
 # Recibir la variable de entorno de Vite en tiempo de build
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
-RUN npm run build
+RUN pnpm run build
 
 # Etapa 2: Producción con Nginx
 FROM nginx:stable-alpine as production-stage

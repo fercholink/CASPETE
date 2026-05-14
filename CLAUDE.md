@@ -8,25 +8,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Roles: `PARENT`, `VENDOR`, `SCHOOL_ADMIN`, `SUPER_ADMIN`
 
+## Package Manager
+
+> **IMPORTANTE:** Este proyecto usa **pnpm** como gestor de paquetes. NUNCA usar `npm install`.
+> - Instalar deps: `pnpm install`
+> - Añadir paquete: `pnpm add <pkg>`
+> - Añadir dev dep: `pnpm add -D <pkg>`
+> - Los Dockerfiles usan `corepack enable && corepack prepare pnpm@latest --activate`
+
 ## Commands
 
 ### Backend (`backend/`)
 ```bash
-npm run dev          # Start with hot reload (tsx watch)
-npm run build        # Compile TypeScript → dist/
-npm start            # Run compiled server
-npm run db:migrate   # Apply Prisma migrations
-npm run db:generate  # Regenerate Prisma client after schema changes
-npm run db:studio    # Open Prisma Studio GUI
-npm run db:seed      # Seed initial data
+pnpm dev             # Start with hot reload (tsx watch)
+pnpm build           # Compile TypeScript → dist/
+pnpm start           # Run compiled server
+pnpm db:migrate      # Apply Prisma migrations
+pnpm db:generate     # Regenerate Prisma client after schema changes
+pnpm db:studio       # Open Prisma Studio GUI
+pnpm db:seed         # Seed initial data
 ```
 
 ### Frontend (`frontend/`)
 ```bash
-npm run dev          # Start Vite dev server (port 5173)
-npm run build        # Type check + production build
-npm run lint         # ESLint
-npm run preview      # Preview production build
+pnpm dev             # Start Vite dev server (port 5173)
+pnpm build           # Type check + production build
+pnpm lint            # ESLint
+pnpm preview         # Preview production build
 ```
 
 Backend runs on `http://localhost:3001`, frontend on `http://localhost:5173`.

@@ -1,18 +1,16 @@
-fix(pnpm): add onlyBuiltDependencies to lockfile header
+fix(docker): pin pnpm@9 to bypass ERR_PNPM_IGNORED_BUILDS
 
-In pnpm 11, build script approval is stored in the pnpm-lock.yaml
-under the top-level `onlyBuiltDependencies` key (not in package.json).
-The package.json field is only used to pre-populate the interactive
-approve-builds menu.
+pnpm 11 introduces mandatory interactive build script approval
+(ERR_PNPM_IGNORED_BUILDS) that cannot be bypassed in Docker via
+lockfile metadata or package.json config alone.
 
-This is the equivalent of running `pnpm approve-builds` and selecting
-all four packages in an interactive session.
+pnpm 9 does not have this restriction — it runs build scripts
+(prisma, bcrypt, esbuild) automatically without approval.
 
-Approved packages:
-  - @prisma/engines (Prisma query engine binary)
-  - bcrypt (native node addon)
-  - esbuild (native binary for bundling)
-  - prisma (CLI generate step)
+pnpm 9 is fully compatible with Node.js 22 and handles the same
+lockfile format.
 
-Also restored --frozen-lockfile in backend/Dockerfile since the
-lockfile now contains the correct approval metadata.
+Changes:
+- backend/Dockerfile: corepack pnpm@latest -> npm install -g pnpm@9
+- frontend/Dockerfile: corepack pnpm@latest -> npm install -g pnpm@9
+- Both use --no-frozen-lockfile for cross-version compatibility

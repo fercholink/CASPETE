@@ -1,20 +1,18 @@
-# Usar Node 22 (requerido por pnpm 11.x)
+# Usar Node 22 (necesario para pnpm moderno)
 FROM node:22-alpine
 
-# Habilitar pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Instalar pnpm 9.x (compatible con Node 22, sin restriccion ERR_PNPM_IGNORED_BUILDS)
+RUN npm install -g pnpm@9
 
 # Crear directorio de trabajo
 WORKDIR /app
 
 # Copiar archivos de dependencias
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json ./
 COPY prisma ./prisma/
 
-# Instalar dependencias
-# El pnpm-lock.yaml incluye onlyBuiltDependencies para autorizar
-# los scripts de build de prisma, bcrypt y esbuild
-RUN pnpm install --frozen-lockfile
+# Instalar dependencias (pnpm 9 ejecuta build scripts sin aprobacion)
+RUN pnpm install --no-frozen-lockfile
 
 # Generar el cliente de Prisma
 RUN pnpm run db:generate

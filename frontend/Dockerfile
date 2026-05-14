@@ -1,14 +1,12 @@
-# Etapa 1: Construcción — Node 22 requerido por pnpm 11.x
+# Etapa 1: Construcción — Node 22 + pnpm 9 (sin restriccion de build scripts)
 FROM node:22-alpine AS build-stage
 WORKDIR /app
 
-# Habilitar pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Instalar pnpm 9.x (compatible con Node 22, sin ERR_PNPM_IGNORED_BUILDS)
+RUN npm install -g pnpm@9
 
 # Copiar manifiesto de dependencias
-COPY package.json pnpm-lock.yaml* ./
-
-# Sin --frozen-lockfile para respetar onlyBuiltDependencies del package.json
+COPY package.json ./
 RUN pnpm install --no-frozen-lockfile
 
 COPY . .

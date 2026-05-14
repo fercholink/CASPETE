@@ -11,8 +11,10 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml* ./
 COPY prisma ./prisma/
 
-# Instalar dependencias con pnpm
-RUN pnpm install --frozen-lockfile
+# Instalar dependencias
+# Sin --frozen-lockfile para que pnpm.onlyBuiltDependencies del package.json
+# sea respetado y los scripts de build nativos (prisma, bcrypt) se ejecuten
+RUN pnpm install --no-frozen-lockfile
 
 # Generar el cliente de Prisma
 RUN pnpm run db:generate
@@ -27,4 +29,4 @@ RUN pnpm run build
 EXPOSE 3000
 
 # Comando para arrancar en producción
-CMD ["node", "dist/app.js"]
+CMD ["node", "dist/server.js"]

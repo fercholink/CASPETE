@@ -7,7 +7,9 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copiar manifiesto de dependencias
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile
+
+# Sin --frozen-lockfile para respetar onlyBuiltDependencies del package.json
+RUN pnpm install --no-frozen-lockfile
 
 COPY . .
 

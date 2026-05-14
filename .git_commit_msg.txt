@@ -1,11 +1,13 @@
-fix(pnpm): allow build scripts for prisma, bcrypt, esbuild in Docker
+fix(docker): use --no-frozen-lockfile + fix pnpm-workspace allowBuilds
 
-pnpm 11 blocks build scripts by default for security.
-Add pnpm.onlyBuiltDependencies to pre-authorize the packages
-that need native compilation, avoiding ERR_PNPM_IGNORED_BUILDS
-in non-interactive Docker build environments.
+pnpm 11 requires explicit build script approval per project.
+The pnpm-workspace.yaml allowBuilds config was created with placeholder
+values. Fix: set all required packages to true.
 
-- backend/package.json: allow @prisma/engines, bcrypt, esbuild, prisma
-- frontend/package.json: allow esbuild
-- backend/pnpm-lock.yaml: regenerated with new config
-- frontend/pnpm-lock.yaml: regenerated with new config
+Use --no-frozen-lockfile in Dockerfiles so pnpm reads allowBuilds
+from pnpm-workspace.yaml at install time without interactive approval.
+
+Changes:
+- backend/pnpm-workspace.yaml: set allowBuilds true for all 4 packages
+- backend/Dockerfile: pnpm install --no-frozen-lockfile
+- frontend/Dockerfile: pnpm install --no-frozen-lockfile

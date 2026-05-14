@@ -1,16 +1,12 @@
-fix(docker): pin pnpm@9 to bypass ERR_PNPM_IGNORED_BUILDS
+fix(docker): remove pnpm-workspace.yaml from backend
 
-pnpm 11 introduces mandatory interactive build script approval
-(ERR_PNPM_IGNORED_BUILDS) that cannot be bypassed in Docker via
-lockfile metadata or package.json config alone.
+The pnpm-workspace.yaml in backend/ was incorrectly causing
+pnpm 9 (used in Docker) to treat the directory as a workspace root.
 
-pnpm 9 does not have this restriction — it runs build scripts
-(prisma, bcrypt, esbuild) automatically without approval.
+Since no packages[] field was defined, pnpm 9 failed with:
+"ERROR packages field missing or empty"
 
-pnpm 9 is fully compatible with Node.js 22 and handles the same
-lockfile format.
-
-Changes:
-- backend/Dockerfile: corepack pnpm@latest -> npm install -g pnpm@9
-- frontend/Dockerfile: corepack pnpm@latest -> npm install -g pnpm@9
-- Both use --no-frozen-lockfile for cross-version compatibility
+The backend is a standalone project, not a monorepo workspace.
+The pnpm-workspace.yaml was only added as an attempt to configure
+allowBuilds (pnpm 11 feature), which is unnecessary since we now
+use pnpm@9 in Docker which runs build scripts without restrictions.

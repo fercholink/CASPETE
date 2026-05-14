@@ -1,14 +1,5 @@
-feat(compliance): panel privacidad SUPER_ADMIN - AuditLog + ARCO requests
+fix(frontend): use useContext(AuthContext) instead of non-existent useAuth
 
-Backend:
-- auth.middleware.ts: nuevo requireRole() para control de acceso por rol
-- arco.router.ts: GET /audit-logs y GET /arco-requests (solo SUPER_ADMIN)
-- arco.service.ts: getAuditLogs() con filtros+paginacion, getArcoRequests()
-
-Frontend:
-- PrivacyCompliancePage.tsx: panel con 2 tabs (AuditLog + ARCO),
-  KPIs cards (total registros, consentimientos cookies, ARCO pendientes),
-  tabla paginada con filtros por accion/entidad, badges de colores
-- router/index.tsx: ruta /privacy-compliance protegida SUPER_ADMIN
-
-Acceso en produccion: caspete.com/privacy-compliance (solo SUPER_ADMIN)
+PrivacyCompliancePage.tsx imported useAuth which is not exported
+by AuthContext.tsx. The project uses the raw useContext(AuthContext)
+pattern. Fix: import useContext + AuthContext, use ctx?.user instead.

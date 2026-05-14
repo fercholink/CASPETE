@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -45,7 +45,8 @@ const ARCO_STATUS_COLORS: Record<string, string> = {
 };
 
 export default function PrivacyCompliancePage() {
-  const { user } = useAuth();
+  const ctx = useContext(AuthContext);
+  const user = ctx?.user ?? null;
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<'audit' | 'arco'>('audit');

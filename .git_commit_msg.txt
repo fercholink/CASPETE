@@ -1,10 +1,19 @@
-fix(frontend): replace Link with anchor in CookieBanner to fix white screen
+feat(arco): register cookie consent in backend AuditLog — Ley 1581
 
-CookieBanner is rendered outside <RouterProvider> in App.tsx.
-Using react-router-dom's <Link> outside a Router context throws:
-"TypeError: Cannot destructure property 'basename' of useContext(...)"
-which crashes the entire React app, causing a white screen.
+Cookie consent was only stored in browser localStorage (not durable,
+not traceable). Under Art. 7 and 12 of Ley 1581/2012 and Decree 1377/2013,
+controllers must be able to prove that consent was obtained.
 
-Fix: replace <Link to="/cookies"> with <a href="/cookies"> — a plain
-HTML anchor is safe outside the router context and works correctly
-for navigating to the cookies policy page.
+Backend:
+- arco.router.ts: POST /api/arco/cookie-consent (public, no auth required)
+  Works for both anonymous visitors and authenticated users.
+- arco.service.ts: saveCookieConsent()
+  - Logs to AuditLog: IP, user-agent, preferences (necessary/analytics/marketing)
+  - If authenticated userId provided, also syncs allow_analytics and
+    allow_marketing fields in the User record.
+
+Frontend:
+- CookieBanner.tsx: reportConsentToBackend() called on every consent action
+  (accept all, accept necessary only, save custom preferences).
+  Fire-and-forget — never blocks the UI even if backend is unreachable.
+  Reads userId from localStorage to link consent to authenticated user.

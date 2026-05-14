@@ -8,6 +8,36 @@ interface CookiePreferences {
 
 const STORAGE_KEY = 'caspete_cookie_consent';
 const CONSENT_VERSION = 'v1.0';
+const API_URL = import.meta.env.VITE_API_URL ?? '';
+
+// Envía el consentimiento al backend para trazabilidad Ley 1581 (fire-and-forget)
+function reportConsentToBackend(accepted: CookiePreferences) {
+  try {
+    const token = localStorage.getItem('caspete_token');
+    const rawUser = localStorage.getItem('caspete_user');
+    const userId: string | undefined = rawUser
+      ? (JSON.parse(rawUser) as { id?: string }).id
+      : undefined;
+
+    const body = JSON.stringify({
+      necessary: accepted.necessary,
+      analytics: accepted.analytics,
+      marketing: accepted.marketing,
+      version: CONSENT_VERSION,
+      ...(userId ? { userId } : {}),
+    });
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    // Fire-and-forget: no esperamos respuesta, nunca bloquea la UI
+    fetch(`${API_URL}/api/arco/cookie-consent`, {
+      method: 'POST',
+      headers,
+      body,
+    }).catch(() => {/* silencioso si el backend no responde */});
+  } catch {/* silencioso */}
+}
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
@@ -35,6 +65,7 @@ export default function CookieBanner() {
       version: CONSENT_VERSION,
       timestamp: new Date().toISOString(),
     }));
+    reportConsentToBackend(accepted);
     setVisible(false);
   }
 

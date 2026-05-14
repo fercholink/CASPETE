@@ -4,6 +4,22 @@ import * as arco from './arco.service.js';
 
 const router = Router();
 
+// ── POST /api/arco/cookie-consent — Registro consentimiento cookies (público) ─
+// No requiere auth: también usuarios anónimos pueden otorgar/revocar consentimiento
+router.post('/cookie-consent', async (req, res, next) => {
+  try {
+    const body = req.body as {
+      necessary: boolean;
+      analytics: boolean;
+      marketing: boolean;
+      version: string;
+      userId?: string;
+    };
+    const result = await arco.saveCookieConsent(body, req);
+    res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
 // ── GET /api/arco/my-data — Derecho de Acceso (Art. 13) ─────────────────────
 router.get('/my-data', authenticate, async (req, res, next) => {
   try {

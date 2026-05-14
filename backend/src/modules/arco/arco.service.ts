@@ -221,3 +221,68 @@ export async function saveConsents(
     justification: `Consentimientos otorgados en registro — Política ${CONSENT_VERSION}. Art. 9 Ley 1581/2012`,
   });
 }
+
+// ── Consentimiento de Cookies (público, anónimos y autenticados) ─────────────
+/**
+ * Registra la decisión del usuario ante el banner de cookies.
+ * Aplica a usuarios anónimos (visitantes) y autenticados.
+ * Fuente de trazabilidad requerida por el Art. 7 y 12 Ley 1581/2012.
+ *
+ * Si el usuario está autenticado (userId presente), actualiza además
+ * allow_analytics y allow_marketing en su perfil.
+ */
+export async function saveCookieConsent(
+  prefs: {
+    necessary: boolean;
+    analytics: boolean;
+    marketing: boolean;
+    version: string;
+    userId?: string;
+  },
+  req: Request,
+) {
+  const userAgent = (req.headers['user-agent'] ?? 'unknown').substring(0, 200);
+  const justification =
+    `Cookie consent — necesarias:${prefs.necessary} analytics:${prefs.analytics} ` +
+    `marketing:${prefs.marketing} versión:${prefs.version} ` +
+    `ua:${userAgent}`;
+
+  // Si el usuario está autenticado, sincronizar preferencias en BD
+  if (prefs.userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: prefs.userId },
+      select: { role: true },
+    });
+
+    if (user) {
+      await prisma.user.update({
+        where: { id: prefs.userId },
+        data: {
+          allow_analytics: prefs.analytics,
+          allow_marketing: prefs.marketing,
+        },
+      });
+
+      await logAudit({
+        req, userId: prefs.userId, role: user.role,
+        action: 'UPDATE', entity: 'User',
+        recordId: prefs.userId,
+        fields: ['allow_analytics', 'allow_marketing', 'cookie_consent'],
+        justification,
+      });
+
+      return { recorded: true, authenticated: true };
+    }
+  }
+
+  // Usuario anónimo: solo auditlog sin usuario
+  await logAudit({
+    req, userId: null, role: 'ANONYMOUS',
+    action: 'CREATE', entity: 'CookieConsent',
+    recordId: null,
+    fields: ['necessary', 'analytics', 'marketing'],
+    justification,
+  });
+
+  return { recorded: true, authenticated: false };
+}

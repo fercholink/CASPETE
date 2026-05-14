@@ -1,8 +1,8 @@
-# Etapa 1: Construcción
-FROM node:20-alpine as build-stage
+# Etapa 1: Construcción — Node 22 requerido por pnpm 11.x
+FROM node:22-alpine AS build-stage
 WORKDIR /app
 
-# Habilitar pnpm (gestor de paquetes seguro)
+# Habilitar pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copiar manifiesto de dependencias
@@ -18,7 +18,7 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN pnpm run build
 
 # Etapa 2: Producción con Nginx
-FROM nginx:stable-alpine as production-stage
+FROM nginx:stable-alpine AS production-stage
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
 # Configuración básica de Nginx para SPA (React Router)

@@ -1,7 +1,7 @@
-# Usar una imagen ligera de Node.js
-FROM node:20-alpine
+# Usar Node 22 (requerido por pnpm 11.x)
+FROM node:22-alpine
 
-# Habilitar pnpm (gestor de paquetes seguro)
+# Habilitar pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Crear directorio de trabajo

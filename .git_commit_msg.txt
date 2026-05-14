@@ -1,20 +1,7 @@
-feat(habeas-data): Ley 1581/2012 - compliance completo
+fix(docker): upgrade to node:22-alpine for pnpm 11.x compatibility
 
-Backend:
-- schema.prisma: consentimiento 3 capas + deletion/anonymized en User
-- Nuevos modelos: AuditLog (accountability) y ArcoRequest (derechos ARCO)
-- migration SQL: 20260514_add_habeas_data_ley1581
-- audit-log.middleware.ts: accountability toda operacion datos personales
-- arco.service.ts: Acceso, Oposicion, Cancelacion, Anonimizacion
-- arco.router.ts: my-data, privacy-toggles, request-deletion
-- auth.schemas.ts: 3 consentimientos obligatorios en registro
-- auth.service.ts: guarda consents + timestamp + version
-- app.ts: registro modulo ARCO en /api/arco
+pnpm 11.x requires Node.js >= 22. The Dockerfiles used node:20-alpine
+which caused ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite at install time.
 
-Frontend:
-- RegisterPage.tsx: 3 checkboxes independientes no pre-marcados (Art. 7, 9, 12)
-- CookieBanner.tsx: consentimiento granular necesarias/analiticas
-- MisDatosPage.tsx: pagina ARCO - ver datos, descargar, toggles, eliminacion
-- PrivacyPolicyPage.tsx: Politica de Tratamiento publica
-- App.tsx: CookieBanner global
-- router: rutas /privacidad, /derechos-datos, /cookies, /mis-datos
+- backend/Dockerfile: node:20-alpine -> node:22-alpine
+- frontend/Dockerfile: node:20-alpine -> node:22-alpine

@@ -12,9 +12,9 @@ COPY package.json pnpm-lock.yaml* ./
 COPY prisma ./prisma/
 
 # Instalar dependencias
-# Sin --frozen-lockfile para que pnpm.onlyBuiltDependencies del package.json
-# sea respetado y los scripts de build nativos (prisma, bcrypt) se ejecuten
-RUN pnpm install --no-frozen-lockfile
+# El pnpm-lock.yaml incluye onlyBuiltDependencies para autorizar
+# los scripts de build de prisma, bcrypt y esbuild
+RUN pnpm install --frozen-lockfile
 
 # Generar el cliente de Prisma
 RUN pnpm run db:generate

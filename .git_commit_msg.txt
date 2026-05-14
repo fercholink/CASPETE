@@ -1,13 +1,18 @@
-fix(docker): use --no-frozen-lockfile + fix pnpm-workspace allowBuilds
+fix(pnpm): add onlyBuiltDependencies to lockfile header
 
-pnpm 11 requires explicit build script approval per project.
-The pnpm-workspace.yaml allowBuilds config was created with placeholder
-values. Fix: set all required packages to true.
+In pnpm 11, build script approval is stored in the pnpm-lock.yaml
+under the top-level `onlyBuiltDependencies` key (not in package.json).
+The package.json field is only used to pre-populate the interactive
+approve-builds menu.
 
-Use --no-frozen-lockfile in Dockerfiles so pnpm reads allowBuilds
-from pnpm-workspace.yaml at install time without interactive approval.
+This is the equivalent of running `pnpm approve-builds` and selecting
+all four packages in an interactive session.
 
-Changes:
-- backend/pnpm-workspace.yaml: set allowBuilds true for all 4 packages
-- backend/Dockerfile: pnpm install --no-frozen-lockfile
-- frontend/Dockerfile: pnpm install --no-frozen-lockfile
+Approved packages:
+  - @prisma/engines (Prisma query engine binary)
+  - bcrypt (native node addon)
+  - esbuild (native binary for bundling)
+  - prisma (CLI generate step)
+
+Also restored --frozen-lockfile in backend/Dockerfile since the
+lockfile now contains the correct approval metadata.

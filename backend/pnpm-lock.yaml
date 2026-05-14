@@ -1,5 +1,11 @@
 lockfileVersion: '9.0'
 
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - bcrypt
+  - esbuild
+  - prisma
+
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false

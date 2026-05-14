@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 
 interface CookiePreferences {
   necessary: true;     // siempre activas
@@ -78,9 +77,9 @@ export default function CookieBanner() {
               Caspete usa cookies necesarias para operar la plataforma. Puedes aceptar cookies analíticas
               para ayudarnos a mejorar el servicio.{' '}
               <strong>No usamos cookies publicitarias en perfiles de menores.</strong>{' '}
-              <Link to="/cookies" style={{ color: 'var(--color-brand, #1a4731)', fontWeight: 600 }}>
+              <a href="/cookies" style={{ color: 'var(--color-brand, #1a4731)', fontWeight: 600 }}>
                 Política de cookies
-              </Link>
+              </a>
             </p>
           </div>
         </div>

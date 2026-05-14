@@ -1,7 +1,11 @@
-fix(docker): upgrade to node:22-alpine for pnpm 11.x compatibility
+fix(pnpm): allow build scripts for prisma, bcrypt, esbuild in Docker
 
-pnpm 11.x requires Node.js >= 22. The Dockerfiles used node:20-alpine
-which caused ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite at install time.
+pnpm 11 blocks build scripts by default for security.
+Add pnpm.onlyBuiltDependencies to pre-authorize the packages
+that need native compilation, avoiding ERR_PNPM_IGNORED_BUILDS
+in non-interactive Docker build environments.
 
-- backend/Dockerfile: node:20-alpine -> node:22-alpine
-- frontend/Dockerfile: node:20-alpine -> node:22-alpine
+- backend/package.json: allow @prisma/engines, bcrypt, esbuild, prisma
+- frontend/package.json: allow esbuild
+- backend/pnpm-lock.yaml: regenerated with new config
+- frontend/pnpm-lock.yaml: regenerated with new config

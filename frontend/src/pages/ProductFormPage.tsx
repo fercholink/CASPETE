@@ -204,7 +204,7 @@ export default function ProductFormPage() {
           {/* ── Ley 2120 / Resolución 2492 ─────────────────── */}
           <div style={{ marginTop: 20, borderTop: '1px solid var(--color-border)', paddingTop: 16 }}>
             <button type="button" onClick={() => setShowNutrition(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', width: '100%', padding: '10px 14px', borderRadius: 10, background: showNutrition ? 'rgba(22,163,74,0.06)' : 'var(--color-gray-100)' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', cursor: 'pointer', width: '100%', padding: '10px 14px', borderRadius: 10, background: showNutrition ? 'rgba(22,163,74,0.06)' : 'var(--color-gray-100)' }}>
               <svg width={18} height={18} viewBox="0 0 100 100">
                 <polygon points="30,2 70,2 98,30 98,70 70,98 30,98 2,70 2,30" fill={showNutrition ? '#15803d' : '#94a3b8'} />
               </svg>

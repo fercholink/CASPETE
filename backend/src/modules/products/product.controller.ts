@@ -1,6 +1,10 @@
 import type { Request, Response } from 'express';
 import * as productService from './product.service.js';
-import { createProductSchema, updateProductSchema } from './product.schemas.js';
+import {
+  createProductSchema,
+  updateProductSchema,
+  updateNutritionalDataSchema,
+} from './product.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
 export async function create(req: Request, res: Response) {
@@ -10,39 +14,51 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function list(req: Request, res: Response) {
-  const page = Math.max(1, Number(req.query['page']) || 1);
+  const page  = Math.max(1, Number(req.query['page'])  || 1);
   const limit = Math.min(100, Math.max(1, Number(req.query['limit']) || 50));
-  const opts: { page: number; limit: number; search?: string; category?: string; active?: string; is_healthy?: string } = { page, limit };
-  if (typeof req.query['search'] === 'string') opts.search = req.query['search'];
-  if (typeof req.query['category'] === 'string') opts.category = req.query['category'];
-  if (typeof req.query['active'] === 'string') opts.active = req.query['active'];
-  if (typeof req.query['is_healthy'] === 'string') opts.is_healthy = req.query['is_healthy'];
-  const result = await productService.listProducts(req.user!, opts);
+  const opts: Record<string, string | number> = { page, limit };
+  ['search', 'category', 'active', 'is_healthy', 'level', 'seal_free'].forEach(k => {
+    if (typeof req.query[k] === 'string') opts[k] = req.query[k] as string;
+  });
+  const result = await productService.listProducts(req.user!, opts as never);
   sendSuccess(res, result);
 }
 
 export async function getOne(req: Request, res: Response) {
-  const id = req.params['id'] as string;
-  const product = await productService.getProduct(id);
+  const product = await productService.getProduct(req.params['id'] as string);
   sendSuccess(res, product);
 }
 
+export async function getSeals(req: Request, res: Response) {
+  const seals = await productService.getProductSeals(req.params['id'] as string);
+  sendSuccess(res, seals);
+}
+
 export async function update(req: Request, res: Response) {
-  const id = req.params['id'] as string;
   const input = updateProductSchema.parse(req.body);
-  const product = await productService.updateProduct(id, input, req.user!);
+  const product = await productService.updateProduct(req.params['id'] as string, input, req.user!);
   sendSuccess(res, product, 'Producto actualizado');
 }
 
+export async function updateNutritional(req: Request, res: Response) {
+  const input = updateNutritionalDataSchema.parse(req.body);
+  const product = await productService.updateNutritionalData(req.params['id'] as string, input, req.user!);
+  sendSuccess(res, product, 'Datos nutricionales actualizados y sellos recalculados');
+}
+
+export async function audit(req: Request, res: Response) {
+  const input = updateNutritionalDataSchema.parse(req.body);
+  const product = await productService.registerAudit(req.params['id'] as string, input, req.user!);
+  sendSuccess(res, product, 'Auditoría nutricional registrada');
+}
+
 export async function deactivate(req: Request, res: Response) {
-  const id = req.params['id'] as string;
-  const product = await productService.deactivateProduct(id, req.user!);
+  const product = await productService.deactivateProduct(req.params['id'] as string, req.user!);
   sendSuccess(res, product, 'Producto desactivado');
 }
 
 export async function reactivate(req: Request, res: Response) {
-  const id = req.params['id'] as string;
-  const product = await productService.reactivateProduct(id, req.user!);
+  const product = await productService.reactivateProduct(req.params['id'] as string, req.user!);
   sendSuccess(res, product, 'Producto reactivado');
 }
 
@@ -52,7 +68,6 @@ export async function getStats(req: Request, res: Response) {
 }
 
 export async function deleteOne(req: Request, res: Response) {
-  const id = req.params['id'] as string;
-  await productService.deleteProduct(id, req.user!);
+  await productService.deleteProduct(req.params['id'] as string, req.user!);
   sendSuccess(res, null, 'Producto eliminado permanentemente');
 }

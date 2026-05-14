@@ -2,12 +2,19 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
+import { SealBadgeGroup, NutritionalLevelBadge } from '../components/SealBadge';
+import { SealFreeFilter } from '../components/NutritionCompliance';
 
 interface Product {
   id: string; name: string; description: string | null; base_price: string;
   image_url: string | null; category: string | null; is_healthy: boolean;
   active: boolean; customizable_options: string[]; created_at: string;
   _count: { store_products: number };
+  // Ley 2120
+  nutritional_level: 'LEVEL_1' | 'LEVEL_2';
+  seal_sodium: boolean; seal_sugars: boolean;
+  seal_saturated_fat: boolean; seal_trans_fat: boolean; seal_sweeteners: boolean;
+  has_sweeteners: boolean;
 }
 interface ProductsResponse { products: Product[]; total: number; page: number; pages: number; categories: { name: string; count: number }[]; }
 interface Category { id: string; name: string; label: string; icon: string | null; color: string | null; sort_order: number; active: boolean; product_count?: number; }
@@ -24,6 +31,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [activeCat, setActiveCat] = useState('');
   const [filterActive, setFilterActive] = useState('');
+  const [sealFree, setSealFree] = useState(false);
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -50,11 +58,12 @@ export default function ProductsPage() {
     if (search) p.set('search', search);
     if (activeCat) p.set('category', activeCat);
     if (filterActive) p.set('active', filterActive);
+    if (sealFree) p.set('seal_free', 'true');
     apiClient.get<{ data: ProductsResponse }>(`/products?${p}`)
       .then(r => { setData(r.data.data); setError(''); })
       .catch(e => setError((e as any).response?.data?.error ?? 'Error al cargar'))
       .finally(() => setLoading(false));
-  }, [search, activeCat, filterActive]);
+  }, [search, activeCat, filterActive, sealFree]);
 
   useEffect(() => { fetchCats(); }, [fetchCats]);
   useEffect(() => { fetchProducts(page); }, [fetchProducts, page]);
@@ -105,7 +114,7 @@ export default function ProductsPage() {
     finally { setDeletingCatId(null); }
   }
 
-  const hasFilters = !!(search || activeCat || filterActive);
+  const hasFilters = !!(search || activeCat || filterActive || sealFree);
 
   return (
     <>
@@ -164,8 +173,10 @@ export default function ProductsPage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input className="form-input" placeholder="Buscar producto..." value={search} onChange={e => setSearch(e.target.value)} style={{ marginBottom: 0, paddingLeft: 40 }} />
           </div>
+          {/* Filtro Libre de Sellos – Ley 2120 */}
+          <SealFreeFilter value={sealFree} onChange={v => { setSealFree(v); setPage(1); }} />
           {isSA && <select className="form-select" value={filterActive} onChange={e => { setFilterActive(e.target.value); setPage(1); }} style={{ width: 150, marginBottom: 0 }}><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select>}
-          {hasFilters && <button className="btn-ghost" style={{ fontSize: 13, padding: '7px 12px', color: 'var(--color-text-muted)' }} onClick={() => { setSearch(''); setActiveCat(''); setFilterActive(''); setPage(1); }}>Limpiar ×</button>}
+          {hasFilters && <button className="btn-ghost" style={{ fontSize: 13, padding: '7px 12px', color: 'var(--color-text-muted)' }} onClick={() => { setSearch(''); setActiveCat(''); setFilterActive(''); setSealFree(false); setPage(1); }}>Limpiar ×</button>}
         </div>
 
         {/* States */}
@@ -190,13 +201,29 @@ export default function ProductsPage() {
                 <div style={{ width: '100%', height: 150, background: product.image_url ? 'var(--color-surface)' : 'linear-gradient(135deg, var(--color-gray-100), rgba(37,99,235,0.05))', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
                   {product.image_url ? <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                     : <span style={{ fontSize: 48, opacity: 0.3 }}>{cats.find(c => c.name === product.category)?.icon || '📦'}</span>}
-                  <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 4 }}>
+                  <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     {product.is_healthy && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'rgba(22,163,74,0.9)', color: '#fff', fontWeight: 600 }}>🥗 Saludable</span>}
                     {!product.active && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'rgba(220,38,38,0.9)', color: '#fff', fontWeight: 600 }}>Inactivo</span>}
                   </div>
+                  {/* Sellos Ley 2120 — esquina inferior derecha de la imagen */}
+                  {product.nutritional_level === 'LEVEL_2' && (
+                    <div style={{ position: 'absolute', bottom: 6, right: 6, display: 'flex', gap: 3, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '70%' }}>
+                      <SealBadgeGroup
+                        sealSodium={product.seal_sodium}
+                        sealSugars={product.seal_sugars}
+                        sealSaturatedFat={product.seal_saturated_fat}
+                        sealTransFat={product.seal_trans_fat}
+                        sealSweeteners={product.seal_sweeteners}
+                        size="sm"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div style={{ padding: '12px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  {product.category && <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>{cats.find(c => c.name === product.category)?.label || product.category}</span>}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    {product.category && <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{cats.find(c => c.name === product.category)?.label || product.category}</span>}
+                    <NutritionalLevelBadge level={product.nutritional_level} />
+                  </div>
                   <h3 style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>{product.name}</h3>
                   {product.description && <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.description}</p>}
                   <div style={{ flex: 1 }} />

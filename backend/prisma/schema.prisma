@@ -40,6 +40,16 @@ enum TopupRequestStatus {
   REJECTED
 }
 
+enum NutritionalLevel {
+  LEVEL_1  // Sin sellos — producto ideal
+  LEVEL_2  // Con advertencias
+}
+
+enum ProductForm {
+  SOLID
+  LIQUID
+}
+
 model School {
   id         String   @id @default(uuid()) @db.Uuid
   name       String   @db.VarChar(200)
@@ -111,6 +121,7 @@ model Student {
   photo_url   String?  @db.Text
   balance     Decimal  @default(0.00) @db.Decimal(10, 2)
   delivery_code String? @db.VarChar(6)
+  daily_spending_limit Decimal @default(15000.00) @db.Decimal(10, 2)
   active      Boolean  @default(true)
   created_at  DateTime @default(now())
 
@@ -119,6 +130,8 @@ model Student {
   lunch_orders   LunchOrder[]
   transactions   Transaction[]
   topup_requests TopupRequest[]
+  allergies      StudentAllergy[]
+  nutrition_reports NutritionDailyReport[]
 
   @@unique([school_id, national_id])
 }
@@ -149,18 +162,38 @@ model ProductCategory {
 
 // Catálogo maestro global — administrado por SUPER_ADMIN
 model Product {
-  id                   String         @id @default(uuid()) @db.Uuid
-  name                 String         @db.VarChar(200)
-  description          String?        @db.Text
-  base_price           Decimal        @db.Decimal(10, 2)
-  image_url            String?        @db.Text
-  category             String?        @db.VarChar(50) // references ProductCategory.name
-  is_healthy           Boolean        @default(true)
-  customizable_options String[]       @default([])
-  active               Boolean        @default(true)  // SUPER_ADMIN puede deshabilitar globalmente
-  created_at           DateTime       @default(now())
+  id                   String          @id @default(uuid()) @db.Uuid
+  name                 String          @db.VarChar(200)
+  description          String?         @db.Text
+  base_price           Decimal         @db.Decimal(10, 2)
+  image_url            String?         @db.Text
+  category             String?         @db.VarChar(50)
+  is_healthy           Boolean         @default(true)
+  customizable_options String[]        @default([])
+
+  // ── Ley 2120 / Resolución 2492 de 2022 ──
+  product_form           ProductForm     @default(SOLID)
+  nutritional_level      NutritionalLevel @default(LEVEL_1) // computado por NutritionalClassifier
+  sodium_per_100         Decimal?        @db.Decimal(8, 2)  // mg por 100g o 100ml
+  added_sugars_pct       Decimal?        @db.Decimal(5, 2)  // % energía azúcares añadidos
+  saturated_fat_pct      Decimal?        @db.Decimal(5, 2)  // % energía grasas saturadas
+  trans_fat_pct          Decimal?        @db.Decimal(5, 2)  // % energía grasas trans
+  has_sweeteners         Boolean         @default(false)
+  // Sellos computados (solo escritura por NutritionalClassifier)
+  seal_sodium            Boolean         @default(false)
+  seal_sugars            Boolean         @default(false)
+  seal_saturated_fat     Boolean         @default(false)
+  seal_trans_fat         Boolean         @default(false)
+  seal_sweeteners        Boolean         @default(false)
+  // Trazabilidad
+  supplier_tech_sheet_url String?        @db.VarChar(500)
+  last_nutritional_audit  DateTime?
+
+  active               Boolean         @default(true)
+  created_at           DateTime        @default(now())
 
   store_products StoreProduct[]
+  allergens      ProductAllergy[]
 }
 
 // Pivot: qué productos ofrece cada tienda, con precio y stock propios
@@ -194,6 +227,11 @@ model LunchOrder {
   otp_code       String?     @db.VarChar(6)
   otp_expires_at DateTime?
   notes          String?     @db.Text
+  // ── Ley 2120 compliance ──
+  is_seal_free        Boolean  @default(false)  // todos los productos level_1
+  has_sweetener_alert Boolean  @default(false)  // algún producto con edulcorantes
+  seal_summary        Json     @default("{}")
+  compliance_score    Int      @default(100)    // 0-100
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt
 
@@ -292,4 +330,72 @@ model PushSubscription {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
+}
+
+// Módulo de Proveedores B2B (Ley 2120 — trazabilidad Art. 32)
+model Supplier {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @db.VarChar(255)
+  nit             String?  @db.VarChar(20)
+  contact_name    String?  @db.VarChar(100)
+  contact_phone   String?  @db.VarChar(20)
+  contact_email   String?  @db.VarChar(255)
+  city            String?  @db.VarChar(100)
+  tech_sheet_url  String?  @db.VarChar(500)  // ficha técnica
+  tech_sheet_uploaded_at DateTime?
+  is_verified     Boolean  @default(false)
+  active          Boolean  @default(true)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+// Modelos Ley 2120
+model Allergy {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(100)
+  severity    String   @default("moderate") @db.VarChar(20)
+  description String?  @db.Text
+
+  student_allergies StudentAllergy[]
+  product_allergies ProductAllergy[]
+}
+
+model StudentAllergy {
+  student_id   String   @db.Uuid
+  allergy_id   String   @db.Uuid
+  notes        String?  @db.Text
+  diagnosed_at DateTime? @db.Date
+
+  student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  allergy Allergy @relation(fields: [allergy_id], references: [id], onDelete: Cascade)
+
+  @@id([student_id, allergy_id])
+}
+
+model ProductAllergy {
+  product_id String @db.Uuid
+  allergy_id String @db.Uuid
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  allergy Allergy @relation(fields: [allergy_id], references: [id], onDelete: Cascade)
+
+  @@id([product_id, allergy_id])
+}
+
+model NutritionDailyReport {
+  id                String   @id @default(uuid()) @db.Uuid
+  student_id        String   @db.Uuid
+  report_date       DateTime @db.Date
+  total_calories    Decimal  @default(0) @db.Decimal(8, 2)
+  total_sugar_grams Decimal  @default(0) @db.Decimal(8, 2)
+  total_sodium_mg   Decimal  @default(0) @db.Decimal(8, 2)
+  green_items       Int      @default(0)
+  yellow_items      Int      @default(0)
+  red_items         Int      @default(0)
+  alerts_triggered  Int      @default(0)
+  created_at        DateTime @default(now())
+
+  student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, report_date])
 }

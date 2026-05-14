@@ -23,6 +23,11 @@ const orderSelect = {
   notes: true,
   created_at: true,
   updated_at: true,
+  // ── Ley 2120 compliance ──
+  is_seal_free: true,
+  has_sweetener_alert: true,
+  compliance_score: true,
+  seal_summary: true,
   school: { select: { id: true, name: true } },
   student: { select: { id: true, full_name: true, grade: true, photo_url: true, parent_id: true, balance: true, delivery_code: true } },
   store: { select: { id: true, name: true } },
@@ -38,7 +43,14 @@ const orderSelect = {
         select: {
           id: true,
           price: true,
-          product: { select: { id: true, name: true, is_healthy: true, base_price: true, image_url: true } },
+          product: {
+            select: {
+              id: true, name: true, is_healthy: true, base_price: true, image_url: true,
+              // Ley 2120
+              nutritional_level: true, seal_sodium: true, seal_sugars: true,
+              seal_saturated_fat: true, seal_trans_fat: true, seal_sweeteners: true,
+            },
+          },
         },
       },
     },
@@ -81,11 +93,21 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   if (store.school_id !== student.school_id)
     throw new AppError('La tienda no pertenece al colegio del estudiante', 400);
 
-  // Cargar los StoreProducts solicitados
+  // Cargar los StoreProducts solicitados con datos nutricionales Ley 2120
   const storeProductIds = input.items.map((i) => i.store_product_id);
   const storeProducts = await prisma.storeProduct.findMany({
     where: { id: { in: storeProductIds }, active: true, store_id: input.store_id, product: { active: true } },
-    select: { id: true, price: true, stock: true, product: { select: { id: true, name: true, base_price: true } } },
+    select: {
+      id: true, price: true, stock: true,
+      product: {
+        select: {
+          id: true, name: true, base_price: true,
+          // Ley 2120
+          nutritional_level: true, seal_sodium: true, seal_sugars: true,
+          seal_saturated_fat: true, seal_trans_fat: true, seal_sweeteners: true,
+        },
+      },
+    },
   });
   if (storeProducts.length !== new Set(storeProductIds).size)
     throw new AppError('Uno o más productos no están disponibles en esta tienda', 400);
@@ -119,6 +141,23 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
     );
   }
 
+  // ── Cálculo de cumplimiento Ley 2120 (Brecha #1) ──────────────────────
+  const productsInCart = storeProducts.map((sp) => sp.product);
+  const is_seal_free       = productsInCart.every((p) => p.nutritional_level === 'LEVEL_1');
+  const has_sweetener_alert = productsInCart.some((p) => p.seal_sweeteners);
+  const sealCount = productsInCart.reduce((acc, p) =>
+    acc + [p.seal_sodium, p.seal_sugars, p.seal_saturated_fat, p.seal_trans_fat, p.seal_sweeteners].filter(Boolean).length
+  , 0);
+  const maxSeals = productsInCart.length * 5;
+  const compliance_score = maxSeals === 0 ? 100 : Math.round((1 - sealCount / maxSeals) * 100);
+  const seal_summary = {
+    sodium:        productsInCart.filter((p) => p.seal_sodium).map((p) => p.name),
+    sugars:        productsInCart.filter((p) => p.seal_sugars).map((p) => p.name),
+    saturated_fat: productsInCart.filter((p) => p.seal_saturated_fat).map((p) => p.name),
+    trans_fat:     productsInCart.filter((p) => p.seal_trans_fat).map((p) => p.name),
+    sweeteners:    productsInCart.filter((p) => p.seal_sweeteners).map((p) => p.name),
+  };
+
   return prisma.$transaction(async (tx) => {
     const order = await tx.lunchOrder.create({
       data: {
@@ -128,6 +167,11 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
         scheduled_date: new Date(input.scheduled_date),
         total_amount: totalAmount,
         notes: input.notes ?? null,
+        // ── Ley 2120 compliance ──
+        is_seal_free,
+        has_sweetener_alert,
+        compliance_score,
+        seal_summary,
         order_items: { create: orderItemsData },
       },
       select: orderSelect,
@@ -355,6 +399,9 @@ export async function deliverOrder(id: string, otpCode: string, actor: JwtPayloa
     select: orderSelect,
   });
 
+  // ── Brecha #5: Generar NutritionDailyReport ──────────────────────────────
+  void upsertNutritionReport(order.student.id, new Date(order.scheduled_date)).catch(() => {});
+
   // Notificar al padre por push
   sendPushToUser(order.student.parent_id, {
     title: '✅ Lonchera entregada',
@@ -433,6 +480,63 @@ export async function deliverStudentOrders(studentId: string, deliveryCode: stri
   }
 
   return { delivered: result.count, orders: updatedOrders };
+}
+
+// ── Brecha #5: Helper NutritionDailyReport ─────────────────────────────
+/**
+ * Acumula (upsert) el reporte nutricional diario del estudiante
+ * sumando los pedidos entregados en la fecha dada.
+ */
+async function upsertNutritionReport(studentId: string, date: Date) {
+  const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
+  const dayEnd   = new Date(date); dayEnd.setHours(23, 59, 59, 999);
+
+  // Todos los pedidos entregados del día para el estudiante
+  const orders = await prisma.lunchOrder.findMany({
+    where: { student_id: studentId, status: 'DELIVERED', scheduled_date: { gte: dayStart, lte: dayEnd } },
+    select: {
+      compliance_score: true, is_seal_free: true,
+      order_items: {
+        select: {
+          quantity: true,
+          store_product: {
+            select: {
+              product: {
+                select: {
+                  nutritional_level: true, seal_sweeteners: true,
+                  sodium_per_100: true, added_sugars_pct: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  let green_items = 0, red_items = 0, alerts_triggered = 0;
+  let total_sodium_mg = 0, total_sugar_grams = 0;
+
+  for (const order of orders) {
+    for (const item of order.order_items) {
+      const p = item.store_product.product;
+      const qty = item.quantity;
+      if (p.nutritional_level === 'LEVEL_1') green_items += qty;
+      else red_items += qty;
+      if (p.seal_sweeteners) alerts_triggered += qty;
+      if (p.sodium_per_100)   total_sodium_mg   += p.sodium_per_100.toNumber()   * qty;
+      if (p.added_sugars_pct) total_sugar_grams += p.added_sugars_pct.toNumber() * qty;
+    }
+  }
+
+  await prisma.nutritionDailyReport.upsert({
+    where: { student_id_report_date: { student_id: studentId, report_date: dayStart } },
+    update: { green_items, red_items, alerts_triggered, total_sodium_mg, total_sugar_grams },
+    create: {
+      student_id: studentId, report_date: dayStart,
+      green_items, red_items, alerts_triggered, total_sodium_mg, total_sugar_grams,
+    },
+  });
 }
 
 export async function previewStudentDelivery(studentId: string, deliveryCode: string, actor: JwtPayload) {

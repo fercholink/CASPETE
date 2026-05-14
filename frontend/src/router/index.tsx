@@ -24,6 +24,9 @@ import ProfilePage from '../pages/ProfilePage';
 import LandingPage from '../pages/LandingPage';
 import TopupRequestsPage from '../pages/TopupRequestsPage';
 import PaymentMethodsPage from '../pages/PaymentMethodsPage';
+import Ley2120DashboardPage from '../pages/Ley2120DashboardPage';
+import SuppliersPage from '../pages/SuppliersPage';
+import SupplierFormPage from '../pages/SupplierFormPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -196,6 +199,42 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
         <PaymentMethodsPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ── Ley 2120 Dashboard ──────────────────────────────
+  {
+    path: '/ley2120',
+    element: (
+      <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <Ley2120DashboardPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ── Proveedores (Brecha #6) ────────────────────────────
+  {
+    path: '/suppliers',
+    element: (
+      <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <SuppliersPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/suppliers/new',
+    element: (
+      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+        <SupplierFormPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/suppliers/:id/edit',
+    element: (
+      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+        <SupplierFormPage />
       </ProtectedRoute>
     ),
   },

@@ -108,6 +108,8 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/topup-requests',  label: 'Recargas',           icon: '💰' },
     { to: '/transactions',    label: 'Transacciones',      icon: '📊' },
     { to: '/payment-methods', label: 'Métodos de pago',   icon: '🏦' },
+    { to: '/ley2120',         label: 'Ley 2120',           icon: '⬛' },
+    { to: '/suppliers',       label: 'Proveedores',        icon: '🏭' },
   ],
   SCHOOL_ADMIN: [
     { to: '/students',       label: 'Estudiantes',   icon: '🎒' },
@@ -117,6 +119,7 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/orders',         label: 'Pedidos',       icon: '📋' },
     { to: '/topup-requests', label: 'Recargas',      icon: '💰' },
     { to: '/transactions',   label: 'Transacciones', icon: '📊' },
+    { to: '/ley2120',        label: 'Ley 2120',      icon: '⬛' },
   ],
   VENDOR: [
     { to: '/products', label: 'Mis productos',   icon: '🍱' },
@@ -184,6 +187,24 @@ function SuperAdminDashboard() {
             <StatCard label="Entregados"        value={admin.orders_delivered_today} icon="🚀" color="#059669" to="/orders?status=DELIVERED" />
           </div>
 
+          {/* Tarjeta Ley 2120 */}
+          <Link to="/ley2120" style={{ textDecoration: 'none', display: 'block', marginBottom: 20 }}>
+            <div className="user-card" style={{ padding: '16px 20px', marginBottom: 0, background: 'linear-gradient(135deg, #1a1a1a 0%, #374151 100%)', border: 'none', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <svg width={36} height={36} viewBox="0 0 100 100" style={{ flexShrink: 0 }}>
+                  <polygon points="30,2 70,2 98,30 98,70 70,98 30,98 2,70 2,30" fill="white" />
+                </svg>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#fff' }}>Dashboard Ley 2120</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Cumplimiento nutricional · Sellos · Proveedores · KPIs</p>
+                </div>
+                <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.5)', fontSize: 18 }}>→</span>
+              </div>
+            </div>
+          </Link>
+
           {admin.top_products.length > 0 && (
             <div className="user-card" style={{ marginBottom: 20 }}>
               <p className="dashboard-label" style={{ marginBottom: 12 }}>Top productos (últimos 30 días)</p>
@@ -227,6 +248,22 @@ function SchoolAdminDashboard() {
         <StatCard label="Ingresos hoy"       value={fmt(data.revenue_today)}     icon="💵" color="#059669" to="/transactions" />
         <StatCard label="Estudiantes activos"value={data.active_students}        icon="🎒"              to="/students" />
       </div>
+
+      {/* Tarjeta Ley 2120 */}
+      <Link to="/ley2120" style={{ textDecoration: 'none', display: 'block', marginBottom: 20 }}>
+        <div className="user-card" style={{ padding: '16px 20px', marginBottom: 0, background: 'linear-gradient(135deg, #1a1a1a 0%, #374151 100%)', border: 'none', cursor: 'pointer', transition: 'transform 0.15s' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <svg width={32} height={32} viewBox="0 0 100 100" style={{ flexShrink: 0 }}><polygon points="30,2 70,2 98,30 98,70 70,98 30,98 2,70 2,30" fill="white" /></svg>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: '#fff' }}>Dashboard Ley 2120</p>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Cumplimiento · Sellos · Proveedores</p>
+            </div>
+            <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.5)', fontSize: 18 }}>→</span>
+          </div>
+        </div>
+      </Link>
 
       {data.top_products.length > 0 && (
         <div className="user-card" style={{ marginBottom: 20 }}>

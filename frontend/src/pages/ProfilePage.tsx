@@ -34,12 +34,16 @@ export default function ProfilePage() {
     setProfileMsg('');
     setProfileError('');
     try {
-      const r = await apiClient.patch<{ data: { full_name: string; phone: string | null } }>('/auth/profile', {
+      const r = await apiClient.patch<{ data: { full_name: string; phone: string | null; country_code: string | null } }>('/auth/profile', {
         full_name: fullName,
         phone: phone ? phone.replace(/\s/g, '') : null,
         country_code: '+57',
       });
-      updateUser({ full_name: r.data.data.full_name });
+      // Actualizar contexto con nombre Y teléfono para que persista sin recargar
+      updateUser({
+        full_name: r.data.data.full_name,
+        phone: r.data.data.phone,
+      });
       setProfileMsg('Perfil actualizado correctamente');
     } catch (err: unknown) {
       setProfileError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al actualizar');

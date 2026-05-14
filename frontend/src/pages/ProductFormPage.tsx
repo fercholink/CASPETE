@@ -1,28 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { apiClient } from '../api/client';
+import { SealBadgeGroup, NutritionalLevelBadge } from '../components/SealBadge';
+import { classifyProductClient } from '../lib/nutritional-classifier-client';
 
+interface AllergyOption { id: string; name: string; severity: string; }
 interface CategoryOption { id: string; name: string; label: string; icon: string | null; }
 
 interface ProductData {
-  id: string;
-  name: string;
-  description: string | null;
-  base_price: string;
-  image_url: string | null;
-  category: string | null;
-  is_healthy: boolean;
+  id: string; name: string; description: string | null; base_price: string;
+  image_url: string | null; category: string | null; is_healthy: boolean;
   customizable_options: string[];
+  // Ley 2120
+  product_form: 'SOLID' | 'LIQUID';
+  nutritional_level: 'LEVEL_1' | 'LEVEL_2';
+  sodium_per_100: string | null; added_sugars_pct: string | null;
+  saturated_fat_pct: string | null; trans_fat_pct: string | null;
+  has_sweeteners: boolean; supplier_tech_sheet_url: string | null;
+  seal_sodium: boolean; seal_sugars: boolean; seal_saturated_fat: boolean;
+  seal_trans_fat: boolean; seal_sweeteners: boolean;
 }
 
 const emptyForm = {
-  name: '',
-  description: '',
-  base_price: '',
-  image_url: '',
-  category: '',
-  is_healthy: true,
-  customizable_options: '',
+  name: '', description: '', base_price: '', image_url: '', category: '',
+  is_healthy: true, customizable_options: '',
+  // Ley 2120
+  product_form: 'SOLID' as 'SOLID' | 'LIQUID',
+  sodium_per_100: '', added_sugars_pct: '', saturated_fat_pct: '',
+  trans_fat_pct: '', has_sweeteners: false, supplier_tech_sheet_url: '',
 };
 
 export default function ProductFormPage() {
@@ -35,9 +40,14 @@ export default function ProductFormPage() {
   const [fetching, setFetching] = useState(!!id);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [showNutrition, setShowNutrition] = useState(false);
+  // Brecha #7 — alérgenos
+  const [allAllergies, setAllAllergies] = useState<AllergyOption[]>([]);
+  const [selectedAllergyIds, setSelectedAllergyIds] = useState<string[]>([]);
 
   useEffect(() => {
     apiClient.get<{ data: CategoryOption[] }>('/categories').then(r => setCategories(r.data.data)).catch(() => {});
+    apiClient.get<{ data: AllergyOption[] }>('/allergies').then(r => setAllAllergies(r.data.data)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -45,132 +55,126 @@ export default function ProductFormPage() {
     apiClient.get<{ data: ProductData }>(`/products/${id}`).then((res) => {
       const p = res.data.data;
       setForm({
-        name: p.name,
-        description: p.description ?? '',
-        base_price: parseFloat(p.base_price).toString(),
-        image_url: p.image_url ?? '',
-        category: p.category ?? '',
-        is_healthy: p.is_healthy,
+        name: p.name, description: p.description ?? '', base_price: parseFloat(p.base_price).toString(),
+        image_url: p.image_url ?? '', category: p.category ?? '', is_healthy: p.is_healthy,
         customizable_options: p.customizable_options?.join(', ') ?? '',
+        product_form: p.product_form ?? 'SOLID',
+        sodium_per_100: p.sodium_per_100 ? parseFloat(p.sodium_per_100).toString() : '',
+        added_sugars_pct: p.added_sugars_pct ? parseFloat(p.added_sugars_pct).toString() : '',
+        saturated_fat_pct: p.saturated_fat_pct ? parseFloat(p.saturated_fat_pct).toString() : '',
+        trans_fat_pct: p.trans_fat_pct ? parseFloat(p.trans_fat_pct).toString() : '',
+        has_sweeteners: p.has_sweeteners ?? false,
+        supplier_tech_sheet_url: p.supplier_tech_sheet_url ?? '',
       });
-    })
-      .catch(() => setError('Error al cargar datos'))
-      .finally(() => setFetching(false));
+      if (p.nutritional_level === 'LEVEL_2') setShowNutrition(true);
+      // Cargar alérgenos actuales del producto
+      if (id) {
+        apiClient.get<{ data: { allergy_id: string }[] }>(`/allergies/products/${id}`)
+          .then(r => setSelectedAllergyIds(r.data.data.map(a => a.allergy_id)))
+          .catch(() => {});
+      }
+    }).catch(() => setError('Error al cargar datos')).finally(() => setFetching(false));
   }, [id]);
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
-  ) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value, type } = e.target;
     const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
-    setForm((p) => ({ ...p, [name]: val }));
+    setForm(p => ({ ...p, [name]: val }));
   }
+
+  // Live preview of seals based on current form values
+  const liveSeals = useMemo(() => classifyProductClient({
+    product_form: form.product_form,
+    sodium_per_100: form.sodium_per_100 ? parseFloat(form.sodium_per_100) : null,
+    added_sugars_pct: form.added_sugars_pct ? parseFloat(form.added_sugars_pct) : null,
+    saturated_fat_pct: form.saturated_fat_pct ? parseFloat(form.saturated_fat_pct) : null,
+    trans_fat_pct: form.trans_fat_pct ? parseFloat(form.trans_fat_pct) : null,
+    has_sweeteners: form.has_sweeteners,
+  }), [form.product_form, form.sodium_per_100, form.added_sugars_pct, form.saturated_fat_pct, form.trans_fat_pct, form.has_sweeteners]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
+    setLoading(true); setError('');
     const base_price = parseFloat(form.base_price);
-    if (isNaN(base_price) || base_price <= 0) {
-      setError('El precio debe ser un número positivo');
-      setLoading(false);
-      return;
-    }
+    if (isNaN(base_price) || base_price <= 0) { setError('El precio debe ser un número positivo'); setLoading(false); return; }
 
     const payload = {
-      name: form.name,
-      base_price,
-      is_healthy: form.is_healthy,
-      customizable_options: form.customizable_options.split(',').map(s => s.trim()).filter(s => s.length > 0),
-      ...(form.description ? { description: form.description } : {}),
-      ...(form.image_url ? { image_url: form.image_url } : {}),
-      ...(form.category ? { category: form.category } : {}),
+      name: form.name, base_price, is_healthy: form.is_healthy,
+      customizable_options: form.customizable_options.split(',').map(s => s.trim()).filter(Boolean),
+      ...(form.description && { description: form.description }),
+      ...(form.image_url && { image_url: form.image_url }),
+      ...(form.category && { category: form.category }),
+      // Ley 2120 — solo si la sección está expandida
+      ...(showNutrition && {
+        product_form: form.product_form,
+        has_sweeteners: form.has_sweeteners,
+        ...(form.sodium_per_100 && { sodium_per_100: parseFloat(form.sodium_per_100) }),
+        ...(form.added_sugars_pct && { added_sugars_pct: parseFloat(form.added_sugars_pct) }),
+        ...(form.saturated_fat_pct && { saturated_fat_pct: parseFloat(form.saturated_fat_pct) }),
+        ...(form.trans_fat_pct && { trans_fat_pct: parseFloat(form.trans_fat_pct) }),
+        ...(form.supplier_tech_sheet_url && { supplier_tech_sheet_url: form.supplier_tech_sheet_url }),
+      }),
     };
 
     try {
-      if (isEdit) {
-        await apiClient.patch(`/products/${id}`, payload);
-      } else {
-        await apiClient.post('/products', payload);
+      if (isEdit) await apiClient.patch(`/products/${id}`, payload);
+      else {
+        const created = await apiClient.post<{ data: { id: string } }>('/products', payload);
+        // Si hay alérgenos seleccionados, guardarlos al nuevo producto
+        const newId = created.data.data.id;
+        if (selectedAllergyIds.length > 0) {
+          await apiClient.put(`/allergies/products/${newId}`, { allergyIds: selectedAllergyIds });
+        }
+        navigate('/products');
+        return;
       }
+      // Edición: guardar alérgenos
+      if (isEdit) await apiClient.put(`/allergies/products/${id}`, { allergyIds: selectedAllergyIds });
       navigate('/products');
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { error?: string } } }).response?.data
-          ?.error ?? 'Error al guardar el producto';
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
+      setError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al guardar el producto');
+    } finally { setLoading(false); }
   }
 
-  if (fetching) {
-    return (
-      <div className="auth-page">
-        <div className="roadmap-note" style={{ maxWidth: 440, width: '100%' }}>
-          Cargando...
-        </div>
-      </div>
-    );
-  }
+  if (fetching) return <div className="auth-page"><div className="roadmap-note" style={{ maxWidth: 440, width: '100%' }}>Cargando...</div></div>;
+
+  const inputNum = (label: string, name: string, placeholder: string, hint: string, max?: number) => (
+    <div className="form-group" style={{ marginBottom: 0 }}>
+      <label className="form-label" htmlFor={name}>
+        {label} <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, fontSize: 11 }}>{hint}</span>
+      </label>
+      <input id={name} name={name} className="form-input" type="number" step="0.01" min="0"
+        max={max} value={(form as Record<string, unknown>)[name] as string}
+        onChange={handleChange} placeholder={placeholder} style={{ marginBottom: 0 }} />
+    </div>
+  );
 
   return (
     <div className="auth-page" style={{ justifyContent: 'flex-start', paddingTop: 48 }}>
-      <div className="auth-card" style={{ maxWidth: 500 }}>
-        <Link
-          to="/products"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 13,
-            color: 'var(--color-text-muted)',
-            textDecoration: 'none',
-            marginBottom: 24,
-          }}
-        >
+      <div className="auth-card" style={{ maxWidth: 560 }}>
+        <Link to="/products" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-muted)', textDecoration: 'none', marginBottom: 24 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           Volver a productos
         </Link>
-
-        <span className="brand-badge">
-          <span className="brand-dot" />
-          CASPETE
-        </span>
-
-        <h1 className="auth-title">
-          {isEdit ? 'Editar producto' : 'Nuevo producto'}
-        </h1>
-        <p className="auth-subtitle">
-          {isEdit ? 'Actualiza los datos del producto en el catálogo global' : 'Agrega un producto al catálogo global'}
-        </p>
+        <span className="brand-badge"><span className="brand-dot" />CASPETE</span>
+        <h1 className="auth-title">{isEdit ? 'Editar producto' : 'Nuevo producto'}</h1>
+        <p className="auth-subtitle">{isEdit ? 'Actualiza los datos del producto en el catálogo global' : 'Agrega un producto al catálogo global'}</p>
 
         <form onSubmit={handleSubmit}>
+          {/* ── Datos básicos ─────────────────────────────── */}
           <div className="form-group">
             <label className="form-label" htmlFor="name">Nombre del producto</label>
-            <input
-              id="name" name="name" className="form-input" type="text"
-              value={form.name} onChange={handleChange} required
-              placeholder="Empanada de pollo"
-            />
+            <input id="name" name="name" className="form-input" type="text" value={form.name} onChange={handleChange} required placeholder="Empanada de pollo" />
           </div>
 
-          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="base_price">Precio base (COP)</label>
-              <input
-                id="base_price" name="base_price" className="form-input" type="number"
-                value={form.base_price} onChange={handleChange}
-                required min="0.01" step="0.01" placeholder="1500"
-              />
+              <input id="base_price" name="base_price" className="form-input" type="number" value={form.base_price} onChange={handleChange} required min="0.01" step="0.01" placeholder="1500" />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="category">Categoría</label>
-              <select
-                id="category" name="category" className="form-select"
-                value={form.category} onChange={handleChange}
-              >
+              <select id="category" name="category" className="form-select" value={form.category} onChange={handleChange}>
                 <option value="">Sin categoría</option>
                 {categories.map(c => <option key={c.id} value={c.name}>{c.icon || '📦'} {c.label}</option>)}
               </select>
@@ -179,56 +183,127 @@ export default function ProductFormPage() {
 
           <div style={{ marginTop: 14 }}>
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-              <input
-                id="is_healthy" name="is_healthy" type="checkbox"
-                checked={form.is_healthy} onChange={handleChange}
-                style={{ width: 16, height: 16, accentColor: 'var(--color-brand)', cursor: 'pointer' }}
-              />
+              <input id="is_healthy" name="is_healthy" type="checkbox" checked={form.is_healthy} onChange={handleChange} style={{ width: 16, height: 16, accentColor: 'var(--color-brand)', cursor: 'pointer' }} />
               <span>¿Saludable?</span>
             </label>
           </div>
 
           <div className="form-group" style={{ marginTop: 14 }}>
-            <label className="form-label" htmlFor="description">
-              Descripción{' '}
-              <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span>
-            </label>
-            <input
-              id="description" name="description" className="form-input" type="text"
-              value={form.description} onChange={handleChange}
-              placeholder="Rellena con pollo desmenuzado y queso"
-            />
+            <label className="form-label" htmlFor="description">Descripción <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span></label>
+            <input id="description" name="description" className="form-input" type="text" value={form.description} onChange={handleChange} placeholder="Rellena con pollo desmenuzado y queso" />
           </div>
-
           <div className="form-group">
-            <label className="form-label" htmlFor="customizable_options">
-              Opciones de personalización <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(separadas por comas)</span>
-            </label>
-            <input
-              id="customizable_options" name="customizable_options" className="form-input" type="text"
-              value={form.customizable_options} onChange={handleChange}
-              placeholder="Ej: Sin cebolla, Doble queso, Sin salsas"
-            />
+            <label className="form-label" htmlFor="customizable_options">Opciones de personalización <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(separadas por comas)</span></label>
+            <input id="customizable_options" name="customizable_options" className="form-input" type="text" value={form.customizable_options} onChange={handleChange} placeholder="Sin cebolla, Doble queso" />
           </div>
-
           <div className="form-group">
-            <label className="form-label" htmlFor="image_url">
-              URL de imagen{' '}
-              <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span>
-            </label>
-            <input
-              id="image_url" name="image_url" className="form-input" type="text"
-              value={form.image_url} onChange={handleChange}
-              placeholder="https://..."
-            />
+            <label className="form-label" htmlFor="image_url">URL de imagen <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span></label>
+            <input id="image_url" name="image_url" className="form-input" type="text" value={form.image_url} onChange={handleChange} placeholder="https://..." />
           </div>
 
-          {error && <p className="form-error">{error}</p>}
+          {/* ── Ley 2120 / Resolución 2492 ─────────────────── */}
+          <div style={{ marginTop: 20, borderTop: '1px solid var(--color-border)', paddingTop: 16 }}>
+            <button type="button" onClick={() => setShowNutrition(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', width: '100%', padding: '10px 14px', borderRadius: 10, background: showNutrition ? 'rgba(22,163,74,0.06)' : 'var(--color-gray-100)' }}>
+              <svg width={18} height={18} viewBox="0 0 100 100">
+                <polygon points="30,2 70,2 98,30 98,70 70,98 30,98 2,70 2,30" fill={showNutrition ? '#15803d' : '#94a3b8'} />
+              </svg>
+              <span style={{ fontWeight: 600, fontSize: 14, color: showNutrition ? '#15803d' : 'var(--color-text)' }}>
+                Información Nutricional — Ley 2120
+              </span>
+              <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                {showNutrition ? '▲ Ocultar' : '▼ Agregar'}
+              </span>
+            </button>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading
-              ? isEdit ? 'Guardando...' : 'Creando...'
-              : isEdit ? 'Guardar cambios' : 'Crear producto'}
+            {showNutrition && (
+              <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Preview en tiempo real de sellos */}
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--color-gray-50)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)' }}>Vista previa de sellos:</p>
+                    <NutritionalLevelBadge level={liveSeals.nutritional_level} />
+                  </div>
+                  {liveSeals.nutritional_level === 'LEVEL_2' ? (
+                    <SealBadgeGroup
+                      sealSodium={liveSeals.seal_sodium} sealSugars={liveSeals.seal_sugars}
+                      sealSaturatedFat={liveSeals.seal_saturated_fat} sealTransFat={liveSeals.seal_trans_fat}
+                      sealSweeteners={liveSeals.seal_sweeteners} size="md"
+                    />
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 12, color: '#15803d' }}>✅ Sin sellos de advertencia con los valores actuales</p>
+                  )}
+                </div>
+
+                {/* Forma del producto */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="product_form">Forma del producto</label>
+                  <select id="product_form" name="product_form" className="form-select" value={form.product_form} onChange={handleChange}>
+                    <option value="SOLID">Sólido (umbral sodio: ≥ 300 mg/100g)</option>
+                    <option value="LIQUID">Líquido (umbral sodio: ≥ 40 mg/100ml)</option>
+                  </select>
+                </div>
+
+                {/* Grid de valores nutricionales */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {inputNum('Sodio', 'sodium_per_100', 'mg por 100g/ml', `Umbral: ${form.product_form === 'LIQUID' ? '40' : '300'} mg`)}
+                  {inputNum('Azúcares añadidos %', 'added_sugars_pct', '% energía', 'Umbral: 10%', 100)}
+                  {inputNum('Grasas saturadas %', 'saturated_fat_pct', '% energía', 'Umbral: 10%', 100)}
+                  {inputNum('Grasas trans %', 'trans_fat_pct', '% energía', 'Cualquier presencia', 100)}
+                </div>
+
+                {/* Edulcorantes */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', borderRadius: 10, background: form.has_sweeteners ? 'rgba(234,179,8,0.08)' : 'var(--color-gray-50)', border: `1px solid ${form.has_sweeteners ? 'rgba(234,179,8,0.4)' : 'var(--color-border)'}` }}>
+                  <input id="has_sweeteners" name="has_sweeteners" type="checkbox" checked={form.has_sweeteners} onChange={handleChange}
+                    style={{ width: 16, height: 16, accentColor: '#ca8a04', cursor: 'pointer' }} />
+                  <div>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>Contiene edulcorantes</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-muted)' }}>Edulcorantes artificiales o naturales no calóricos (stevia, sucralosa, aspartame...)</p>
+                  </div>
+                </label>
+
+                {/* Ficha técnica proveedor */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="supplier_tech_sheet_url">
+                    Ficha técnica del proveedor <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(Art. 32 Res. 2492)</span>
+                  </label>
+                  <input id="supplier_tech_sheet_url" name="supplier_tech_sheet_url" className="form-input" type="text"
+                    value={form.supplier_tech_sheet_url} onChange={handleChange} placeholder="https://..." style={{ marginBottom: 0 }} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Brecha #7: Alérgenos ────────────────────────── */}
+          {allAllergies.length > 0 && (
+            <div style={{ marginTop: 20, borderTop: '1px solid var(--color-border)', paddingTop: 16 }}>
+              <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--color-text-muted)' }}>Alérgenos declarados</p>
+              <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(220,38,38,0.04)', border: '1px solid rgba(220,38,38,0.15)', marginBottom: 12 }}>
+                <p style={{ margin: 0, fontSize: 12, color: '#7f1d1d', lineHeight: 1.5 }}>Declara si este producto contiene o puede contener alérgenos. Esta información se mostrará como alerta al confirmar loncheras.</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8 }}>
+                {allAllergies.map(a => (
+                  <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, background: selectedAllergyIds.includes(a.id) ? 'rgba(220,38,38,0.06)' : 'var(--color-gray-50)', border: `1px solid ${selectedAllergyIds.includes(a.id) ? 'rgba(220,38,38,0.3)' : 'var(--color-border)'}`, cursor: 'pointer', transition: 'background 0.15s, border-color 0.15s' }}>
+                    <input type="checkbox" checked={selectedAllergyIds.includes(a.id)}
+                      onChange={e => setSelectedAllergyIds(prev => e.target.checked ? [...prev, a.id] : prev.filter(x => x !== a.id))}
+                      style={{ width: 14, height: 14, cursor: 'pointer', accentColor: '#dc2626', flexShrink: 0 }} />
+                    <div>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: selectedAllergyIds.includes(a.id) ? '#dc2626' : 'var(--color-text)' }}>{a.name}</span>
+                      {a.severity === 'severe' && <span style={{ display: 'block', fontSize: 10, color: '#dc2626', fontWeight: 700 }}>⚠ SEVERA</span>}
+                    </div>
+                  </label>
+                ))}
+              </div>
+              {selectedAllergyIds.length > 0 && (
+                <p style={{ margin: '8px 0 0', fontSize: 11, color: '#dc2626' }}>⚠️ {selectedAllergyIds.length} alérgeno{selectedAllergyIds.length !== 1 ? 's' : ''} declarado{selectedAllergyIds.length !== 1 ? 's' : ''}. Los padres serán alertados al agregar este producto al carrito.</p>
+              )}
+            </div>
+          )}
+
+          {error && <p className="form-error" style={{ marginTop: 16 }}>{error}</p>}
+
+          <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: 20 }}>
+            {loading ? (isEdit ? 'Guardando...' : 'Creando...') : (isEdit ? 'Guardar cambios' : 'Crear producto')}
           </button>
         </form>
       </div>

@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../api/client';
+import { SealBadgeGroup, NutritionalLevelBadge } from '../components/SealBadge';
+import { SweetenerAlert, ComplianceScoreBadge } from '../components/NutritionCompliance';
 
 interface Student {
   id: string;
@@ -24,14 +26,15 @@ interface StoreProduct {
   stock: number | null;
   active: boolean;
   product: {
-    id: string;
-    name: string;
-    description: string | null;
-    base_price: string;
-    image_url: string | null;
-    category: string | null;
-    is_healthy: boolean;
+    id: string; name: string; description: string | null;
+    base_price: string; image_url: string | null;
+    category: string | null; is_healthy: boolean;
     customizable_options: string[];
+    // Ley 2120
+    nutritional_level: 'LEVEL_1' | 'LEVEL_2';
+    seal_sodium: boolean; seal_sugars: boolean;
+    seal_saturated_fat: boolean; seal_trans_fat: boolean; seal_sweeteners: boolean;
+    has_sweeteners: boolean;
   };
 }
 
@@ -79,6 +82,7 @@ export default function NewOrderPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fetching, setFetching] = useState(true);
+  const [allergenAlerts, setAllergenAlerts] = useState<{ allergy: { name: string; severity: string }; product: string }[]>([]);
 
   useEffect(() => {
     apiClient
@@ -124,9 +128,7 @@ export default function NewOrderPage() {
   }
 
   function setQty(sp: StoreProduct, qty: number) {
-    if (sp.stock !== null && qty > sp.stock) {
-      qty = sp.stock;
-    }
+    if (sp.stock !== null && qty > sp.stock) qty = sp.stock;
     setCart((prev) => {
       const existing = prev.find((i) => i.storeProduct.id === sp.id);
       if (qty <= 0) return prev.filter((i) => i.storeProduct.id !== sp.id);
@@ -134,6 +136,15 @@ export default function NewOrderPage() {
       return [...prev, { storeProduct: sp, quantity: qty, customizations: [] }];
     });
   }
+
+  // Verificar alergias al cambiar el carrito
+  useEffect(() => {
+    if (!selectedStudent || cart.length === 0) { setAllergenAlerts([]); return; }
+    const ids = cart.map(i => i.storeProduct.id);
+    apiClient.post<{ data: { has_alert: boolean; alerts: { allergy: { name: string; severity: string }; product: string }[] } }>(
+      '/allergies/check', { studentId: selectedStudent.id, storeProductIds: ids }
+    ).then(r => setAllergenAlerts(r.data.data.has_alert ? r.data.data.alerts : [])).catch(() => {});
+  }, [cart, selectedStudent]);
 
   function toggleCustomization(spId: string, option: string) {
     setCart((prev) => prev.map((i) => {
@@ -151,6 +162,20 @@ export default function NewOrderPage() {
   const total = cart.reduce((s, i) => s + getEffectivePrice(i.storeProduct) * i.quantity, 0);
   const balance = selectedStudent ? parseFloat(selectedStudent.balance) : 0;
   const hasEnough = balance >= total && total > 0;
+
+  // ── Compliance Ley 2120 ──────────────────────────────────────
+  const complianceData = useMemo(() => {
+    const cartProducts = cart.map(i => i.storeProduct.product);
+    const is_seal_free = cartProducts.every(p => p.nutritional_level === 'LEVEL_1');
+    const has_sweetener_alert = cartProducts.some(p => p.seal_sweeteners);
+    const sweetenerNames = cart.filter(i => i.storeProduct.product.seal_sweeteners).map(i => i.storeProduct.product.name);
+    const sealCount = cartProducts.reduce((acc, p) => {
+      return acc + [p.seal_sodium, p.seal_sugars, p.seal_saturated_fat, p.seal_trans_fat, p.seal_sweeteners].filter(Boolean).length;
+    }, 0);
+    const maxSeals = cartProducts.length * 5;
+    const score = maxSeals === 0 ? 100 : Math.round((1 - sealCount / maxSeals) * 100);
+    return { is_seal_free, has_sweetener_alert, sweetenerNames, score };
+  }, [cart]);
 
   // Agrupar por categoría
   const grouped = storeProducts.reduce<Record<string, StoreProduct[]>>((acc, sp) => {
@@ -259,31 +284,37 @@ export default function NewOrderPage() {
                           const qty = getQty(sp.id);
                           const price = getEffectivePrice(sp);
                           const hasCustomPrice = sp.price !== null;
+                          const isLevel2 = sp.product.nutritional_level === 'LEVEL_2';
                           return (
-                            <div key={sp.id} className="user-card" style={{ padding: '14px 16px', marginBottom: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            <div key={sp.id} className="user-card" style={{ padding: '14px 16px', marginBottom: 0, display: 'flex', flexDirection: 'column', gap: 12, border: isLevel2 ? '1px solid rgba(220,38,38,0.2)' : undefined }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                                 <div style={{ flex: 1 }}>
-                                  <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 500 }}>
-                                    {sp.product.name}
-                                    {sp.product.is_healthy && (
-                                      <span className="role-badge" style={{ marginLeft: 8, fontSize: 11 }}>Saludable</span>
-                                    )}
-                                  </p>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                                    <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{sp.product.name}</p>
+                                    {sp.product.is_healthy && <span className="role-badge" style={{ fontSize: 11 }}>Saludable</span>}
+                                    <NutritionalLevelBadge level={sp.product.nutritional_level} />
+                                  </div>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                     <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
                                       {fmt(price)}
                                       {hasCustomPrice && (
-                                        <span style={{ textDecoration: 'line-through', marginLeft: 6, fontSize: 11, opacity: 0.5 }}>
-                                          {fmt(sp.product.base_price)}
-                                        </span>
+                                        <span style={{ textDecoration: 'line-through', marginLeft: 6, fontSize: 11, opacity: 0.5 }}>{fmt(sp.product.base_price)}</span>
                                       )}
                                     </p>
                                     {sp.stock !== null && (
-                                      <span style={{ fontSize: 12, color: sp.stock <= 5 ? 'var(--color-error)' : 'var(--color-text-muted)' }}>
-                                        📦 Quedan: {sp.stock}
-                                      </span>
+                                      <span style={{ fontSize: 12, color: sp.stock <= 5 ? 'var(--color-error)' : 'var(--color-text-muted)' }}>📦 Quedan: {sp.stock}</span>
                                     )}
                                   </div>
+                                  {/* Sellos Ley 2120 */}
+                                  {isLevel2 && (
+                                    <div style={{ marginTop: 6 }}>
+                                      <SealBadgeGroup
+                                        sealSodium={sp.product.seal_sodium} sealSugars={sp.product.seal_sugars}
+                                        sealSaturatedFat={sp.product.seal_saturated_fat} sealTransFat={sp.product.seal_trans_fat}
+                                        sealSweeteners={sp.product.seal_sweeteners} size="sm"
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                   <button type="button" onClick={() => setQty(sp, qty - 1)}
@@ -338,6 +369,26 @@ export default function NewOrderPage() {
                 <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 16 }}>Cargando productos de la tienda...</p>
               )}
 
+              {/* ── Alerta ALERGIAS (Brecha #2) */}
+              {allergenAlerts.length > 0 && (
+                <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(220,38,38,0.06)', border: '1.5px solid rgba(220,38,38,0.3)', marginTop: 16 }}>
+                  <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: 13, color: '#dc2626' }}>
+                    ⚠️ Alergia detectada — Revisión requerida
+                  </p>
+                  {allergenAlerts.map((a, i) => (
+                    <p key={i} style={{ margin: '3px 0', fontSize: 12, color: '#7f1d1d' }}>
+                      <strong>{a.product}</strong> contiene <strong>{a.allergy.name}</strong>
+                      {a.allergy.severity === 'severe' && <span style={{ marginLeft: 6, background: '#dc2626', color: '#fff', borderRadius: 4, padding: '1px 5px', fontSize: 10 }}>SEVERA</span>}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {/* ── Alerta edulcorantes Ley 2120 */}
+              {cart.length > 0 && complianceData.has_sweetener_alert && (
+                <SweetenerAlert productNames={complianceData.sweetenerNames} />
+              )}
+
               {/* Notas */}
               <div className="form-group" style={{ marginTop: 16 }}>
                 <label className="form-label" htmlFor="notes">
@@ -349,6 +400,10 @@ export default function NewOrderPage() {
               {/* Resumen */}
               {cart.length > 0 && (
                 <div style={{ background: 'var(--color-gray-50)', border: '1px solid var(--color-border)', borderRadius: 12, padding: '16px 20px', marginTop: 4 }}>
+                  {/* Compliance Score Ley 2120 */}
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid var(--color-border)' }}>
+                    <ComplianceScoreBadge score={complianceData.score} isSeaFree={complianceData.is_seal_free} />
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                     <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>Total pedido</span>
                     <span style={{ fontSize: 16, fontWeight: 600 }}>${total.toLocaleString('es-CO')}</span>

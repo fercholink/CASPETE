@@ -1,12 +1,11 @@
-fix(docker): remove pnpm-workspace.yaml from backend
+fix(tsconfig): disable declaration to fix TS2883 in Docker build
 
-The pnpm-workspace.yaml in backend/ was incorrectly causing
-pnpm 9 (used in Docker) to treat the directory as a workspace root.
+TS2883 occurs when declaration:true is set and TypeScript tries to emit
+.d.ts files referencing internal pnpm symlink paths (.pnpm/...) that are
+not portable across environments.
 
-Since no packages[] field was defined, pnpm 9 failed with:
-"ERROR packages field missing or empty"
+The backend is a Node.js application (not a library), so emitting
+declaration files serves no purpose and causes cross-environment build
+failures when package resolution paths differ.
 
-The backend is a standalone project, not a monorepo workspace.
-The pnpm-workspace.yaml was only added as an attempt to configure
-allowBuilds (pnpm 11 feature), which is unnecessary since we now
-use pnpm@9 in Docker which runs build scripts without restrictions.
+- tsconfig.json: declaration false, declarationMap false

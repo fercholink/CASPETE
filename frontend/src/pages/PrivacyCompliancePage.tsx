@@ -97,16 +97,81 @@ export default function PrivacyCompliancePage() {
   const cookieCount = logs.filter(l => l.entity === 'CookieConsent' || l.justification?.startsWith('Cookie consent')).length;
   const arcoCount   = arcoList.filter(r => r.status === 'PENDING').length;
 
+  // ── Exportar como CSV ──────────────────────────────────────────────────────
+  function downloadReport() {
+    const now = new Date().toLocaleDateString('es-CO').replace(/\//g, '-');
+    let csv = '';
+    let filename = '';
+
+    if (tab === 'audit') {
+      filename = `caspete_audit_log_${now}.csv`;
+      const headers = ['ID','Fecha','Acción','Entidad','Usuario','Email','Rol','IP','Campos','Justificación'];
+      csv = headers.join(';') + '\n';
+      csv += logs.map(l => [
+        l.id,
+        new Date(l.created_at).toLocaleString('es-CO'),
+        l.action,
+        l.entity,
+        l.user?.full_name ?? (l.role === 'ANONYMOUS' ? 'Anónimo' : l.user_id ?? ''),
+        l.user?.email ?? '',
+        l.role ?? '',
+        l.ip_address ?? '',
+        l.fields.join(' | '),
+        (l.justification ?? '').replace(/;/g, ','),
+      ].map(v => `"${String(v).replace(/"/g, '\'')}"`).join(';')).join('\n');
+    } else {
+      filename = `caspete_arco_requests_${now}.csv`;
+      const headers = ['ID','Fecha','Tipo','Usuario','Email','Rol','Descripción','Estado','Fecha Resolución'];
+      csv = headers.join(';') + '\n';
+      csv += arcoList.map(r => [
+        r.id,
+        new Date(r.created_at).toLocaleString('es-CO'),
+        r.type,
+        r.user?.full_name ?? r.user_id,
+        r.user?.email ?? '',
+        r.user?.role ?? '',
+        r.description.replace(/;/g, ','),
+        r.status,
+        r.resolved_at ? new Date(r.resolved_at).toLocaleString('es-CO') : '',
+      ].map(v => `"${String(v).replace(/"/g, '\'')}"`).join(';')).join('\n');
+    }
+
+    // BOM para que Excel abra correctamente caracteres especiales
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div style={{ padding: '32px 24px', maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
-          🔐 Panel de Privacidad & Compliance
-        </h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: 14, margin: '6px 0 0' }}>
-          Trazabilidad de datos personales — Ley 1581/2012 · Solo SUPER_ADMIN
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="btn-ghost"
+            style={{ padding: '7px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            ← Panel principal
+          </button>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
+              🔐 Privacidad &amp; Compliance
+            </h1>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 13, margin: '3px 0 0' }}>
+              Trazabilidad de datos personales — Ley 1581/2012 · Solo SUPER_ADMIN
+            </p>
+          </div>
+          <button
+            onClick={downloadReport}
+            className="btn-primary"
+            style={{ padding: '8px 18px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}
+          >
+            ⬇ Descargar informe CSV
+          </button>
+        </div>
       </div>
 
       {/* KPI cards */}

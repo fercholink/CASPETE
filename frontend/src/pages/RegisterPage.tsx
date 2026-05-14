@@ -103,64 +103,68 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit}>
           {/* Nombre y Apellido */}
           <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-            <div>
-              <label className="form-label" htmlFor="firstName">Nombre(s)</label>
-              <input id="firstName" name="firstName" className="form-input" type="text" value={form.firstName} onChange={handleChange} required placeholder="Juan" autoComplete="given-name" />
-            </div>
-            <div>
-              <label className="form-label" htmlFor="lastName">Apellido(s)</label>
-              <input id="lastName" name="lastName" className="form-input" type="text" value={form.lastName} onChange={handleChange} required placeholder="García" autoComplete="family-name" />
-            </div>
+          <div>
+            <label className="form-label" htmlFor="firstName">Nombre(s)</label>
+            <input id="firstName" name="firstName" className="form-input" type="text" value={form.firstName} onChange={handleChange} required placeholder="Juan" autoComplete="given-name" />
+            <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>📋 Usado para identificarte en la plataforma (Art. 12 Ley 1581)</p>
+          </div>
+          <div>
+            <label className="form-label" htmlFor="lastName">Apellido(s)</label>
+            <input id="lastName" name="lastName" className="form-input" type="text" value={form.lastName} onChange={handleChange} required placeholder="García" autoComplete="family-name" />
+          </div>
           </div>
 
           {/* Email y Teléfono */}
           <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-            <div>
-              <label className="form-label" htmlFor="email">Correo electrónico</label>
-              <input id="email" name="email" className="form-input" type="email" value={form.email} onChange={handleChange} required placeholder="tu@correo.com" autoComplete="email" />
+          <div>
+            <label className="form-label" htmlFor="email">Correo electrónico</label>
+            <input id="email" name="email" className="form-input" type="email" value={form.email} onChange={handleChange} required placeholder="tu@correo.com" autoComplete="email" />
+            <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>📧 Para notificaciones de pedidos y recuperación de contraseña. No compartimos tu correo.</p>
+          </div>
+          <div>
+            <label className="form-label" htmlFor="phone">Teléfono <span style={{ color: '#9ca3af', fontWeight: 400 }}>(opc.)</span></label>
+            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden', background: '#fff', transition: 'border-color 0.2s' }}
+              onFocusCapture={e => (e.currentTarget.style.borderColor = '#1a4731')}
+              onBlurCapture={e => (e.currentTarget.style.borderColor = '#d1d5db')}
+            >
+              <span style={{ padding: '0 10px', fontSize: 14, fontWeight: 600, color: '#374151', background: '#f3f4f6', borderRight: '1px solid #d1d5db', height: '100%', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', userSelect: 'none' }}>🇨🇴 +57</span>
+              <input
+                id="phone" name="phone" type="tel"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="300 123 4567"
+                autoComplete="tel-national"
+                maxLength={10}
+                style={{ flex: 1, border: 'none', outline: 'none', padding: '10px 12px', fontSize: 14, color: '#111827', background: 'transparent', minWidth: 0 }}
+              />
             </div>
-            <div>
-              <label className="form-label" htmlFor="phone">Teléfono <span style={{ color: '#9ca3af', fontWeight: 400 }}>(opc.)</span></label>
-              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden', background: '#fff', transition: 'border-color 0.2s' }}
-                onFocusCapture={e => (e.currentTarget.style.borderColor = '#1a4731')}
-                onBlurCapture={e => (e.currentTarget.style.borderColor = '#d1d5db')}
-              >
-                <span style={{ padding: '0 10px', fontSize: 14, fontWeight: 600, color: '#374151', background: '#f3f4f6', borderRight: '1px solid #d1d5db', height: '100%', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', userSelect: 'none' }}>🇨🇴 +57</span>
-                <input
-                  id="phone" name="phone" type="tel"
-                  value={form.phone}
-                  onChange={handleChange}
-                  placeholder="300 123 4567"
-                  autoComplete="tel-national"
-                  maxLength={10}
-                  style={{ flex: 1, border: 'none', outline: 'none', padding: '10px 12px', fontSize: 14, color: '#111827', background: 'transparent', minWidth: 0 }}
-                />
-              </div>
-            </div>
+            <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>📱 Opcional. Solo para alertas urgentes. Nunca con fines publicitarios.</p>
+          </div>
           </div>
 
           {/* Contraseñas */}
           <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-            <div>
-              <label className="form-label" htmlFor="password">Contraseña</label>
-              <div style={{ position: 'relative' }}>
-                <input id="password" name="password" className="form-input" type={showPassword ? 'text' : 'password'} value={form.password} onChange={handleChange} required minLength={8} placeholder="Mín. 8 caracteres" autoComplete="new-password" style={{ paddingRight: 44 }} />
-                <button type="button" onClick={() => setShowPassword(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
-                  <EyeIcon open={showPassword} />
-                </button>
-              </div>
+          <div>
+            <label className="form-label" htmlFor="password">Contraseña</label>
+            <div style={{ position: 'relative' }}>
+              <input id="password" name="password" className="form-input" type={showPassword ? 'text' : 'password'} value={form.password} onChange={handleChange} required minLength={8} placeholder="Mín. 8 caracteres" autoComplete="new-password" style={{ paddingRight: 44 }} />
+              <button type="button" onClick={() => setShowPassword(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
+                <EyeIcon open={showPassword} />
+              </button>
             </div>
-            <div>
-              <label className="form-label" htmlFor="confirmPassword">Confirmar contraseña</label>
-              <div style={{ position: 'relative' }}>
-                <input id="confirmPassword" name="confirmPassword" className="form-input" type={showConfirm ? 'text' : 'password'} value={form.confirmPassword} onChange={handleChange} required placeholder="Repite la contraseña" autoComplete="new-password" style={{ paddingRight: 44, borderColor: !passwordsMatch ? '#ef4444' : undefined }} />
-                <button type="button" onClick={() => setShowConfirm(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
-                  <EyeIcon open={showConfirm} />
-                </button>
-              </div>
-              {!passwordsMatch && <p style={{ fontSize: 11, color: '#ef4444', marginTop: 3 }}>⚠ No coinciden</p>}
-              {passwordsMatch && form.confirmPassword.length > 0 && <p style={{ fontSize: 11, color: '#16a34a', marginTop: 3 }}>✓ Coinciden</p>}
+            <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>🔐 Almacenada cifrada. No la compartimos ni la conocemos.</p>
+          </div>
+          <div>
+            <label className="form-label" htmlFor="confirmPassword">Confirmar contraseña</label>
+            <div style={{ position: 'relative' }}>
+              <input id="confirmPassword" name="confirmPassword" className="form-input" type={showConfirm ? 'text' : 'password'} value={form.confirmPassword} onChange={handleChange} required placeholder="Repite la contraseña" autoComplete="new-password" style={{ paddingRight: 44, borderColor: !passwordsMatch ? '#ef4444' : undefined }} />
+              <button type="button" onClick={() => setShowConfirm(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
+                <EyeIcon open={showConfirm} />
+              </button>
             </div>
+            {!passwordsMatch && <p style={{ fontSize: 11, color: '#ef4444', marginTop: 3 }}>⚠ No coinciden</p>}
+            {passwordsMatch && form.confirmPassword.length > 0 && <p style={{ fontSize: 11, color: '#16a34a', marginTop: 3 }}>✓ Coinciden</p>}
+          </div>
           </div>
 
           {/* Tipo de usuario */}
@@ -244,6 +248,16 @@ export default function RegisterPage() {
                 y que estoy facultado/a para autorizar el tratamiento de sus datos conforme a la Ley 1581 de 2012.
               </span>
             </label>
+          </div>
+
+          {/* ⚠️ Aviso menores de edad — Art. 7 Ley 1581/2012 */}
+          <div style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+            <p style={{ margin: 0, fontSize: 11, color: '#92400e', lineHeight: 1.6 }}>
+              <strong>⚠ Protección reforzada de menores (Art. 7):</strong> Al registrar datos de un menor de edad,
+              usted como padre, madre o acudiente asume la responsabilidad legal de otorgar el consentimiento.
+              Los datos del menor (nombre, alergias, grado) solo serán usados para la gestión de su alimentación escolar
+              y no serán compartidos con terceros sin su autorización expresa.
+            </p>
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading || !passwordsMatch || !allConsentsGiven} style={{ marginBottom: 8 }}>

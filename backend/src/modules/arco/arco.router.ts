@@ -1,8 +1,43 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/auth.middleware.js';
 import * as arco from './arco.service.js';
+import * as breach from './breach.service.js';
 
 const router = Router();
+
+// ── POST /api/arco/breaches — Registrar brecha de seguridad (SUPER_ADMIN) ───
+router.post('/breaches', authenticate, requireRole(['SUPER_ADMIN']), async (req, res, next) => {
+  try {
+    const body = req.body as {
+      description: string;
+      affectedData: string[];
+      estimatedAffectedUsers: number;
+      severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+      remediationActions: string;
+    };
+    const result = await breach.reportBreach({
+      reportedBy: req.user!.email,
+      ...body,
+    }, req);
+    res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
+// ── GET /api/arco/breaches — Listar brechas registradas (SUPER_ADMIN) ────────
+router.get('/breaches', authenticate, requireRole(['SUPER_ADMIN']), async (req, res, next) => {
+  try {
+    const data = await breach.listBreaches();
+    res.json({ success: true, data });
+  } catch (e) { next(e); }
+});
+
+// ── GET /api/arco/arco-alerts — Alertas ARCO vencidas >10 días (SUPER_ADMIN) ─
+router.get('/arco-alerts', authenticate, requireRole(['SUPER_ADMIN']), async (req, res, next) => {
+  try {
+    const data = await breach.checkArcoDeadlines();
+    res.json({ success: true, data });
+  } catch (e) { next(e); }
+});
 
 // ── POST /api/arco/cookie-consent — Registro consentimiento cookies (público) ─
 router.post('/cookie-consent', async (req, res, next) => {

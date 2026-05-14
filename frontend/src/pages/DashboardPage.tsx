@@ -205,6 +205,22 @@ function SuperAdminDashboard() {
             </div>
           </Link>
 
+          {/* Tarjeta Privacidad & Compliance — Ley 1581 */}
+          <Link to="/privacy-compliance" style={{ textDecoration: 'none', display: 'block', marginBottom: 20 }}>
+            <div className="user-card" style={{ padding: '16px 20px', marginBottom: 0, background: 'linear-gradient(135deg, #1a2e1a 0%, #14532d 100%)', border: 'none', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,80,0,0.25)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <span style={{ fontSize: 32, flexShrink: 0 }}>🔐</span>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#fff' }}>Privacidad & Compliance</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Audit Log · Consentimientos cookies · Solicitudes ARCO · Ley 1581/2012</p>
+                </div>
+                <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.5)', fontSize: 18 }}>→</span>
+              </div>
+            </div>
+          </Link>
+
           {admin.top_products.length > 0 && (
             <div className="user-card" style={{ marginBottom: 20 }}>
               <p className="dashboard-label" style={{ marginBottom: 12 }}>Top productos (últimos 30 días)</p>

@@ -1,5 +1,7 @@
-fix(frontend): use useContext(AuthContext) instead of non-existent useAuth
+feat(dashboard): add Privacy Compliance quick access card for SUPER_ADMIN
 
-PrivacyCompliancePage.tsx imported useAuth which is not exported
-by AuthContext.tsx. The project uses the raw useContext(AuthContext)
-pattern. Fix: import useContext + AuthContext, use ctx?.user instead.
+Adds a green gradient card below the Ley 2120 card in the SUPER_ADMIN
+dashboard panel. Clicking it navigates to /privacy-compliance.
+
+Shows: Audit Log, consentimientos cookies, solicitudes ARCO, Ley 1581/2012.
+Same hover animation style as the existing Ley 2120 card.

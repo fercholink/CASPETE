@@ -31,6 +31,10 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [emailExists, setEmailExists] = useState(false);
+  // ── Ley 1581/2012 — 3 consentimientos obligatorios (Art. 7, 9, 12) ────────
+  const [consentGeneral, setConsentGeneral] = useState(false);
+  const [consentSensitive, setConsentSensitive] = useState(false);
+  const [consentLegalRep, setConsentLegalRep] = useState(false);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -40,10 +44,12 @@ export default function RegisterPage() {
 
   const passwordsMatch = form.confirmPassword === '' || form.password === form.confirmPassword;
   const selectedRole = ROLE_OPTIONS[form.roleIndex];
+  const allConsentsGiven = consentGeneral && consentSensitive && consentLegalRep;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (form.password !== form.confirmPassword) { setError('Las contraseñas no coinciden.'); return; }
+    if (!allConsentsGiven) { setError('Debe aceptar las tres declaraciones de privacidad para continuar.'); return; }
     setLoading(true); setError(''); setEmailExists(false);
     try {
       await apiClient.post('/auth/register', {
@@ -53,6 +59,10 @@ export default function RegisterPage() {
         role: selectedRole.value,
         ...(form.phone ? { phone: form.phone.replace(/\s/g, '') } : {}),
         country_code: '+57',
+        // Ley 1581/2012 — consentimientos
+        consent_general:   true,
+        consent_sensitive: true,
+        consent_legal_rep: true,
       });
       await login(form.email, form.password);
       navigate('/dashboard');
@@ -62,6 +72,7 @@ export default function RegisterPage() {
       if (msg.toLowerCase().includes('ya está registrado') || msg.toLowerCase().includes('ya existe')) setEmailExists(true);
     } finally { setLoading(false); }
   }
+
 
   return (
     <div className="register-wrapper">
@@ -179,9 +190,66 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <button type="submit" className="btn-primary" disabled={loading || !passwordsMatch} style={{ marginBottom: 8 }}>
+          {/* ── Ley 1581/2012 — Consentimientos obligatorios (Art. 7, 9, 12) ── */}
+          <div style={{ background: 'rgba(26,71,49,0.04)', border: '1px solid rgba(26,71,49,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+            <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              🔒 Protección de datos — Ley 1581 de 2012
+            </p>
+            <p style={{ margin: '0 0 12px', fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>
+              <strong>Responsable:</strong> Caspete.com · <strong>Finalidad:</strong> Gestión de loncheras escolares y seguridad alimentaria del menor.
+              Usted tiene derecho a conocer, actualizar y suprimir sus datos escribiendo a{' '}
+              <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a>.{' '}
+              <Link to="/privacidad" target="_blank" style={{ color: '#1a4731', fontWeight: 600 }}>Ver política completa →</Link>
+            </p>
+
+            {/* Consentimiento 1 — General */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={consentGeneral}
+                onChange={e => setConsentGeneral(e.target.checked)}
+                style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+                He leído y acepto la{' '}
+                <Link to="/privacidad" target="_blank" style={{ color: '#1a4731', fontWeight: 600 }}>Política de Tratamiento de la Información</Link>{' '}
+                de caspete.com para el manejo de mis datos personales (nombre, contacto, pagos).
+              </span>
+            </label>
+
+            {/* Consentimiento 2 — Datos sensibles */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={consentSensitive}
+                onChange={e => setConsentSensitive(e.target.checked)}
+                style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+                <strong>Autorizo expresamente</strong> el tratamiento de los datos de salud (alergias, restricciones médicas) de mi hijo/a,
+                exclusivamente para garantizar su seguridad alimentaria. Comprendo que son datos sensibles y que puedo revocar esta autorización en cualquier momento.
+              </span>
+            </label>
+
+            {/* Consentimiento 3 — Representación legal */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={consentLegalRep}
+                onChange={e => setConsentLegalRep(e.target.checked)}
+                style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+                <strong>Declaro bajo gravedad de juramento</strong> que soy el padre, madre o representante legal del menor registrado
+                y que estoy facultado/a para autorizar el tratamiento de sus datos conforme a la Ley 1581 de 2012.
+              </span>
+            </label>
+          </div>
+
+          <button type="submit" className="btn-primary" disabled={loading || !passwordsMatch || !allConsentsGiven} style={{ marginBottom: 8 }}>
             {loading ? 'Creando cuenta...' : 'Crear cuenta gratis →'}
           </button>
+
         </form>
 
         {/* Separador */}

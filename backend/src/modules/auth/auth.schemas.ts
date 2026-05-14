@@ -14,6 +14,10 @@ export const registerSchema = z.object({
   country_code: z.string().optional(),
   role: z.enum(['PARENT']),
   school_id: z.string().uuid('school_id debe ser un UUID válido').optional(),
+  // ── Ley 1581/2012 — Consentimientos obligatorios (Art. 7, 9, 12) ──
+  consent_general:   z.literal(true, { message: 'Debe aceptar la política general de tratamiento de datos' }),
+  consent_sensitive: z.literal(true, { message: 'Debe autorizar el tratamiento de datos sensibles de salud' }),
+  consent_legal_rep: z.literal(true, { message: 'Debe declarar ser el representante legal del menor' }),
 });
 
 export const loginSchema = z.object({

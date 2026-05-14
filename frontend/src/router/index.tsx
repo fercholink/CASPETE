@@ -27,6 +27,8 @@ import PaymentMethodsPage from '../pages/PaymentMethodsPage';
 import Ley2120DashboardPage from '../pages/Ley2120DashboardPage';
 import SuppliersPage from '../pages/SuppliersPage';
 import SupplierFormPage from '../pages/SupplierFormPage';
+import MisDatosPage from '../pages/MisDatosPage';
+import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -35,6 +37,10 @@ export const router = createBrowserRouter([
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
   { path: '/auth/callback', element: <AuthCallbackPage /> },
+  // ── Páginas legales públicas (accesibles sin login) ──────────────
+  { path: '/privacidad', element: <PrivacyPolicyPage /> },
+  { path: '/derechos-datos', element: <PrivacyPolicyPage /> },
+  { path: '/cookies', element: <PrivacyPolicyPage /> },
 
   {
     path: '/dashboard',
@@ -282,6 +288,16 @@ export const router = createBrowserRouter([
           </p>
         </div>
       </div>
+    ),
+  },
+
+  // ── Derechos ARCO — Ley 1581/2012 ────────────────────────────────
+  {
+    path: '/mis-datos',
+    element: (
+      <ProtectedRoute>
+        <MisDatosPage />
+      </ProtectedRoute>
     ),
   },
 ]);

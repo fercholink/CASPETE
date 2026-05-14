@@ -89,6 +89,23 @@ model User {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
+  // ── Ley 1581/2012 — Habeas Data ──────────────────────────────────
+  // Consentimiento en 3 capas (Art. 7, 9, 12)
+  consent_general      Boolean  @default(false)  // Autorización general tratamiento
+  consent_sensitive    Boolean  @default(false)  // Autorización datos sensibles (alergias/salud)
+  consent_legal_rep    Boolean  @default(false)  // Declaración representación legal del menor
+  consent_timestamp    DateTime?                 // Cuándo se otorgaron los consentimientos
+  consent_version      String?  @db.VarChar(20) // Versión política aceptada (ej: "v1.0")
+  consent_ip           String?  @db.VarChar(45) // IP de quien consintió
+  // Oposición granular (Derecho de Oposición — Art. 13)
+  allow_analytics      Boolean  @default(true)  // Uso datos para análisis de servicio
+  allow_marketing      Boolean  @default(false) // Comunicaciones comerciales
+  // Derecho al Olvido (Art. 8, 15)
+  deletion_requested   Boolean  @default(false) // Solicitud de eliminación pendiente
+  deletion_requested_at DateTime?               // Cuándo se solicitó
+  deletion_executed_at  DateTime?               // Cuándo se ejecutó la eliminación
+  anonymized           Boolean  @default(false) // Registro anonimizado
+
   school         School?             @relation(fields: [school_id], references: [id])
   students       Student[]           @relation("ParentToStudent")
   deliveries     LunchOrder[]        @relation("DeliveredBy")
@@ -96,7 +113,9 @@ model User {
   reset_tokens     PasswordResetToken[]
   topup_requests   TopupRequest[]
   push_subscriptions PushSubscription[]
+  audit_logs       AuditLog[]
 }
+
 
 model RefreshToken {
   id         String    @id @default(uuid()) @db.Uuid
@@ -398,4 +417,39 @@ model NutritionDailyReport {
   student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
 
   @@unique([student_id, report_date])
+}
+
+// ── Ley 1581/2012 — Habeas Data ──────────────────────────────────────────────
+
+// Registro de auditoría: toda operación sobre datos personales (Accountability)
+model AuditLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  user_id       String?  @db.Uuid           // quién hizo la acción (null = sistema)
+  role          String?  @db.VarChar(30)    // rol del operador
+  action        String   @db.VarChar(30)    // CREATE | READ | UPDATE | DELETE | EXPORT | ANONYMIZE
+  entity        String   @db.VarChar(50)    // tabla/colección afectada
+  record_id     String?  @db.VarChar(100)   // ID del registro afectado
+  fields        String[] @default([])       // campos consultados/modificados
+  ip_address    String?  @db.VarChar(45)
+  justification String?  @db.Text           // motivo (obligatorio para datos sensibles)
+  created_at    DateTime @default(now())
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([entity, record_id])
+  @@index([user_id, created_at])
+}
+
+// Solicitudes ARCO: Acceso, Rectificación, Cancelación, Oposición (Art. 13–15)
+model ArcoRequest {
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String   @db.Uuid
+  type        String   @db.VarChar(20)   // ACCESS | RECTIFY | DELETE | OPPOSE
+  description String?  @db.Text
+  status      String   @default("PENDING") @db.VarChar(20) // PENDING | IN_PROGRESS | RESOLVED
+  resolved_at DateTime?
+  response    String?  @db.Text
+  created_at  DateTime @default(now())
+
+  @@index([user_id, status])
 }

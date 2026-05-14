@@ -107,6 +107,12 @@ export async function registerUser(input: RegisterInput) {
       country_code: input.country_code ?? null,
       role: input.role as UserRole,
       school_id: input.school_id ?? null,
+      // ── Ley 1581/2012 — Consentimientos (Art. 7, 9, 12) ──────────
+      consent_general:   input.consent_general   ?? false,
+      consent_sensitive: input.consent_sensitive ?? false,
+      consent_legal_rep: input.consent_legal_rep ?? false,
+      consent_timestamp: new Date(),
+      consent_version:   'v1.0',
     },
     select: {
       id: true,

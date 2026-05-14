@@ -35,3 +35,14 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     sendError(res, 'Token inválido o expirado', 401);
   }
 }
+
+/** Verifica que el usuario autenticado tenga uno de los roles permitidos. */
+export function requireRole(roles: UserRole[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      sendError(res, 'No tienes permiso para realizar esta acción', 403);
+      return;
+    }
+    next();
+  };
+}

@@ -29,6 +29,7 @@ import SuppliersPage from '../pages/SuppliersPage';
 import SupplierFormPage from '../pages/SupplierFormPage';
 import MisDatosPage from '../pages/MisDatosPage';
 import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
+import PrivacyCompliancePage from '../pages/PrivacyCompliancePage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -297,6 +298,16 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <MisDatosPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ── Panel Compliance — SUPER_ADMIN ────────────────────────────────
+  {
+    path: '/privacy-compliance',
+    element: (
+      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+        <PrivacyCompliancePage />
       </ProtectedRoute>
     ),
   },

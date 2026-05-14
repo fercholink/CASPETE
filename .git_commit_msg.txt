@@ -1,19 +1,14 @@
-feat(arco): register cookie consent in backend AuditLog — Ley 1581
-
-Cookie consent was only stored in browser localStorage (not durable,
-not traceable). Under Art. 7 and 12 of Ley 1581/2012 and Decree 1377/2013,
-controllers must be able to prove that consent was obtained.
+feat(compliance): panel privacidad SUPER_ADMIN - AuditLog + ARCO requests
 
 Backend:
-- arco.router.ts: POST /api/arco/cookie-consent (public, no auth required)
-  Works for both anonymous visitors and authenticated users.
-- arco.service.ts: saveCookieConsent()
-  - Logs to AuditLog: IP, user-agent, preferences (necessary/analytics/marketing)
-  - If authenticated userId provided, also syncs allow_analytics and
-    allow_marketing fields in the User record.
+- auth.middleware.ts: nuevo requireRole() para control de acceso por rol
+- arco.router.ts: GET /audit-logs y GET /arco-requests (solo SUPER_ADMIN)
+- arco.service.ts: getAuditLogs() con filtros+paginacion, getArcoRequests()
 
 Frontend:
-- CookieBanner.tsx: reportConsentToBackend() called on every consent action
-  (accept all, accept necessary only, save custom preferences).
-  Fire-and-forget — never blocks the UI even if backend is unreachable.
-  Reads userId from localStorage to link consent to authenticated user.
+- PrivacyCompliancePage.tsx: panel con 2 tabs (AuditLog + ARCO),
+  KPIs cards (total registros, consentimientos cookies, ARCO pendientes),
+  tabla paginada con filtros por accion/entidad, badges de colores
+- router/index.tsx: ruta /privacy-compliance protegida SUPER_ADMIN
+
+Acceso en produccion: caspete.com/privacy-compliance (solo SUPER_ADMIN)

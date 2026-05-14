@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth.middleware.js';
+import { authenticate, requireRole } from '../../middleware/auth.middleware.js';
 import * as arco from './arco.service.js';
 
 const router = Router();
 
 // ── POST /api/arco/cookie-consent — Registro consentimiento cookies (público) ─
-// No requiere auth: también usuarios anónimos pueden otorgar/revocar consentimiento
 router.post('/cookie-consent', async (req, res, next) => {
   try {
     const body = req.body as {
@@ -20,7 +19,32 @@ router.post('/cookie-consent', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// ── GET /api/arco/my-data — Derecho de Acceso (Art. 13) ─────────────────────
+// ── GET /api/arco/audit-logs — Panel Compliance SUPER_ADMIN ──────────────────
+router.get('/audit-logs', authenticate, requireRole(['SUPER_ADMIN']), async (req, res, next) => {
+  try {
+    const q = req.query as {
+      page?: string; limit?: string;
+      action?: string; entity?: string; userId?: string;
+    };
+    const data = await arco.getAuditLogs({
+      page: parseInt(q.page ?? '1'),
+      limit: parseInt(q.limit ?? '50'),
+      ...(q.action ? { action: q.action } : {}),
+      ...(q.entity ? { entity: q.entity } : {}),
+      ...(q.userId ? { userId: q.userId } : {}),
+    });
+    res.json({ success: true, ...data });
+  } catch (e) { next(e); }
+});
+
+// ── GET /api/arco/arco-requests — Solicitudes ARCO pendientes SUPER_ADMIN ────
+router.get('/arco-requests', authenticate, requireRole(['SUPER_ADMIN']), async (req, res, next) => {
+  try {
+    const data = await arco.getArcoRequests();
+    res.json({ success: true, data });
+  } catch (e) { next(e); }
+});
+
 router.get('/my-data', authenticate, async (req, res, next) => {
   try {
     const data = await arco.getMyData(req.user!.sub, req);

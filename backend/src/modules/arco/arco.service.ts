@@ -286,3 +286,56 @@ export async function saveCookieConsent(
 
   return { recorded: true, authenticated: false };
 }
+
+// ── Panel Compliance — SUPER_ADMIN ───────────────────────────────────────────
+
+/**
+ * Lista entradas del AuditLog con filtros y paginación.
+ * Solo SUPER_ADMIN.
+ */
+export async function getAuditLogs(filters: {
+  page: number;
+  limit: number;
+  action?: string;
+  entity?: string;
+  userId?: string;
+}) {
+  const { page, limit, action, entity, userId } = filters;
+  const skip = (page - 1) * limit;
+
+  const where = {
+    ...(action ? { action: action as 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'EXPORT' | 'ANONYMIZE' } : {}),
+    ...(entity ? { entity: { contains: entity, mode: 'insensitive' as const } } : {}),
+    ...(userId ? { user_id: userId } : {}),
+  };
+
+  const [total, logs] = await Promise.all([
+    prisma.auditLog.count({ where }),
+    prisma.auditLog.findMany({
+      where,
+      orderBy: { created_at: 'desc' },
+      skip,
+      take: limit,
+      include: {
+        user: { select: { full_name: true, email: true, role: true } },
+      },
+    }),
+  ]);
+
+  return {
+    data: logs,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+/**
+ * Lista todas las solicitudes ARCO pendientes/completadas.
+ * Solo SUPER_ADMIN.
+ */
+export async function getArcoRequests() {
+  return prisma.arcoRequest.findMany({
+    orderBy: { created_at: 'desc' },
+  });
+}

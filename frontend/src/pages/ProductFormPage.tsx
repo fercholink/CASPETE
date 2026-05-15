@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { SealBadgeGroup, NutritionalLevelBadge } from '../components/SealBadge';
@@ -9,7 +9,10 @@ interface CategoryOption { id: string; name: string; label: string; icon: string
 
 interface ProductData {
   id: string; name: string; description: string | null; base_price: string;
-  image_url: string | null; category: string | null; is_healthy: boolean;
+  image_url: string | null; category: string | null;
+  category_id: string | null;
+  product_type: 'FOOD' | 'DRINK' | 'SNACK' | 'SUPPLEMENT' | 'COMBO';
+  is_healthy: boolean;
   customizable_options: string[];
   // Ley 2120
   product_form: 'SOLID' | 'LIQUID';
@@ -59,8 +62,8 @@ export default function ProductFormPage() {
       setForm({
         name: p.name, description: p.description ?? '', base_price: parseFloat(p.base_price).toString(),
         image_url: p.image_url ?? '',
-        category_id: (p as Record<string, unknown>).category_id as string ?? '',
-        product_type: ((p as Record<string, unknown>).product_type as string ?? 'FOOD') as 'FOOD' | 'DRINK' | 'SNACK' | 'SUPPLEMENT' | 'COMBO',
+        category_id: p.category_id ?? '',
+        product_type: p.product_type ?? 'FOOD',
         is_healthy: p.is_healthy,
         customizable_options: p.customizable_options?.join(', ') ?? '',
         product_form: p.product_form ?? 'SOLID',

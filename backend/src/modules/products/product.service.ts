@@ -11,8 +11,12 @@ import type {
 // ─── Select común ──────────────────────────────────────────────────────────
 const productSelect = {
   id: true, name: true, description: true, base_price: true,
-  image_url: true, category: true, is_healthy: true, active: true,
+  image_url: true, category: true, category_id: true, is_healthy: true, active: true,
   customizable_options: true, created_at: true,
+  // Brecha #1 corregida: categoría FK con label e icon para el frontend
+  category_rel: {
+    select: { id: true, name: true, label: true, icon: true, color: true },
+  },
   // Ley 2120
   product_form: true, nutritional_level: true,
   sodium_per_100: true, added_sugars_pct: true,
@@ -20,7 +24,7 @@ const productSelect = {
   seal_sodium: true, seal_sugars: true, seal_saturated_fat: true,
   seal_trans_fat: true, seal_sweeteners: true,
   supplier_tech_sheet_url: true, last_nutritional_audit: true,
-  // Brecha C: Alérgenos declarados (Art. 26 Ley 2120) — relación "allergens" en schema.prisma
+  // Alérgenos declarados (Art. 26 Ley 2120)
   allergens: {
     select: { allergy: { select: { id: true, name: true, severity: true } } },
   },
@@ -46,19 +50,51 @@ function buildNutritionalSeals(input: Partial<CreateProductInput>) {
     trans_fat_pct:     input.trans_fat_pct     != null ? Number(input.trans_fat_pct)     : null,
     has_sweeteners:    input.has_sweeteners    ?? false,
   });
-  // Brecha D: is_healthy se sincroniza con el nivel nutricional (LEVEL_1 = saludable)
+  // is_healthy se sincroniza con el nivel nutricional (LEVEL_1 = saludable)
   return { ...seals, is_healthy: seals.nutritional_level === 'LEVEL_1' };
+}
+
+/**
+ * Resuelve el slug (campo legacy `category`) desde category_id.
+ * Permite que el frontend envíe solo category_id y el backend
+ * mantenga automáticamente la columna legacy sincronizada.
+ */
+async function resolveCategorySlug(
+  category_id?: string | null,
+  categoryFallback?: string,
+): Promise<{ category_id?: string | null; category?: string | null }> {
+  if (category_id) {
+    const cat = await prisma.productCategory.findUnique({
+      where: { id: category_id },
+      select: { name: true },
+    });
+    if (!cat) throw new AppError('Categoría no encontrada', 404);
+    return { category_id, category: cat.name }; // sincroniza slug legacy
+  }
+  // Si solo llega el slug legacy (compatibilidad hacia atrás)
+  if (categoryFallback) {
+    const cat = await prisma.productCategory.findUnique({
+      where: { name: categoryFallback },
+      select: { id: true, name: true },
+    });
+    if (cat) return { category_id: cat.id, category: cat.name };
+    // Categoría nueva no registrada: guardar solo slug legacy (sin FK)
+    return { category_id: null, category: categoryFallback };
+  }
+  return {}; // sin cambio de categoría
 }
 
 // ─── CRUD ──────────────────────────────────────────────────────────────────
 export async function createProduct(input: CreateProductInput, actor: JwtPayload) {
   if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo SUPER_ADMIN puede crear productos', 403);
   const seals = buildNutritionalSeals(input);
+  const catData = await resolveCategorySlug(input.category_id, input.category);
   return prisma.product.create({
     data: {
       name: input.name, base_price: input.base_price,
       is_healthy: input.is_healthy, description: input.description ?? null,
-      image_url: input.image_url ?? null, category: input.category ?? null,
+      image_url: input.image_url ?? null,
+      ...catData,  // category_id + category (slug sincronizado)
       customizable_options: input.customizable_options ?? [],
       product_form: input.product_form ?? 'SOLID',
       sodium_per_100: input.sodium_per_100 ?? null,
@@ -78,7 +114,7 @@ export async function listProducts(
   actor: JwtPayload,
   opts: {
     page?: number; limit?: number; search?: string; category?: string;
-    active?: string; is_healthy?: string; level?: string; seal_free?: string;
+    category_id?: string; active?: string; is_healthy?: string; level?: string; seal_free?: string;
   } = {},
 ) {
   const page = Math.max(1, opts.page ?? 1);
@@ -86,7 +122,9 @@ export async function listProducts(
   const skip = (page - 1) * limit;
   const where: Record<string, unknown> = {};
 
-  if (opts.category)   where.category  = opts.category;
+  // Filtro por categoría: preferir category_id (FK) sobre slug legacy
+  if (opts.category_id) where.category_id = opts.category_id;
+  else if (opts.category)   where.category  = opts.category;
   if (opts.active !== undefined) where.active = opts.active === 'true';
   if (opts.is_healthy !== undefined) where.is_healthy = opts.is_healthy === 'true';
   // Filtro "Libre de Sellos" Ley 2120
@@ -105,14 +143,14 @@ export async function listProducts(
   ]);
 
   const categoryStats = await prisma.product.groupBy({
-    by: ['category'], _count: true,
+    by: ['category_id'], _count: true,
     where: opts.active !== undefined ? { active: opts.active === 'true' } : {},
   });
 
   return {
     products, total, page,
     pages: Math.ceil(total / limit),
-    categories: categoryStats.map(c => ({ name: c.category ?? 'otro', count: c._count })),
+    categories: categoryStats.map(c => ({ id: c.category_id ?? null, count: c._count })),
   };
 }
 
@@ -137,6 +175,10 @@ export async function updateProduct(id: string, input: UpdateProductInput, actor
   if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo SUPER_ADMIN puede editar el catálogo', 403);
   await getProduct(id);
   const seals = buildNutritionalSeals(input as Partial<CreateProductInput>);
+  // Si viene category_id o category en el payload, resolverlos
+  const catData = (input.category_id !== undefined || input.category !== undefined)
+    ? await resolveCategorySlug(input.category_id, input.category)
+    : {};
   return prisma.product.update({
     where: { id },
     data: {
@@ -144,7 +186,7 @@ export async function updateProduct(id: string, input: UpdateProductInput, actor
       ...(input.description !== undefined && { description: input.description ?? null }),
       ...(input.base_price !== undefined && { base_price: input.base_price }),
       ...(input.image_url !== undefined && { image_url: input.image_url ?? null }),
-      ...(input.category !== undefined && { category: input.category ?? null }),
+      ...catData,  // category_id + category sincronizados
       ...(input.is_healthy !== undefined && { is_healthy: input.is_healthy }),
       ...(input.active !== undefined && { active: input.active }),
       ...(input.customizable_options !== undefined && { customizable_options: input.customizable_options }),
@@ -222,11 +264,18 @@ export async function getProductStats() {
     prisma.product.count({ where: { is_healthy: true, active: true } }),
     prisma.product.count({ where: { nutritional_level: 'LEVEL_1', active: true } }),
     prisma.product.count({ where: { nutritional_level: 'LEVEL_2', active: true } }),
-    prisma.product.groupBy({ by: ['category'], _count: true }),
+    prisma.productCategory.findMany({
+      select: { id: true, name: true, label: true, icon: true, _count: { select: { products: true } } },
+      orderBy: { sort_order: 'asc' },
+    }),
   ]);
   return {
     total, active, healthy, level1, level2,
     pct_seal_free: active > 0 ? Math.round((level1 / active) * 100) : 0,
-    categories: categories.map(c => ({ name: c.category ?? 'otro', count: c._count })),
+    // Estadísticas por categoría con label e icon desde la FK real
+    categories: categories.map(c => ({
+      id: c.id, name: c.name, label: c.label, icon: c.icon,
+      count: c._count.products,
+    })),
   };
 }

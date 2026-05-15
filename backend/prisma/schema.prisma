@@ -181,6 +181,8 @@ model ProductCategory {
   sort_order Int      @default(0)
   active     Boolean  @default(true)
   created_at DateTime @default(now())
+
+  products   Product[] // relación inversa — FK category_id en Product
 }
 
 // Catálogo maestro global — administrado por SUPER_ADMIN
@@ -190,7 +192,9 @@ model Product {
   description          String?         @db.Text
   base_price           Decimal         @db.Decimal(10, 2)
   image_url            String?         @db.Text
-  category             String?         @db.VarChar(50)
+  // ── Clasificación de categoría — Brecha #1 corregida ──
+  category             String?         @db.VarChar(50)  // @deprecated — legacy slug; usar category_id
+  category_id          String?         @db.Uuid         // FK formal a ProductCategory
   is_healthy           Boolean         @default(true)
   customizable_options String[]        @default([])
 
@@ -215,6 +219,7 @@ model Product {
   active               Boolean         @default(true)
   created_at           DateTime        @default(now())
 
+  category_rel   ProductCategory? @relation(fields: [category_id], references: [id])
   store_products StoreProduct[]
   allergens      ProductAllergy[]
 }

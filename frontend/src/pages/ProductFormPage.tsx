@@ -22,7 +22,8 @@ interface ProductData {
 }
 
 const emptyForm = {
-  name: '', description: '', base_price: '', image_url: '', category: '',
+  name: '', description: '', base_price: '', image_url: '',
+  category_id: '',  // UUID FK a ProductCategory — campo principal
   is_healthy: true, customizable_options: '',
   // Ley 2120
   product_form: 'SOLID' as 'SOLID' | 'LIQUID',
@@ -56,7 +57,9 @@ export default function ProductFormPage() {
       const p = res.data.data;
       setForm({
         name: p.name, description: p.description ?? '', base_price: parseFloat(p.base_price).toString(),
-        image_url: p.image_url ?? '', category: p.category ?? '', is_healthy: p.is_healthy,
+        image_url: p.image_url ?? '',
+        category_id: (p as Record<string, unknown>).category_id as string ?? '',
+        is_healthy: p.is_healthy,
         customizable_options: p.customizable_options?.join(', ') ?? '',
         product_form: p.product_form ?? 'SOLID',
         sodium_per_100: p.sodium_per_100 ? parseFloat(p.sodium_per_100).toString() : '',
@@ -103,7 +106,8 @@ export default function ProductFormPage() {
       customizable_options: form.customizable_options.split(',').map(s => s.trim()).filter(Boolean),
       ...(form.description && { description: form.description }),
       ...(form.image_url && { image_url: form.image_url }),
-      ...(form.category && { category: form.category }),
+      // Enviar category_id (UUID FK) — el backend sincroniza el slug legacy automáticamente
+      ...(form.category_id && { category_id: form.category_id }),
       // Ley 2120 — solo si la sección está expandida
       ...(showNutrition && {
         product_form: form.product_form,
@@ -173,10 +177,10 @@ export default function ProductFormPage() {
               <input id="base_price" name="base_price" className="form-input" type="number" value={form.base_price} onChange={handleChange} required min="0.01" step="0.01" placeholder="1500" />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="category">Categoría</label>
-              <select id="category" name="category" className="form-select" value={form.category} onChange={handleChange}>
+              <label className="form-label" htmlFor="category_id">Categoría</label>
+              <select id="category_id" name="category_id" className="form-select" value={form.category_id} onChange={handleChange}>
                 <option value="">Sin categoría</option>
-                {categories.map(c => <option key={c.id} value={c.name}>{c.icon || '📦'} {c.label}</option>)}
+                {categories.map(c => <option key={c.id} value={c.id}>{c.icon || '📦'} {c.label}</option>)}
               </select>
             </div>
           </div>

@@ -61,8 +61,8 @@ export async function updateCategory(id: string, input: UpdateCategoryInput) {
 export async function deleteCategory(id: string) {
   const cat = await getCategory(id);
 
-  // Check if products use this category
-  const count = await prisma.product.count({ where: { category: cat.name } });
+  // Verificar si hay productos usando esta categoría (por FK)
+  const count = await prisma.product.count({ where: { category_id: cat.id } });
   if (count > 0) {
     throw new AppError(`No se puede eliminar: ${count} producto(s) usan esta categoría. Reasígnalos primero.`, 409);
   }
@@ -71,20 +71,20 @@ export async function deleteCategory(id: string) {
 }
 
 export async function listCategoriesWithCounts() {
+  // Usar la relación FK real (_count.products) para obtener conteos precisos
   const categories = await prisma.productCategory.findMany({
     orderBy: [{ sort_order: 'asc' }, { label: 'asc' }],
-    select: categorySelect,
+    select: {
+      id: true, name: true, label: true, icon: true,
+      color: true, sort_order: true, active: true, created_at: true,
+      _count: { select: { products: true } },
+    },
   });
-
-  // Get product counts per category
-  const counts = await prisma.product.groupBy({
-    by: ['category'],
-    _count: true,
-  });
-  const countMap = new Map(counts.map(c => [c.category ?? '', c._count]));
 
   return categories.map(cat => ({
-    ...cat,
-    product_count: countMap.get(cat.name) ?? 0,
+    id: cat.id, name: cat.name, label: cat.label, icon: cat.icon,
+    color: cat.color, sort_order: cat.sort_order, active: cat.active,
+    created_at: cat.created_at,
+    product_count: cat._count.products,
   }));
 }

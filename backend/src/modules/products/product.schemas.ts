@@ -16,7 +16,9 @@ export const createProductSchema = z.object({
   description:          z.string().max(1000).optional(),
   base_price:           z.number().positive(),
   image_url:            z.string().max(500).optional(),
-  category:             z.string().max(50).optional(),
+  // Clasificación de categoría — usar category_id (FK) preferentemente
+  category_id:          z.string().uuid('category_id debe ser un UUID válido').optional().nullable(),
+  category:             z.string().max(50).optional(),  // legacy — se sincroniza automáticamente
   is_healthy:           z.boolean().default(true),
   customizable_options: z.array(z.string()).default([]),
   // Ley 2120 — product_form es requerido para clasificación correcta (Art. 7 Res. 2492)
@@ -28,7 +30,9 @@ export const updateProductSchema = z.object({
   description:          z.string().max(1000).optional(),
   base_price:           z.number().positive().optional(),
   image_url:            z.string().max(500).optional(),
-  category:             z.string().max(50).optional(),
+  // Clasificación de categoría — usar category_id (FK) preferentemente
+  category_id:          z.string().uuid('category_id debe ser un UUID válido').optional().nullable(),
+  category:             z.string().max(50).optional(),  // legacy
   is_healthy:           z.boolean().optional(),
   active:               z.boolean().optional(),
   customizable_options: z.array(z.string()).optional(),

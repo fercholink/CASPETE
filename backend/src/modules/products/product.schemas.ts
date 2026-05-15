@@ -19,6 +19,8 @@ export const createProductSchema = z.object({
   // Clasificación de categoría — usar category_id (FK) preferentemente
   category_id:          z.string().uuid('category_id debe ser un UUID válido').optional().nullable(),
   category:             z.string().max(50).optional(),  // legacy — se sincroniza automáticamente
+  // Tipo de producto — Brecha #2 corregida
+  product_type:         z.enum(['FOOD', 'DRINK', 'SNACK', 'SUPPLEMENT', 'COMBO']).default('FOOD'),
   is_healthy:           z.boolean().default(true),
   customizable_options: z.array(z.string()).default([]),
   // Ley 2120 — product_form es requerido para clasificación correcta (Art. 7 Res. 2492)
@@ -33,6 +35,8 @@ export const updateProductSchema = z.object({
   // Clasificación de categoría — usar category_id (FK) preferentemente
   category_id:          z.string().uuid('category_id debe ser un UUID válido').optional().nullable(),
   category:             z.string().max(50).optional(),  // legacy
+  // Tipo de producto — Brecha #2 corregida
+  product_type:         z.enum(['FOOD', 'DRINK', 'SNACK', 'SUPPLEMENT', 'COMBO']).optional(),
   is_healthy:           z.boolean().optional(),
   active:               z.boolean().optional(),
   customizable_options: z.array(z.string()).optional(),

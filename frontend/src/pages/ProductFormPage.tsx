@@ -23,7 +23,8 @@ interface ProductData {
 
 const emptyForm = {
   name: '', description: '', base_price: '', image_url: '',
-  category_id: '',  // UUID FK a ProductCategory — campo principal
+  category_id: '',  // UUID FK a ProductCategory
+  product_type: 'FOOD' as 'FOOD' | 'DRINK' | 'SNACK' | 'SUPPLEMENT' | 'COMBO',
   is_healthy: true, customizable_options: '',
   // Ley 2120
   product_form: 'SOLID' as 'SOLID' | 'LIQUID',
@@ -59,6 +60,7 @@ export default function ProductFormPage() {
         name: p.name, description: p.description ?? '', base_price: parseFloat(p.base_price).toString(),
         image_url: p.image_url ?? '',
         category_id: (p as Record<string, unknown>).category_id as string ?? '',
+        product_type: ((p as Record<string, unknown>).product_type as string ?? 'FOOD') as 'FOOD' | 'DRINK' | 'SNACK' | 'SUPPLEMENT' | 'COMBO',
         is_healthy: p.is_healthy,
         customizable_options: p.customizable_options?.join(', ') ?? '',
         product_form: p.product_form ?? 'SOLID',
@@ -106,9 +108,8 @@ export default function ProductFormPage() {
       customizable_options: form.customizable_options.split(',').map(s => s.trim()).filter(Boolean),
       ...(form.description && { description: form.description }),
       ...(form.image_url && { image_url: form.image_url }),
-      // Enviar category_id (UUID FK) — el backend sincroniza el slug legacy automáticamente
       ...(form.category_id && { category_id: form.category_id }),
-      // Ley 2120 — solo si la sección está expandida
+      product_type: form.product_type,
       ...(showNutrition && {
         product_form: form.product_form,
         has_sweeteners: form.has_sweeteners,
@@ -171,10 +172,23 @@ export default function ProductFormPage() {
             <input id="name" name="name" className="form-input" type="text" value={form.name} onChange={handleChange} required placeholder="Empanada de pollo" />
           </div>
 
+          {/* Precio */}
+          <div className="form-group" style={{ marginTop: 14 }}>
+            <label className="form-label" htmlFor="base_price">Precio base (COP)</label>
+            <input id="base_price" name="base_price" className="form-input" type="number" value={form.base_price} onChange={handleChange} required min="0.01" step="0.01" placeholder="1500" />
+          </div>
+
+          {/* Tipo de producto + Categoría */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="base_price">Precio base (COP)</label>
-              <input id="base_price" name="base_price" className="form-input" type="number" value={form.base_price} onChange={handleChange} required min="0.01" step="0.01" placeholder="1500" />
+              <label className="form-label" htmlFor="product_type">Tipo de producto</label>
+              <select id="product_type" name="product_type" className="form-select" value={form.product_type} onChange={handleChange}>
+                <option value="FOOD">🍲 Comida preparada</option>
+                <option value="DRINK">🥤 Bebida</option>
+                <option value="SNACK">🍪 Mecato / Snack</option>
+                <option value="SUPPLEMENT">💪 Suplemento nutricional</option>
+                <option value="COMBO">🧳 Combo</option>
+              </select>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="category_id">Categoría</label>

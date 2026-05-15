@@ -11,7 +11,9 @@ import type {
 // ─── Select común ──────────────────────────────────────────────────────────
 const productSelect = {
   id: true, name: true, description: true, base_price: true,
-  image_url: true, category: true, category_id: true, is_healthy: true, active: true,
+  image_url: true, category: true, category_id: true,
+  product_type: true,  // Brecha #2: tipo de producto
+  is_healthy: true, active: true,
   customizable_options: true, created_at: true,
   // Brecha #1 corregida: categoría FK con label e icon para el frontend
   category_rel: {
@@ -92,9 +94,10 @@ export async function createProduct(input: CreateProductInput, actor: JwtPayload
   return prisma.product.create({
     data: {
       name: input.name, base_price: input.base_price,
+      product_type: input.product_type ?? 'FOOD',
       is_healthy: input.is_healthy, description: input.description ?? null,
       image_url: input.image_url ?? null,
-      ...catData,  // category_id + category (slug sincronizado)
+      ...catData,
       customizable_options: input.customizable_options ?? [],
       product_form: input.product_form ?? 'SOLID',
       sodium_per_100: input.sodium_per_100 ?? null,
@@ -186,7 +189,8 @@ export async function updateProduct(id: string, input: UpdateProductInput, actor
       ...(input.description !== undefined && { description: input.description ?? null }),
       ...(input.base_price !== undefined && { base_price: input.base_price }),
       ...(input.image_url !== undefined && { image_url: input.image_url ?? null }),
-      ...catData,  // category_id + category sincronizados
+      ...catData,
+      ...(input.product_type !== undefined && { product_type: input.product_type }),
       ...(input.is_healthy !== undefined && { is_healthy: input.is_healthy }),
       ...(input.active !== undefined && { active: input.active }),
       ...(input.customizable_options !== undefined && { customizable_options: input.customizable_options }),

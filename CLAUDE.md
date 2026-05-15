@@ -59,7 +59,10 @@ Feature-based module structure. Each module under `modules/` follows:
 - `middleware/rbac.middleware.ts` — Role-based route guards
 - `middleware/error.middleware.ts` — Centralized error handling
 
-**Modules:** `auth`, `schools`, `students`, `products`, `categories`, `stores`, `store-products`, `orders`, `transactions`, `users`, `reports`, `topup-requests`
+**Modules:** `auth`, `schools`, `students`, `products`, `categories`, `stores`, `store-products`, `orders`, `transactions`, `users`, `reports`, `topup-requests`, `chat`
+
+**Chat module** (`modules/chat/`): Mensajería interna Tendero↔Padre. Arquitectura de polling (GET messages cada 5s). Hilos vinculados a `LunchOrder`. Web Push al recibir mensaje nuevo. Solo `VENDOR` puede iniciar hilos. Tablas: `ChatThread`, `ChatMessage`.
+
 
 **API response format:**
 ```typescript

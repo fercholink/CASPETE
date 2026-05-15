@@ -21,6 +21,7 @@ import supplierRouter from './modules/suppliers/supplier.router.js';
 import complianceRouter from './modules/reports/compliance.router.js';
 import allergyRouter from './modules/allergies/allergy.router.js';
 import arcoRouter from './modules/arco/arco.router.js';
+import chatRouter from './modules/chat/chat.router.js';
 
 const app = express();
  
@@ -67,6 +68,7 @@ app.use('/api/suppliers', supplierRouter);
 app.use('/api/reports', complianceRouter);
 app.use('/api/allergies', allergyRouter);
 app.use('/api/arco', arcoRouter);  // Derechos ARCO — Ley 1581/2012
+app.use('/api/chat', chatRouter);  // Chat interno Tendero ↔ Padre
 
 app.use(errorHandler);
 

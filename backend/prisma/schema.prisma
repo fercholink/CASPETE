@@ -71,6 +71,7 @@ model School {
   lunch_orders   LunchOrder[]
   transactions   Transaction[]
   topup_requests TopupRequest[]
+  chat_threads   ChatThread[]
 }
 
 model User {
@@ -114,6 +115,9 @@ model User {
   topup_requests   TopupRequest[]
   push_subscriptions PushSubscription[]
   audit_logs       AuditLog[]
+  vendor_threads   ChatThread[]       @relation("VendorThreads")
+  parent_threads   ChatThread[]       @relation("ParentThreads")
+  sent_messages    ChatMessage[]
 }
 
 
@@ -260,6 +264,7 @@ model LunchOrder {
   deliverer   User?         @relation("DeliveredBy", fields: [delivered_by], references: [id])
   order_items OrderItem[]
   Transaction Transaction[]
+  chat_threads ChatThread[]
 }
 
 model OrderItem {
@@ -452,4 +457,45 @@ model ArcoRequest {
   created_at  DateTime @default(now())
 
   @@index([user_id, status])
+}
+
+// ── Chat Interno: Tendero ↔ Padre ────────────────────────────────────────────
+// El tendero inicia el hilo; el padre responde. Vinculado opcionalmente a un pedido.
+
+model ChatThread {
+  id        String   @id @default(uuid()) @db.Uuid
+  school_id String   @db.Uuid
+  order_id  String?  @db.Uuid               // pedido relacionado (opcional)
+  vendor_id String   @db.Uuid               // tendero que abre el hilo
+  parent_id String   @db.Uuid               // padre destinatario
+  subject   String   @db.VarChar(200)        // ej: "Novedad pedido del martes"
+  status    String   @default("OPEN") @db.VarChar(20) // OPEN | CLOSED | RESOLVED
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  school   School      @relation(fields: [school_id], references: [id])
+  order    LunchOrder? @relation(fields: [order_id], references: [id])
+  vendor   User        @relation("VendorThreads", fields: [vendor_id], references: [id])
+  parent   User        @relation("ParentThreads", fields: [parent_id], references: [id])
+  messages ChatMessage[]
+
+  @@index([school_id, status])
+  @@index([vendor_id])
+  @@index([parent_id])
+  @@index([order_id])
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid()) @db.Uuid
+  thread_id  String   @db.Uuid
+  sender_id  String   @db.Uuid
+  content    String   @db.VarChar(1000)     // máximo 1000 caracteres
+  read_at    DateTime?                       // null = no leído
+  created_at DateTime @default(now())
+
+  thread ChatThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  sender User       @relation(fields: [sender_id], references: [id])
+
+  @@index([thread_id, created_at])
+  @@index([sender_id])
 }

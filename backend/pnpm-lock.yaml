@@ -1,11 +1,5 @@
 lockfileVersion: '9.0'
 
-onlyBuiltDependencies:
-  - '@prisma/engines'
-  - bcrypt
-  - esbuild
-  - prisma
-
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
@@ -44,6 +38,9 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
+      node-cron:
+        specifier: ^4.2.1
+        version: 4.2.1
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -78,6 +75,9 @@ importers:
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
+      '@types/node-cron':
+        specifier: ^3.0.11
+        version: 3.0.11
       '@types/web-push':
         specifier: ^3.6.4
         version: 3.6.4
@@ -470,6 +470,9 @@ packages:
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
+
+  '@types/node-cron@3.0.11':
+    resolution: {integrity: sha512-0ikrnug3/IyneSHqCBeslAhlK2aBfYek1fGo4bP4QnZPmiqSGRK+Oy7ZMisLWkesffJvQ1cqAcBnJC+8+nxIAg==}
 
   '@types/node@25.6.0':
     resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
@@ -931,6 +934,10 @@ packages:
     resolution: {integrity: sha512-9MdFxmkKaOYVTV+XVRG8ArDwwQ77XIgIPyKASB1k3JPq3M8fGQQQE3YpMOrKm6g//Ktx8ivZr8xo1Qmtqub+GA==}
     engines: {node: ^18 || ^20 || >= 21}
 
+  node-cron@4.2.1:
+    resolution: {integrity: sha512-lgimEHPE/QDgFlywTd8yTR61ptugX3Qer29efeyWw2rv259HtGBNn1vZVmp8lB9uo9wC0t/AT4iGqXxia+CJFg==}
+    engines: {node: '>=6.0.0'}
+
   node-gyp-build@4.8.4:
     resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
@@ -1307,6 +1314,12 @@ packages:
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - bcrypt
+  - esbuild
+  - prisma
+
 snapshots:
 
   '@cspotcode/source-map-support@0.8.1':
@@ -1619,6 +1632,8 @@ snapshots:
       '@types/node': 25.6.0
 
   '@types/ms@2.1.0': {}
+
+  '@types/node-cron@3.0.11': {}
 
   '@types/node@25.6.0':
     dependencies:
@@ -2112,6 +2127,8 @@ snapshots:
   negotiator@1.0.0: {}
 
   node-addon-api@8.7.0: {}
+
+  node-cron@4.2.1: {}
 
   node-gyp-build@4.8.4: {}
 

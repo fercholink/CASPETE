@@ -94,6 +94,7 @@ export default function PrivacyCompliancePage() {
   const [breachForm, setBreachForm] = useState({ description: '', severity: 'HIGH', estimatedAffectedUsers: 0, affectedData: '', remediationActions: '' });
   const [breachSaving, setBreachSaving] = useState(false);
   const [breachSuccess, setBreachSuccess] = useState('');
+  const [sicLoading, setSicLoading] = useState(false);
 
   // Filtros audit
   const [filterAction, setFilterAction] = useState('');
@@ -221,6 +222,34 @@ export default function PrivacyCompliancePage() {
     URL.revokeObjectURL(url);
   }
 
+  // ── Exportar Reporte SIC (JSON consolidado) ────────────────────────────────
+  async function downloadSicReport() {
+    setSicLoading(true);
+    try {
+      const res = await fetch(`${API}/api/arco/sic-report`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json() as { success: boolean; data: unknown };
+      if (!json.success) throw new Error('Error al generar el reporte');
+
+      const now = new Date().toLocaleDateString('es-CO').replace(/\//g, '-');
+      const blob = new Blob(
+        [JSON.stringify(json.data, null, 2)],
+        { type: 'application/json;charset=utf-8;' },
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `caspete_reporte_sic_${now}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error descargando reporte SIC:', err);
+    } finally {
+      setSicLoading(false);
+    }
+  }
+
   return (
     <div style={{ padding: '32px 24px', maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
@@ -241,13 +270,23 @@ export default function PrivacyCompliancePage() {
               Trazabilidad de datos personales — Ley 1581/2012 · Solo SUPER_ADMIN
             </p>
           </div>
-          <button
-            onClick={downloadReport}
-            className="btn-primary"
-            style={{ padding: '8px 18px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}
-          >
-            ⬇ Descargar informe CSV
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              onClick={downloadReport}
+              className="btn-ghost"
+              style={{ padding: '8px 16px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}
+            >
+              ⬇ CSV ({tab === 'audit' ? 'Audit' : 'ARCO'})
+            </button>
+            <button
+              onClick={downloadSicReport}
+              disabled={sicLoading}
+              className="btn-primary"
+              style={{ padding: '8px 18px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}
+            >
+              {sicLoading ? 'Generando...' : '📄 Reporte SIC'}
+            </button>
+          </div>
         </div>
       </div>
 

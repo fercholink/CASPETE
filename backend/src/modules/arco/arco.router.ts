@@ -80,6 +80,16 @@ router.get('/arco-requests', authenticate, requireRole(['SUPER_ADMIN']), async (
   } catch (e) { next(e); }
 });
 
+// ── GET /api/arco/sic-report — Reporte consolidado cumplimiento SIC ───────────
+// Ley 1581/2012 Art. 17 lit. f · Decreto 1377/2013 Art. 13 — Solo SUPER_ADMIN
+router.get('/sic-report', authenticate, requireRole(['SUPER_ADMIN']), async (req, res, next) => {
+  try {
+    const data = await arco.generateSicReport();
+    res.json({ success: true, data });
+  } catch (e) { next(e); }
+});
+
+
 router.get('/my-data', authenticate, async (req, res, next) => {
   try {
     const data = await arco.getMyData(req.user!.sub, req);

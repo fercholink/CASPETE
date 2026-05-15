@@ -38,7 +38,10 @@ router.post('/reset-password', authController.resetPassword);
 // GET  /api/auth/google         — redirige a Google para autenticación
 router.get(
   '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'], session: false }),
+  passport.authenticate('google', { 
+    scope: ['profile', 'email', 'https://www.googleapis.com/auth/user.phonenumbers.read'], 
+    session: false 
+  }),
 );
 
 // GET  /api/auth/google/callback — callback de Google

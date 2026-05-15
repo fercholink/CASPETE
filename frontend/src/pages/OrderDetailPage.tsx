@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
+import { AuthContext } from '../context/AuthContext';
 import QRCodeLib from 'react-qr-code';
 import QRScanner from '../components/QRScanner';
 
@@ -77,6 +78,16 @@ export default function OrderDetailPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [photoZoom, setPhotoZoom] = useState(false);
 
+  // ── Chat: Reportar novedad ───────────────────────────────────────────
+  const chatCtx = useContext(AuthContext);
+  const chatToken = localStorage.getItem('caspete_token');
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatSubject, setChatSubject] = useState('');
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatSending, setChatSending] = useState(false);
+  const [chatError, setChatError] = useState('');
+  void chatCtx; // usado solo para verificar contexto
+
   useEffect(() => {
     if (!id) return;
     apiClient
@@ -85,6 +96,34 @@ export default function OrderDetailPage() {
       .catch((e) => setError((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function submitChatReport(e: React.FormEvent) {
+    e.preventDefault();
+    if (!order) return;
+    setChatSending(true); setChatError('');
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL ?? ''}/api/chat/threads`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${chatToken}` },
+          body: JSON.stringify({
+            order_id: order.id,
+            parent_id: order.student.parent_id,
+            subject: chatSubject || `Novedad pedido ${new Date(order.scheduled_date).toLocaleDateString('es-CO')}`,
+            first_message: chatMessage,
+          }),
+        },
+      );
+      const json = await res.json() as { success: boolean; data?: { id: string }; message?: string };
+      if (!json.success) throw new Error(json.message ?? 'Error al enviar');
+      setChatOpen(false);
+      setChatSubject(''); setChatMessage('');
+      navigate(`/chat/${json.data!.id}`);
+    } catch (err: unknown) {
+      setChatError(err instanceof Error ? err.message : 'Error al crear la conversación');
+    } finally { setChatSending(false); }
+  }
 
   async function handleDeliver(e: React.FormEvent) {
     e.preventDefault();
@@ -492,6 +531,121 @@ export default function OrderDetailPage() {
           >
             Confirmar pedido
           </button>
+        )}
+
+        {/* ── Botón Reportar novedad al padre (VENDOR) ────────────── */}
+        {isVendor && (order.status === 'PENDING' || order.status === 'CONFIRMED') && (
+          <button
+            className="btn-ghost"
+            style={{
+              width: '100%', marginBottom: 12, display: 'flex',
+              alignItems: 'center', justifyContent: 'center', gap: 8,
+              border: '1.5px solid var(--color-border)', borderRadius: 10, padding: '11px 0', fontSize: 14,
+            }}
+            onClick={() => {
+              setChatSubject(`Novedad pedido ${new Date(order.scheduled_date).toLocaleDateString('es-CO')}`);
+              setChatMessage('');
+              setChatError('');
+              setChatOpen(true);
+            }}
+          >
+            💬 Reportar novedad al padre
+          </button>
+        )}
+
+        {/* ── Modal: Nuevo mensaje al padre ───────────────────────── */}
+        {chatOpen && (
+          <div
+            onClick={(e) => { if (e.target === e.currentTarget) setChatOpen(false); }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9000,
+              background: 'rgba(0,0,0,0.55)',
+              display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+              padding: '0 0 24px',
+            }}
+          >
+            <div style={{
+              background: 'var(--color-surface)', borderRadius: '20px 20px 12px 12px',
+              padding: '24px 22px', width: '100%', maxWidth: 520,
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.2)',
+              animation: 'slideUp .25s ease',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>💬 Reportar novedad</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                    Mensaje directo al padre de {order.student.full_name}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setChatOpen(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--color-text-muted)', padding: '4px 8px' }}
+                >✕</button>
+              </div>
+
+              <form onSubmit={submitChatReport}>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: 'var(--color-text-muted)' }}>
+                    Asunto
+                  </label>
+                  <input
+                    className="form-input"
+                    value={chatSubject}
+                    onChange={(e) => setChatSubject(e.target.value)}
+                    placeholder="Ej: Niño no recogió la lonchera"
+                    maxLength={200}
+                    style={{ fontSize: 14 }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: 'var(--color-text-muted)' }}>
+                    Mensaje *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    placeholder="Describe la novedad al padre de familia..."
+                    maxLength={1000}
+                    style={{
+                      width: '100%', padding: '10px 14px', borderRadius: 10,
+                      border: '1px solid var(--color-border)', fontSize: 14,
+                      resize: 'vertical', boxSizing: 'border-box',
+                      background: 'var(--color-bg)', color: 'var(--color-text)',
+                    }}
+                  />
+                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'right', marginTop: 2 }}>
+                    {chatMessage.length}/1000
+                  </div>
+                </div>
+
+                {chatError && (
+                  <p style={{ color: '#dc2626', fontSize: 12, marginBottom: 10 }}>{chatError}</p>
+                )}
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    style={{ flex: 1 }}
+                    onClick={() => setChatOpen(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={chatSending || !chatMessage.trim()}
+                    style={{ flex: 1 }}
+                  >
+                    {chatSending ? 'Enviando...' : '📨 Enviar mensaje'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
 
         <button className="btn-ghost" onClick={() => navigate('/orders')} style={{ width: '100%', marginTop: 8 }}>

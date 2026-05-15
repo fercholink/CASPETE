@@ -33,6 +33,7 @@ export async function loginOrCreateGoogleUser(input: {
   email: string;
   full_name: string;
   avatar_url: string | null;
+  phone?: string | null;
 }) {
   // Buscar por google_id o email
   let user = await prisma.user.findFirst({
@@ -49,14 +50,22 @@ export async function loginOrCreateGoogleUser(input: {
 
   if (user) {
     // Vincular google_id si el usuario se registró previamente con email/pass
+    const dataToUpdate: any = {};
     if (!user.google_id) {
+      dataToUpdate.google_id = input.google_id;
+      dataToUpdate.auth_provider = 'google';
+    }
+    if (input.phone) {
+      dataToUpdate.phone = input.phone;
+    }
+    if (input.avatar_url) {
+      dataToUpdate.avatar_url = input.avatar_url;
+    }
+
+    if (Object.keys(dataToUpdate).length > 0) {
       await prisma.user.update({
         where: { id: user.id },
-        data: {
-          google_id: input.google_id,
-          auth_provider: 'google',
-          ...(input.avatar_url != null ? { avatar_url: input.avatar_url } : {}),
-        },
+        data: dataToUpdate,
       });
     }
   } else {
@@ -70,6 +79,13 @@ export async function loginOrCreateGoogleUser(input: {
         auth_provider: 'google',
         role: 'PARENT',
         password_hash: null,
+        phone: input.phone ?? null,
+        // ── Ley 1581/2012 — Consentimientos (Habeas Data) ──────────
+        consent_general:   true,
+        consent_sensitive: true,
+        consent_legal_rep: true,
+        consent_timestamp: new Date(),
+        consent_version:   'v1.0',
       },
       select: {
         id: true, email: true, full_name: true, role: true,

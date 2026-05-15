@@ -339,3 +339,135 @@ export async function getArcoRequests() {
     orderBy: { created_at: 'desc' },
   });
 }
+
+// ── Reporte SIC (Superintendencia de Industria y Comercio) ───────────────────
+
+/**
+ * Genera un reporte consolidado de cumplimiento para la SIC.
+ * Ley 1581/2012 — Art. 17 lit. f (Informar a la SIC sobre brechas)
+ * Decreto 1377/2013 — Art. 13 (Responsabilidad demostrada)
+ *
+ * Incluye:
+ * - Estadísticas generales de consentimientos
+ * - Resumen de solicitudes ARCO (totales, resueltas, pendientes)
+ * - Brechas de seguridad registradas
+ * - Entradas del AuditLog por categoría (últimos 90 días)
+ */
+export async function generateSicReport() {
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  const now = new Date();
+
+  const [
+    consentStats,
+    arcoStats,
+    auditStats,
+    breachLogs,
+    recentAuditSample,
+  ] = await Promise.all([
+    // Estadísticas de consentimientos
+    prisma.user.aggregate({
+      _count: {
+        id: true,
+        consent_general: true,
+      },
+      where: { anonymized: false },
+    }),
+
+    // Estadísticas ARCO
+    prisma.arcoRequest.groupBy({
+      by: ['status', 'type'],
+      _count: { id: true },
+    }),
+
+    // Resumen AuditLog últimos 90 días por acción
+    prisma.auditLog.groupBy({
+      by: ['action'],
+      _count: { id: true },
+      where: { created_at: { gte: ninetyDaysAgo } },
+    }),
+
+    // Brechas de seguridad
+    prisma.auditLog.findMany({
+      where: { entity: 'SecurityBreach' },
+      orderBy: { created_at: 'desc' },
+      select: { id: true, created_at: true, justification: true },
+    }),
+
+    // Muestra de las últimas 10 entradas del AuditLog (para referencia)
+    prisma.auditLog.findMany({
+      orderBy: { created_at: 'desc' },
+      take: 10,
+      select: {
+        id: true, action: true, entity: true,
+        role: true, created_at: true, justification: true,
+      },
+    }),
+  ]);
+
+  // Calcular consentidos (usuarios con los 3 consentimientos)
+  const totalUsers = await prisma.user.count({ where: { anonymized: false } });
+  const totalConsented = await prisma.user.count({
+    where: { anonymized: false, consent_general: true, consent_sensitive: true, consent_legal_rep: true },
+  });
+  const totalDeletionPending = await prisma.user.count({
+    where: { deletion_requested: true, anonymized: false },
+  });
+  const totalAnonymized = await prisma.user.count({ where: { anonymized: true } });
+
+  // Agrupar ARCO por tipo
+  const arcoByType: Record<string, { total: number; pending: number; resolved: number }> = {};
+  for (const row of arcoStats) {
+    const t = row.type;
+    if (!arcoByType[t]) arcoByType[t] = { total: 0, pending: 0, resolved: 0 };
+    arcoByType[t].total += row._count.id;
+    if (row.status === 'PENDING' || row.status === 'IN_PROGRESS') arcoByType[t].pending += row._count.id;
+    if (row.status === 'RESOLVED') arcoByType[t].resolved += row._count.id;
+  }
+
+  const totalArco = arcoStats.reduce((s, r) => s + r._count.id, 0);
+  const pendingArco = arcoStats.filter(r => r.status === 'PENDING' || r.status === 'IN_PROGRESS')
+    .reduce((s, r) => s + r._count.id, 0);
+
+  // Parsear brechas
+  const breaches = breachLogs.map(e => {
+    try {
+      return { id: e.id, logged_at: e.created_at, ...JSON.parse(e.justification ?? '{}') };
+    } catch {
+      return { id: e.id, logged_at: e.created_at, raw: e.justification };
+    }
+  });
+
+  return {
+    generated_at: now.toISOString(),
+    report_period: {
+      from: ninetyDaysAgo.toISOString(),
+      to: now.toISOString(),
+    },
+    responsible_entity: {
+      name: 'Caspete.com',
+      legal_framework: 'Ley 1581/2012 · Decreto 1377/2013',
+      contact_email: 'privacidad@caspete.com',
+    },
+    consent_summary: {
+      total_active_users: totalUsers,
+      total_consented: totalConsented,
+      consent_rate_pct: totalUsers > 0 ? Math.round((totalConsented / totalUsers) * 100) : 0,
+      pending_deletion: totalDeletionPending,
+      total_anonymized: totalAnonymized,
+    },
+    arco_summary: {
+      total_requests: totalArco,
+      pending_requests: pendingArco,
+      by_type: arcoByType,
+    },
+    audit_summary_90d: auditStats.reduce<Record<string, number>>((acc, r) => {
+      acc[r.action] = r._count.id;
+      return acc;
+    }, {}),
+    security_breaches: {
+      total: breaches.length,
+      entries: breaches,
+    },
+    recent_audit_sample: recentAuditSample,
+  };
+}

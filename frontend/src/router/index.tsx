@@ -30,6 +30,7 @@ import SupplierFormPage from '../pages/SupplierFormPage';
 import MisDatosPage from '../pages/MisDatosPage';
 import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
 import PrivacyCompliancePage from '../pages/PrivacyCompliancePage';
+import ChatPage from '../pages/ChatPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -308,6 +309,24 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
         <PrivacyCompliancePage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ── Chat Interno Tendero ↔ Padre ──────────────────────────────────
+  {
+    path: '/chat',
+    element: (
+      <ProtectedRoute allowedRoles={['VENDOR', 'PARENT', 'SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <ChatPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/chat/:threadId',
+    element: (
+      <ProtectedRoute allowedRoles={['VENDOR', 'PARENT', 'SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <ChatPage />
       </ProtectedRoute>
     ),
   },

@@ -16,11 +16,15 @@ passport.use(
         if (!email) {
           return done(new Error('No se pudo obtener el email de Google'), undefined);
         }
+        // Intentar extraer el teléfono si está disponible en _json (requiere scope adicional)
+        const phone = (profile as any)._json?.phoneNumbers?.[0]?.value ?? null;
+        
         const result = await loginOrCreateGoogleUser({
           google_id: profile.id,
           email,
           full_name: profile.displayName ?? email.split('@')[0],
           avatar_url: profile.photos?.[0]?.value ?? null,
+          phone,
         });
         return done(null, result as any);
       } catch (err) {

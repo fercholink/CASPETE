@@ -31,6 +31,7 @@ import MisDatosPage from '../pages/MisDatosPage';
 import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
 import PrivacyCompliancePage from '../pages/PrivacyCompliancePage';
 import ChatPage from '../pages/ChatPage';
+import SchoolLeadsPage from '../pages/SchoolLeadsPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -327,6 +328,16 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['VENDOR', 'PARENT', 'SCHOOL_ADMIN', 'SUPER_ADMIN']}>
         <ChatPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ── Colegios Interesados ── SUPER_ADMIN ─────────────────────────────
+  {
+    path: '/school-leads',
+    element: (
+      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+        <SchoolLeadsPage />
       </ProtectedRoute>
     ),
   },

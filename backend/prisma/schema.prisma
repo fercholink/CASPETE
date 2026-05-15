@@ -499,3 +499,24 @@ model ChatMessage {
   @@index([thread_id, created_at])
   @@index([sender_id])
 }
+
+// ── Leads: Colegios interesados desde la landing ─────────────────────────────
+model SchoolLead {
+  id              String   @id @default(uuid()) @db.Uuid
+  school_name     String   @db.VarChar(200)        // Nombre del colegio
+  nit             String?  @db.VarChar(20)          // NIT (opcional)
+  city            String   @db.VarChar(100)
+  contact_name    String   @db.VarChar(200)         // Nombre del administrador
+  contact_email   String   @db.VarChar(255)
+  contact_phone   String?  @db.VarChar(20)
+  students_count  Int?                               // Número aproximado de estudiantes
+  plan_interest   String   @db.VarChar(20)          // "COMMISSION" | "MONTHLY"
+  message         String?  @db.Text                 // Mensaje adicional
+  status          String   @default("NEW") @db.VarChar(20) // NEW | CONTACTED | DEMO | CLOSED
+  notes           String?  @db.Text                 // Notas internas del super admin
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([status])
+  @@index([created_at])
+}

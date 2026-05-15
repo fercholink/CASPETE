@@ -613,9 +613,19 @@ body {
 }
 
 @media (max-width: 480px) {
+  /* Navbar: ocultar link, acortar botón */
   .landing-nav-link { display: none; }
-  .btn-primary-landing { font-size: 13px; padding: 7px 16px; }
-  .landing-hero-title { font-size: 36px; }
+  .btn-primary-landing { font-size: 12px; padding: 8px 14px; white-space: nowrap; }
+  .landing-hero-title { font-size: 34px; letter-spacing: -1px; }
+  .landing-hero { padding: 88px 20px 48px; min-height: auto; }
+  .landing-how, .landing-ecosystem, .landing-cta { padding: 48px 20px; }
+  .landing-footer { padding: 48px 20px 28px; }
+  .landing-section-title { font-size: 28px; letter-spacing: -0.5px; }
+}
+
+@media (max-width: 390px) {
+  .landing-hero-title { font-size: 30px; }
+  .btn-primary-landing { font-size: 11px; padding: 7px 12px; }
 }
 
 /* ── Register Page Styles ── */

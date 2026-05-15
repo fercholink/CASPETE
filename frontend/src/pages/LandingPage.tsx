@@ -171,9 +171,13 @@ export default function LandingPage() {
       {/* ── Navbar ── */}
       <nav className="landing-nav">
         <Logo size={26} />
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link to="/login" className="landing-nav-link">Soy padre — Iniciar sesión</Link>
-          <Link to="/register" className="btn-primary-landing">Soy padre — Registrarme gratis</Link>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Link to="/login" className="landing-nav-link">
+            <span className="desktop-only">Soy padre — </span>Iniciar sesión
+          </Link>
+          <Link to="/register" className="btn-primary-landing">
+            <span className="desktop-only">Soy padre — </span>Registrarme
+          </Link>
         </div>
       </nav>
 
@@ -207,11 +211,12 @@ export default function LandingPage() {
               <img src="/caspete_mobile_app_mockup.png" alt="App de Caspete en el celular" />
             </div>
 
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 48 }}>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 40 }}>
               <Link to="/register" style={{
                 textDecoration: 'none', background: '#1a4731', color: '#fff',
                 padding: '15px 36px', borderRadius: 99, fontSize: 16, fontWeight: 700,
                 boxShadow: '0 4px 20px rgba(26,71,49,0.35)', display: 'inline-block',
+                flex: '1 1 auto', textAlign: 'center', minWidth: 0,
               }}>
                 Crear cuenta gratis →
               </Link>
@@ -219,6 +224,7 @@ export default function LandingPage() {
                 textDecoration: 'none', background: '#fff', color: '#1a4731',
                 padding: '15px 36px', borderRadius: 99, fontSize: 16, fontWeight: 600,
                 border: '2px solid rgba(26,71,49,0.2)', display: 'inline-block',
+                flex: '1 1 auto', textAlign: 'center', minWidth: 0,
               }}>
                 Ya tengo cuenta
               </Link>
@@ -336,21 +342,21 @@ export default function LandingPage() {
       </section>
 
       {/* ── Para padres: GRATIS ── */}
-      <section style={{ padding: '60px 48px 0', background: '#fafdfb' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', background: 'linear-gradient(135deg, #1a4731 0%, #2d7a55 100%)', borderRadius: 28, padding: '48px 56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap', boxShadow: '0 16px 48px rgba(26,71,49,0.2)' }}>
-          <div>
+      <section style={{ padding: 'clamp(40px, 6vw, 60px) clamp(20px, 4vw, 48px) 0', background: '#fafdfb' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', background: 'linear-gradient(135deg, #1a4731 0%, #2d7a55 100%)', borderRadius: 28, padding: 'clamp(28px, 5vw, 48px) clamp(24px, 5vw, 56px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', boxShadow: '0 16px 48px rgba(26,71,49,0.2)' }}>
+          <div style={{ flex: '1 1 200px' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#18E299', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: 10 }}>Para padres de familia</span>
-            <h2 style={{ fontSize: 42, fontWeight: 900, color: '#fff', margin: '0 0 10px', letterSpacing: '-1.5px', lineHeight: 1.1 }}>
+            <h2 style={{ fontSize: 'clamp(28px, 6vw, 42px)', fontWeight: 900, color: '#fff', margin: '0 0 10px', letterSpacing: '-1.5px', lineHeight: 1.1 }}>
               La plataforma es<br /><span style={{ color: '#18E299' }}>100% GRATUITA</span>
             </h2>
-            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.6 }}>
               Los padres de familia no pagan suscripción. Solo recargan el saldo de sus hijos y listo.
             </p>
           </div>
-          <div style={{ textAlign: 'center', flexShrink: 0 }}>
-            <div style={{ fontSize: 72, fontWeight: 900, color: '#18E299', lineHeight: 1 }}>$0</div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 6 }}>por suscripción</div>
-            <Link to="/register" style={{ display: 'inline-block', marginTop: 20, background: '#18E299', color: '#0d1f16', padding: '13px 32px', borderRadius: 99, fontWeight: 800, fontSize: 15, textDecoration: 'none', boxShadow: '0 4px 20px rgba(24,226,153,0.4)' }}>
+          <div style={{ textAlign: 'center', flexShrink: 0, width: '100%', maxWidth: 200 }}>
+            <div style={{ fontSize: 64, fontWeight: 900, color: '#18E299', lineHeight: 1 }}>$0</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 6 }}>por suscripción</div>
+            <Link to="/register" style={{ display: 'block', marginTop: 16, background: '#18E299', color: '#0d1f16', padding: '13px 24px', borderRadius: 99, fontWeight: 800, fontSize: 15, textDecoration: 'none', boxShadow: '0 4px 20px rgba(24,226,153,0.4)', textAlign: 'center' }}>
               Crear cuenta gratis
             </Link>
           </div>
@@ -358,17 +364,17 @@ export default function LandingPage() {
       </section>
 
       {/* ── Planes para Colegios ── */}
-      <section style={{ padding: '80px 48px', background: '#fafdfb' }}>
+      <section style={{ padding: 'clamp(48px, 8vw, 80px) clamp(20px, 4vw, 48px)', background: '#fafdfb' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '1px' }}>Colegios e Instituciones</span>
-            <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: '-1.5px', margin: '12px 0 12px', color: '#0d1f16' }}>Elige la modalidad de tu colegio</h2>
-            <p style={{ fontSize: 16, color: '#6b7280', maxWidth: 500, margin: '0 auto' }}>
+            <h2 style={{ fontSize: 'clamp(26px, 5vw, 42px)', fontWeight: 800, letterSpacing: '-1px', margin: '12px 0 12px', color: '#0d1f16' }}>Elige la modalidad de tu colegio</h2>
+            <p style={{ fontSize: 15, color: '#6b7280', maxWidth: 500, margin: '0 auto' }}>
               Dos formas de trabajar con Caspete. Ambas incluyen todas las funciones de la plataforma.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 28, alignItems: 'stretch' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, alignItems: 'stretch' }}>
             {MODALITIES.map(m => (
               <div key={m.key} style={{ padding: 40, borderRadius: 28, background: m.color, border: `2px solid ${m.border}`, boxShadow: m.dark ? '0 24px 60px rgba(26,71,49,0.2)' : '0 4px 20px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>

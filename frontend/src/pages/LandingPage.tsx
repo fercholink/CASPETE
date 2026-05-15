@@ -11,6 +11,113 @@ const Logo = ({ size = 28 }: { size?: number }) => (
   </div>
 );
 
+const CHECK = () => <span style={{ color: '#1a4731', fontWeight: 800, marginRight: 8 }}>✓</span>;
+
+const features = [
+  {
+    category: 'Para Padres de Familia',
+    icon: '👨‍👩‍👧',
+    color: '#f0fdf4',
+    border: '#bbf7d0',
+    items: [
+      'Registro con 3 capas de consentimiento (Ley 1581/2012)',
+      'Google OAuth — un clic para entrar',
+      'Agregar múltiples hijos al mismo perfil',
+      'Programar loncheras para la semana',
+      'Ver saldo en tiempo real por estudiante',
+      'Historial completo de pedidos y transacciones',
+      'Recargar saldo vía Nequi Push Payment',
+      'Código QR de entrega descargable',
+      'Notificaciones push al confirmar y entregar pedidos',
+      'Chat directo con el tendero para novedades',
+      'Solicitud de eliminación de datos (Derecho al olvido)',
+      'Gestión de alergias del estudiante',
+    ],
+  },
+  {
+    category: 'Para Tenderos',
+    icon: '🏪',
+    color: '#fff7ed',
+    border: '#fed7aa',
+    items: [
+      'Panel de pedidos del día en tiempo real',
+      'Ver foto del estudiante para verificar identidad',
+      'Escanear QR del estudiante para entrega',
+      'Ingresar código de 6 dígitos manualmente',
+      'Confirmar pedidos individualmente o en masa',
+      'Catálogo de productos con precio y stock propio',
+      'Iniciar chat con el padre ante cualquier novedad',
+      'Notificación push al recibir respuesta del padre',
+      'Vista de pedidos pendientes por fecha',
+    ],
+  },
+  {
+    category: 'Para Colegios (Admin)',
+    icon: '🏫',
+    color: '#eff6ff',
+    border: '#bfdbfe',
+    items: [
+      'Dashboard administrativo multi-tienda',
+      'Gestión de estudiantes por grado',
+      'Control de saldo y recargas por colegio',
+      'Aprobar o rechazar solicitudes de recarga',
+      'Configurar métodos de pago aceptados',
+      'Reportes nutricionales (Ley 2120/2021)',
+      'Dashboard de cumplimiento Ley 2120 por tienda',
+      'Registro de proveedores con ficha técnica',
+      'Ver todos los hilos de chat del colegio',
+      'Exportar reportes de consumo',
+    ],
+  },
+  {
+    category: 'Seguridad y Cumplimiento Legal',
+    icon: '🔐',
+    color: '#fdf4ff',
+    border: '#e9d5ff',
+    items: [
+      'JWT 15 min + Refresh Token rotativo 30 días',
+      'RBAC: control de acceso por rol en todas las rutas',
+      'Módulo ARCO completo (Acceso, Rectificación, Cancelación, Oposición)',
+      'Cookie Banner con consentimiento granular',
+      'AuditLog de operaciones sobre datos personales',
+      'Anonimización automática (cron 02:00 AM)',
+      'Limpieza de tokens expirados (cron 03:00 AM)',
+      'Registro de brechas con plazo SIC (15 días hábiles)',
+      'Reporte SIC exportable en JSON',
+      'Etiquetado nutricional con sellos (Res. 2492/2022)',
+      'Clasificación LEVEL_1 / LEVEL_2 por producto',
+    ],
+  },
+];
+
+const benefits = [
+  { icon: '📱', title: 'PWA — funciona como app', desc: 'Instálala en el celular sin pasar por tiendas. Funciona en iOS y Android con notificaciones push reales.' },
+  { icon: '🥗', title: 'Cumplimiento Ley 2120', desc: 'Sellos de advertencia automáticos en cada pedido. Puntaje nutricional por orden, reporte por estudiante.' },
+  { icon: '💳', title: 'Pago con Nequi', desc: 'Recarga el saldo del niño desde la app. Flujo asíncrono seguro con confirmación en tiempo real.' },
+  { icon: '📷', title: 'Entrega por QR', desc: 'El tendero escanea el QR o ingresa el código de 6 dígitos. Sin papel, sin errores, sin fraude.' },
+  { icon: '💬', title: 'Chat Tendero ↔ Padre', desc: 'El tendero reporta novedades directamente al padre. Notificación push instantánea y respuesta desde la app.' },
+  { icon: '🇨🇴', title: 'Hecho para Colombia', desc: 'Multitenancy por colegio, zona horaria Bogotá, Nequi, Ley 1581/2012, Ley 2120/2021 y Res. 2492/2022.' },
+];
+
+const plans = [
+  {
+    name: '⚡ Básico', price: 'Gratis', sub: 'para empezar',
+    color: '#f0fdf4', border: '#bbf7d0', btn: '#1a4731', btnTxt: '#fff',
+    items: ['1 tienda', 'Hasta 200 estudiantes', '2 admins', 'Reportes básicos', 'Soporte por email'],
+  },
+  {
+    name: '⭐ Estándar', price: '$89.900', sub: '/ mes por colegio',
+    color: '#1a4731', border: '#2d7a55', btn: '#18E299', btnTxt: '#0d1f16',
+    highlight: true,
+    items: ['3 tiendas', 'Hasta 500 estudiantes', '5 admins', 'Reportes avanzados', 'Notificaciones push', 'Personalización de logo'],
+  },
+  {
+    name: '👑 Premium', price: '$179.900', sub: '/ mes por colegio',
+    color: '#0d1f16', border: '#2d7a55', btn: '#18E299', btnTxt: '#0d1f16',
+    items: ['Tiendas ilimitadas', 'Estudiantes ilimitados', 'Admins ilimitados', 'Reportes completos + exportación', 'Chat prioritario', 'API / Integraciones externas'],
+  },
+];
+
 export default function LandingPage() {
   return (
     <div className="landing-wrapper">
@@ -19,23 +126,17 @@ export default function LandingPage() {
       <nav className="landing-nav">
         <Logo size={26} />
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link to="/login" className="landing-nav-link">
-            Iniciar sesión
-          </Link>
-          <Link to="/register" className="btn-primary-landing">
-            Registrarme gratis
-          </Link>
+          <Link to="/login" className="landing-nav-link">Iniciar sesión</Link>
+          <Link to="/register" className="btn-primary-landing">Registrarme gratis</Link>
         </div>
       </nav>
 
       {/* ── Hero ── */}
       <section className="landing-hero">
-        {/* Decorative blobs */}
         <div style={{ position: 'absolute', top: -120, right: -120, width: 500, height: 500, borderRadius: '50%', background: 'rgba(26,71,49,0.06)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -80, left: -80, width: 350, height: 350, borderRadius: '50%', background: 'rgba(24,226,153,0.08)', pointerEvents: 'none' }} />
 
         <div className="landing-container landing-hero-content">
-          {/* Left */}
           <div style={{ flex: 1 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -44,7 +145,7 @@ export default function LandingPage() {
               letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 28,
             }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#18E299', display: 'inline-block' }} />
-              Plataforma Escolar Digital
+              Plataforma Escolar en Producción
             </span>
 
             <h1 className="landing-hero-title">
@@ -53,15 +154,11 @@ export default function LandingPage() {
             </h1>
 
             <p className="landing-hero-subtitle">
-              Caspete une a <strong style={{ color: '#1a4731' }}>padres, colegios y niños</strong> en un ecosistema digital. Programa loncheras saludables, controla el saldo y garantiza entregas seguras con código OTP.
+              Caspete une a <strong style={{ color: '#1a4731' }}>padres, colegios y tenderos</strong> en un ecosistema digital completo. Pago con Nequi, entrega por QR, chat directo y cumplimiento legal total (Ley 1581 + Ley 2120).
             </p>
 
-            {/* Mobile-only image */}
             <div className="mobile-only landing-mobile-hero-img">
-              <img
-                src="/caspete_mobile_app_mockup.png"
-                alt="App de Caspete en el celular"
-              />
+              <img src="/caspete_mobile_app_mockup.png" alt="App de Caspete en el celular" />
             </div>
 
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 48 }}>
@@ -81,71 +178,37 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Social proof */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-              <div style={{ display: 'flex' }}>
-                {['#fbbf24','#34d399','#60a5fa','#f472b6'].map((c, i) => (
-                  <div key={i} style={{
-                    width: 36, height: 36, borderRadius: '50%', background: c,
-                    border: '2px solid #fff', marginLeft: i > 0 ? -10 : 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700, color: '#fff',
-                  }}>
-                    {['M','P','C','A'][i]}
-                  </div>
-                ))}
-              </div>
-              <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>
-                <strong style={{ color: '#1a4731' }}>+200 familias</strong> ya confían en Caspete
-              </p>
+            {/* Badges de confianza */}
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {['✅ Ley 1581/2012', '🥗 Ley 2120/2021', '💳 Nequi', '📷 QR Seguro', '🔔 Push en tiempo real'].map(b => (
+                <span key={b} style={{
+                  fontSize: 12, fontWeight: 600, padding: '5px 12px',
+                  borderRadius: 99, background: 'rgba(26,71,49,0.07)',
+                  color: '#1a4731', border: '1px solid rgba(26,71,49,0.12)',
+                }}>{b}</span>
+              ))}
             </div>
           </div>
 
-          {/* Right - Image collage */}
+          {/* Right */}
           <div className="landing-hero-image">
             <div style={{ width: '100%', maxWidth: 480, position: 'relative' }}>
-              {/* Main image */}
               <div style={{ borderRadius: 28, overflow: 'hidden', height: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.12)', position: 'relative' }}>
-                <img
-                  src="/hero-familia.png"
-                  alt="Madre entregando lonchera saludable a su hijo"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+                <img src="/hero-familia.png" alt="Familia usando Caspete" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 60%, rgba(26,71,49,0.3))' }} />
               </div>
-
-              {/* Floating card 1 */}
-              <div style={{
-                position: 'absolute', top: -24, left: -48,
-                background: '#fff', borderRadius: 20, padding: '14px 20px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                display: 'flex', alignItems: 'center', gap: 12,
-              }}>
+              <div style={{ position: 'absolute', top: -24, left: -48, background: '#fff', borderRadius: 20, padding: '14px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 28 }}>✅</span>
                 <div>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#1a4731' }}>Entrega verificada</p>
-                  <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>Código OTP confirmado</p>
+                  <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>QR escaneado · 10:32 am</p>
                 </div>
               </div>
-
-              {/* Floating card 2 */}
-              <div style={{
-                position: 'absolute', bottom: 80, right: -40,
-                background: '#1a4731', borderRadius: 20, padding: '14px 20px',
-                boxShadow: '0 8px 32px rgba(26,71,49,0.3)',
-                color: '#fff',
-              }}>
-                <p style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800 }}>🥗 Hoy</p>
-                <p style={{ margin: 0, fontSize: 12, opacity: 0.8 }}>Ensalada + Fruta + Jugo</p>
+              <div style={{ position: 'absolute', bottom: 80, right: -40, background: '#1a4731', borderRadius: 20, padding: '14px 20px', boxShadow: '0 8px 32px rgba(26,71,49,0.3)', color: '#fff' }}>
+                <p style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800 }}>💬 Chat</p>
+                <p style={{ margin: 0, fontSize: 12, opacity: 0.8 }}>Tendero → Padre</p>
               </div>
-
-              {/* Floating card 3 */}
-              <div style={{
-                position: 'absolute', bottom: -16, left: -24,
-                background: '#f0fdf4', borderRadius: 16, padding: '12px 18px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                display: 'flex', alignItems: 'center', gap: 10, border: '1px solid rgba(26,71,49,0.1)',
-              }}>
+              <div style={{ position: 'absolute', bottom: -16, left: -24, background: '#f0fdf4', borderRadius: 16, padding: '12px 18px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: 10, border: '1px solid rgba(26,71,49,0.1)' }}>
                 <span style={{ fontSize: 24 }}>💳</span>
                 <div>
                   <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#374151' }}>Saldo disponible</p>
@@ -157,50 +220,44 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Cómo funciona (infografía) ── */}
+      {/* ── Cómo funciona ── */}
       <section className="landing-how">
         <div style={{ maxWidth: 1100, margin: '0 auto', textAlign: 'center' }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: '#18E299', textTransform: 'uppercase', letterSpacing: '1px' }}>Proceso</span>
           <h2 style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-1.5px', margin: '12px 0 48px', color: '#fff' }}>¿Cómo funciona Caspete?</h2>
           <div style={{ borderRadius: 24, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.4)' }}>
-            <img
-              src="/infografia-proceso.png"
-              alt="Cómo funciona Caspete: Padre programa, Plataforma gestiona, Tendero prepara, Estudiante recibe"
-              style={{ width: '100%', display: 'block' }}
-            />
+            <img src="/infografia-proceso.png" alt="Cómo funciona Caspete" style={{ width: '100%', display: 'block' }} />
           </div>
         </div>
       </section>
 
-      {/* ── Ecosistema ── */}
-      <section className="landing-ecosystem">
+      {/* ── Funciones en producción ── */}
+      <section style={{ padding: '100px 48px', background: '#fafdfb' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div className="landing-section-header">
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '1px' }}>Ecosistema</span>
-            <h2 className="landing-section-title">
-              Un sistema que funciona<br />para todos
-            </h2>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '1px' }}>Funciones reales</span>
+            <h2 style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-1.5px', margin: '12px 0 12px', color: '#0d1f16' }}>Todo lo que ya está funcionando</h2>
+            <p style={{ fontSize: 16, color: '#6b7280', maxWidth: 560, margin: '0 auto' }}>
+              No es un prototipo. Es una plataforma de producción con más de 30 funciones activas.
+            </p>
           </div>
 
-          <div className="landing-grid-3">
-            {[
-              { icon: '👨‍👩‍👧', title: 'Padres', color: '#f0fdf4', border: '#bbf7d0', desc: 'Programa loncheras semanales, recarga saldo digital y recibe notificaciones de cada entrega. Tranquilidad total.', items: ['Programación semanal', 'Recarga de saldo', 'Historial de pedidos'] },
-              { icon: '🏫', title: 'Colegios', color: '#eff6ff', border: '#bfdbfe', desc: 'Administra estudiantes, vincula tiendas y monitorea la nutrición de toda la institución desde un panel central.', items: ['Dashboard administrativo', 'Control por grado', 'Reportes de consumo'] },
-              { icon: '👦', title: 'Niños', color: '#fff7ed', border: '#fed7aa', desc: 'Llegan al colegio, dan su código único en la tienda y reciben su lonchera. Sin efectivo, sin filas largas.', items: ['Código OTP seguro', 'Sin efectivo', 'Menú saludable garantizado'] },
-            ].map((card) => (
-              <div key={card.title} style={{
-                padding: 36, borderRadius: 24, background: card.color,
-                border: `1px solid ${card.border}`, transition: 'transform 0.2s, box-shadow 0.2s',
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+            {features.map(f => (
+              <div key={f.category} style={{
+                padding: 32, borderRadius: 24,
+                background: f.color, border: `1px solid ${f.border}`,
+                transition: 'transform .2s, box-shadow .2s',
               }}
-                onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.08)'; }}
-                onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                <div style={{ fontSize: 48, marginBottom: 20 }}>{card.icon}</div>
-                <h3 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 12px', color: '#0d1f16', letterSpacing: '-0.5px' }}>{card.title}</h3>
-                <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.65, margin: '0 0 20px' }}>{card.desc}</p>
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {card.items.map(item => (
-                    <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 500, color: '#374151' }}>
-                      <span style={{ color: '#1a4731', fontWeight: 800 }}>✓</span> {item}
+                onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.08)'; }}
+                onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                <div style={{ fontSize: 40, marginBottom: 14 }}>{f.icon}</div>
+                <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 16px', color: '#0d1f16' }}>{f.category}</h3>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  {f.items.map(item => (
+                    <li key={item} style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
+                      <CHECK />{item}
                     </li>
                   ))}
                 </ul>
@@ -210,35 +267,77 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Beneficios ── */}
-      <section style={{ padding: '100px 48px', background: 'linear-gradient(180deg, #fafdfb 0%, #f0fdf4 100%)' }}>
+      {/* ── 6 beneficios ── */}
+      <section style={{ padding: '100px 48px', background: 'linear-gradient(180deg, #f0fdf4 0%, #fafdfb 100%)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '1px' }}>¿Por qué Caspete?</span>
             <h2 style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-1.5px', margin: '12px 0 0', color: '#0d1f16' }}>Diseñado para la vida real</h2>
           </div>
-
-          <div className="landing-grid-4">
-            {[
-              { icon: '🥗', title: 'Menús Saludables', desc: 'Productos aprobados por el colegio, sin comida chatarra. Tu hijo come bien, siempre.' },
-              { icon: '📱', title: 'Todo desde el celular', desc: 'Gestiona las loncheras de la semana en 3 minutos desde cualquier dispositivo.' },
-              { icon: '🔒', title: 'Entrega Segura OTP', desc: 'Sistema de código único para verificar que tu hijo recibe SU lonchera.' },
-              { icon: '💰', title: 'Control de gastos', desc: 'Saldo digital recargable. Nunca más "se perdió la plata del recreo".' },
-            ].map(f => (
-              <div key={f.title} style={{ background: '#fff', borderRadius: 20, padding: 32, border: '1px solid rgba(26,71,49,0.08)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-                <div style={{ fontSize: 36, marginBottom: 16 }}>{f.icon}</div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 10px', color: '#0d1f16' }}>{f.title}</h3>
-                <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
+          <div className="landing-grid-3" style={{ gap: 24 }}>
+            {benefits.map(b => (
+              <div key={b.title} style={{ background: '#fff', borderRadius: 20, padding: 32, border: '1px solid rgba(26,71,49,0.08)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', transition: 'transform .2s' }}
+                onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-4px)'; }}
+                onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
+              >
+                <div style={{ fontSize: 38, marginBottom: 16 }}>{b.icon}</div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 10px', color: '#0d1f16' }}>{b.title}</h3>
+                <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.65, margin: 0 }}>{b.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* ── Planes ── */}
+      <section style={{ padding: '100px 48px', background: '#fafdfb' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '1px' }}>Planes</span>
+            <h2 style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-1.5px', margin: '12px 0 0', color: '#0d1f16' }}>Elige tu plan</h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'center' }}>
+            {plans.map(p => (
+              <div key={p.name} style={{
+                padding: 36, borderRadius: 28,
+                background: p.color, border: `2px solid ${p.border}`,
+                boxShadow: p.highlight ? '0 24px 60px rgba(26,71,49,0.25)' : '0 2px 16px rgba(0,0,0,0.06)',
+                transform: p.highlight ? 'scale(1.03)' : 'scale(1)',
+              }}>
+                {p.highlight && (
+                  <div style={{ marginBottom: 16 }}>
+                    <span style={{ background: '#18E299', color: '#0d1f16', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 99, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Más popular</span>
+                  </div>
+                )}
+                <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: p.highlight ? '#fff' : '#0d1f16' }}>{p.name}</h3>
+                <div style={{ marginBottom: 24 }}>
+                  <span style={{ fontSize: 32, fontWeight: 800, color: p.highlight ? '#18E299' : '#1a4731' }}>{p.price}</span>
+                  <span style={{ fontSize: 13, color: p.highlight ? 'rgba(255,255,255,0.5)' : '#9ca3af', marginLeft: 6 }}>{p.sub}</span>
+                </div>
+                <ul style={{ margin: '0 0 28px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {p.items.map(item => (
+                    <li key={item} style={{ fontSize: 14, color: p.highlight ? 'rgba(255,255,255,0.85)' : '#374151' }}>
+                      <span style={{ color: p.highlight ? '#18E299' : '#1a4731', fontWeight: 800, marginRight: 8 }}>✓</span>{item}
+                    </li>
+                  ))}
+                </ul>
+                <Link to="/register" style={{
+                  display: 'block', textAlign: 'center', textDecoration: 'none',
+                  background: p.btn, color: p.btnTxt,
+                  padding: '13px 0', borderRadius: 12, fontWeight: 700, fontSize: 15,
+                }}>
+                  Comenzar
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
+      {/* ── CTA final ── */}
       <section className="landing-cta">
         <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 600, height: 600, borderRadius: '50%', background: 'rgba(24,226,153,0.06)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', maxWidth: 640, margin: '0 auto' }}>
+        <div style={{ position: 'relative', maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 48, fontWeight: 800, color: '#fff', letterSpacing: '-1.5px', margin: '0 0 20px' }}>
             Empieza hoy.<br />Es completamente gratis.
           </h2>
@@ -263,13 +362,14 @@ export default function LandingPage() {
             <div style={{ maxWidth: 280 }}>
               <Logo size={24} />
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginTop: 16, lineHeight: 1.6 }}>
-                Digitalizando el bienestar escolar en Colombia. Una lonchera saludable a la vez.
+                Digitalizando el bienestar escolar en Colombia.<br />
+                Cumplimiento Ley 1581/2012 · Ley 2120/2021.
               </p>
             </div>
             {[
               { title: 'Plataforma', links: [{ label: 'Iniciar sesión', to: '/login' }, { label: 'Registrarse', to: '/register' }] },
-              { title: 'Legal', links: [{ label: 'Términos de uso', to: '#' }, { label: 'Privacidad', to: '#' }] },
-              { title: 'Contacto', links: [{ label: 'hola@caspete.co', to: 'mailto:hola@caspete.co' }, { label: 'Soporte', to: '#' }] },
+              { title: 'Legal', links: [{ label: 'Política de privacidad', to: '/privacy-policy' }, { label: 'Términos de uso', to: '#' }] },
+              { title: 'Contacto', links: [{ label: 'hola@caspete.co', to: 'mailto:hola@caspete.co' }, { label: 'privacidad@caspete.com', to: 'mailto:privacidad@caspete.com' }] },
             ].map(col => (
               <div key={col.title}>
                 <h5 style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 20px' }}>{col.title}</h5>
@@ -282,7 +382,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', margin: 0, textAlign: 'center' }}>
-            © 2026 Caspete · Todos los derechos reservados · Hecho con ❤️ en Colombia
+            © 2026 Caspete · Todos los derechos reservados · Hecho con ❤️ en Colombia · Ley 1581/2012 · Ley 2120/2021
           </p>
         </div>
       </footer>

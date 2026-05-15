@@ -1,42 +1,66 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- ══ Título y descripción ══════════════════════════════════════ -->
-    <title>CASPETE — Loncheras Escolares Inteligentes en Colombia</title>
-    <meta name="description" content="Gestiona las loncheras de tus hijos desde el celular. Programa pedidos saludables, controla el saldo y recibe notificaciones de entrega segura con código OTP. Plataforma digital para colegios en Colombia." />
-    <meta name="keywords" content="loncheras escolares, loncheras Colombia, gestión loncheras, plataforma escolar, comida saludable niños, app colegio, saldo escolar digital" />
+    <!-- ══ Título y descripción (optimizados para CTR) ══════════════════ -->
+    <title>CASPETE — Plataforma de Loncheras Escolares | Pago con Nequi · QR Seguro · Colombia</title>
+    <meta name="description" content="Gestiona las loncheras de tus hijos desde el celular. Programa pedidos saludables, paga con Nequi, recibe notificaciones push y entrega verificada por QR. Plataforma para colegios en Colombia. Cumple Ley 1581 y Ley 2120." />
+    <meta name="keywords" content="loncheras escolares Colombia, app loncheras colegio, plataforma loncheras digitales, gestión loncheras colegios, saldo escolar digital, pago lonchera Nequi, entrega QR escolar, loncheras saludables, control lonchera padres, software colegio Colombia, bienestar escolar, nutrición escolar Colombia, caspete, loncheras inteligentes" />
     <meta name="author" content="CASPETE" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
     <link rel="canonical" href="https://caspete.com/" />
 
-    <!-- ══ Open Graph (WhatsApp, Facebook, LinkedIn) ══════════════════ -->
-    <meta property="og:type"        content="website" />
-    <meta property="og:url"         content="https://caspete.com/" />
-    <meta property="og:title"       content="CASPETE — Loncheras Escolares Inteligentes" />
-    <meta property="og:description" content="Programa loncheras saludables, controla el saldo y garantiza entregas seguras con código OTP. La plataforma digital para colegios y familias de Colombia." />
-    <meta property="og:image"       content="https://caspete.com/og-image.png" />
+    <!-- ══ Geo-targeting Colombia ════════════════════════════════════════ -->
+    <meta name="geo.region" content="CO" />
+    <meta name="geo.country" content="Colombia" />
+    <meta name="geo.placename" content="Colombia" />
+    <meta name="ICBM" content="4.5709, -74.2973" />
+    <meta name="DC.language" content="es-CO" />
+    <meta name="language" content="Spanish" />
+    <meta name="content-language" content="es-CO" />
+
+    <!-- ══ Open Graph (WhatsApp, Facebook, LinkedIn) ════════════════════ -->
+    <meta property="og:type"         content="website" />
+    <meta property="og:url"          content="https://caspete.com/" />
+    <meta property="og:title"        content="CASPETE — Loncheras Escolares Inteligentes | Colombia" />
+    <meta property="og:description"  content="Programa loncheras saludables, controla el saldo de tus hijos y garantiza entregas verificadas por QR. Pago con Nequi. Cumplimiento Ley 1581 y Ley 2120. Plataforma para colegios colombianos." />
+    <meta property="og:image"        content="https://caspete.com/og-image.png" />
     <meta property="og:image:width"  content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt"   content="CASPETE — Loncheras Escolares Inteligentes" />
-    <meta property="og:locale"      content="es_CO" />
-    <meta property="og:site_name"   content="CASPETE" />
+    <meta property="og:image:alt"    content="CASPETE — Plataforma de Loncheras Escolares en Colombia" />
+    <meta property="og:locale"       content="es_CO" />
+    <meta property="og:site_name"    content="CASPETE" />
 
-    <!-- ══ Twitter / X Card ═══════════════════════════════════════════ -->
+    <!-- ══ Twitter / X Card ════════════════════════════════════════════ -->
     <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:site"        content="@caspete_co" />
     <meta name="twitter:title"       content="CASPETE — Loncheras Escolares Inteligentes" />
-    <meta name="twitter:description" content="Gestiona loncheras saludables para tus hijos desde el celular. Plataforma digital para colegios en Colombia." />
+    <meta name="twitter:description" content="Gestiona loncheras saludables para tus hijos desde el celular. Pago con Nequi, entrega por QR y chat con el tendero. Plataforma colombiana." />
     <meta name="twitter:image"       content="https://caspete.com/og-image.png" />
 
-    <!-- ══ Íconos ════════════════════════════════════════════════════ -->
+    <!-- ══ PWA / Instalación ════════════════════════════════════════════ -->
     <link rel="icon"             type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" sizes="180x180"  href="/favicon.png" />
-    <meta name="theme-color" content="#18E299" />
-    <meta name="msapplication-TileColor" content="#1a4731" />
+    <link rel="manifest"                          href="/manifest.json" />
+    <meta name="theme-color"              content="#18E299" />
+    <meta name="msapplication-TileColor"  content="#1a4731" />
+    <meta name="mobile-web-app-capable"   content="yes" />
+    <meta name="apple-mobile-web-app-capable"           content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style"  content="default" />
+    <meta name="apple-mobile-web-app-title"             content="Caspete" />
 
-    <!-- ══ JSON-LD Structured Data ════════════════════════════════════ -->
+    <!-- ══ Performance hints ════════════════════════════════════════════ -->
+    <link rel="preconnect"   href="https://fonts.googleapis.com" />
+    <link rel="preconnect"   href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+
+    <!-- ══ Fuentes ══════════════════════════════════════════════════════ -->
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- ══ JSON-LD Structured Data ══════════════════════════════════════ -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -45,48 +69,158 @@
           "@type": "Organization",
           "@id": "https://caspete.com/#organization",
           "name": "CASPETE",
+          "alternateName": "Caspete Loncheras Escolares",
           "url": "https://caspete.com",
-          "logo": "https://caspete.com/favicon.png",
-          "description": "Plataforma digital de gestión de loncheras escolares en Colombia",
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "email": "hola@caspete.co",
-            "contactType": "customer support",
-            "availableLanguage": "Spanish"
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://caspete.com/favicon.png",
+            "width": 512,
+            "height": 512
           },
+          "description": "Plataforma SaaS colombiana para la gestión digital de loncheras escolares. Pago con Nequi, entrega por QR, cumplimiento Ley 1581/2012 y Ley 2120/2021.",
+          "foundingDate": "2025",
+          "foundingLocation": "Colombia",
+          "areaServed": {
+            "@type": "Country",
+            "name": "Colombia"
+          },
+          "contactPoint": [
+            {
+              "@type": "ContactPoint",
+              "email": "hola@caspete.co",
+              "contactType": "customer support",
+              "availableLanguage": "Spanish"
+            },
+            {
+              "@type": "ContactPoint",
+              "email": "privacidad@caspete.com",
+              "contactType": "privacy",
+              "availableLanguage": "Spanish"
+            }
+          ],
           "address": {
             "@type": "PostalAddress",
             "addressCountry": "CO"
-          }
+          },
+          "sameAs": [
+            "https://www.instagram.com/caspete_co",
+            "https://twitter.com/caspete_co"
+          ]
         },
         {
           "@type": "WebSite",
           "@id": "https://caspete.com/#website",
           "url": "https://caspete.com",
           "name": "CASPETE",
+          "description": "Plataforma de loncheras escolares inteligentes para colegios en Colombia",
           "publisher": { "@id": "https://caspete.com/#organization" },
-          "inLanguage": "es-CO"
+          "inLanguage": "es-CO",
+          "potentialAction": {
+            "@type": "RegisterAction",
+            "target": "https://caspete.com/register"
+          }
         },
         {
           "@type": "SoftwareApplication",
+          "@id": "https://caspete.com/#app",
           "name": "CASPETE",
           "operatingSystem": "Web, iOS, Android",
           "applicationCategory": "EducationApplication",
-          "description": "Plataforma para gestión de loncheras escolares, control de saldo y entregas seguras en colegios de Colombia",
+          "applicationSubCategory": "School Management",
+          "description": "Plataforma para gestión de loncheras escolares, control de saldo, pago con Nequi, entrega verificada por QR y cumplimiento legal colombiano.",
+          "url": "https://caspete.com",
+          "screenshot": "https://caspete.com/og-image.png",
+          "featureList": [
+            "Programación de loncheras semanales",
+            "Pago con Nequi",
+            "Entrega verificada por código QR",
+            "Notificaciones push en tiempo real",
+            "Chat interno tendero-padre",
+            "Cumplimiento Ley 1581/2012",
+            "Cumplimiento Ley 2120/2021 etiquetado nutricional",
+            "Control de saldo digital por estudiante",
+            "Panel administrativo para colegios",
+            "Módulo ARCO habeas data"
+          ],
           "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "COP"
-          }
+            "@type": "AggregateOffer",
+            "lowPrice": "0",
+            "highPrice": "179900",
+            "priceCurrency": "COP",
+            "offerCount": "3"
+          },
+          "inLanguage": "es-CO",
+          "countriesSupported": "CO",
+          "publisher": { "@id": "https://caspete.com/#organization" }
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://caspete.com/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "¿Qué es CASPETE?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "CASPETE es una plataforma digital colombiana para la gestión de loncheras escolares. Los padres programan y pagan las loncheras desde el celular, el tendero las prepara y entrega verificando la identidad del estudiante con un código QR único."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cómo pago la lonchera de mi hijo?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Puedes recargar el saldo de tu hijo directamente con Nequi desde la aplicación de CASPETE. El saldo queda disponible de inmediato para programar loncheras."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cómo sabe el tendero que mi hijo es quien dice ser?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Cada estudiante tiene un código QR único y un código de 6 dígitos. El tendero escanea el QR o ingresa el código para verificar la identidad y entregar la lonchera correcta."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿CASPETE cumple con la Ley 1581 de protección de datos?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sí. CASPETE implementa consentimiento en 3 capas, módulo ARCO completo (Acceso, Rectificación, Cancelación, Oposición), derecho al olvido automático, AuditLog y reporte para la Superintendencia de Industria y Comercio (SIC)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿CASPETE cumple con la Ley 2120 de alimentación saludable?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sí. CASPETE clasifica los productos con sellos de advertencia nutricional (sodio, azúcares, grasas saturadas, trans y edulcorantes) conforme a la Resolución 2492/2022 y muestra un puntaje de cumplimiento por pedido."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cuánto cuesta CASPETE para un colegio?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "CASPETE tiene un plan básico gratuito para colegios pequeños. El plan Estándar cuesta $89.900 COP/mes y el plan Premium $179.900 COP/mes. Los padres no pagan suscripción."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Inicio",
+              "item": "https://caspete.com/"
+            }
+          ]
         }
       ]
     }
     </script>
-
-    <!-- ══ Fuentes ════════════════════════════════════════════════════ -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>

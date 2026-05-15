@@ -7,10 +7,11 @@ interface CookiePreferences {
 }
 
 const STORAGE_KEY = 'caspete_cookie_consent';
+const SESSION_KEY = 'caspete_consent_shown';  // Guard de sesión: evita flash al navegar
 const CONSENT_VERSION = 'v1.0';
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
-// Envía el consentimiento al backend para trazabilidad Ley 1581 (fire-and-forget)
+// Fire-and-forget: registra en backend para trazabilidad Ley 1581 (nunca bloquea la UI)
 function reportConsentToBackend(accepted: CookiePreferences) {
   try {
     const token = localStorage.getItem('caspete_token');
@@ -30,12 +31,12 @@ function reportConsentToBackend(accepted: CookiePreferences) {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    // Fire-and-forget: no esperamos respuesta, nunca bloquea la UI
     fetch(`${API_URL}/api/arco/cookie-consent`, {
       method: 'POST',
       headers,
       body,
-    }).catch(() => {/* silencioso si el backend no responde */});
+      signal: AbortSignal.timeout(5000), // máximo 5s, no bloquea la UI
+    }).catch(() => {/* silencioso: el consentimiento ya está en localStorage */});
   } catch {/* silencioso */}
 }
 
@@ -49,24 +50,50 @@ export default function CookieBanner() {
   });
 
   useEffect(() => {
+    // Guard 1: sessionStorage evita el flash al navegar entre páginas
+    // (el componente se monta 1 sola vez gracias a RootLayout, pero por si acaso)
+    if (sessionStorage.getItem(SESSION_KEY)) return;
+
+    // Guard 2: verificar localStorage
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) setVisible(true);
-    else {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.version !== CONSENT_VERSION) setVisible(true); // re-pedir si cambió la política
-      } catch { setVisible(true); }
+    if (!stored) {
+      setVisible(true);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(stored) as { version?: string };
+      if (parsed.version !== CONSENT_VERSION) {
+        // Política actualizada: pedir de nuevo
+        localStorage.removeItem(STORAGE_KEY);
+        setVisible(true);
+      } else {
+        // Ya aceptado: marcar sesión para no volver a mostrar
+        sessionStorage.setItem(SESSION_KEY, '1');
+      }
+    } catch {
+      // JSON corrupto: limpiar y pedir de nuevo
+      localStorage.removeItem(STORAGE_KEY);
+      setVisible(true);
     }
   }, []);
 
   function saveConsent(accepted: CookiePreferences) {
+    // 1. Guardar en localStorage PRIMERO (nunca depende del backend)
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       ...accepted,
       version: CONSENT_VERSION,
       timestamp: new Date().toISOString(),
     }));
-    reportConsentToBackend(accepted);
+
+    // 2. Marcar sesión actual para evitar re-aparición
+    sessionStorage.setItem(SESSION_KEY, '1');
+
+    // 3. Ocultar banner inmediatamente
     setVisible(false);
+
+    // 4. Reportar al backend de forma asíncrona (fire-and-forget)
+    reportConsentToBackend(accepted);
   }
 
   function acceptAll() {
@@ -87,6 +114,7 @@ export default function CookieBanner() {
     <div
       role="dialog"
       aria-label="Aviso de cookies"
+      aria-modal="false"
       style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
         background: 'var(--color-surface, #fff)',

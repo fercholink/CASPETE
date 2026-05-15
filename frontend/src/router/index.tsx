@@ -32,8 +32,12 @@ import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
 import PrivacyCompliancePage from '../pages/PrivacyCompliancePage';
 import ChatPage from '../pages/ChatPage';
 import SchoolLeadsPage from '../pages/SchoolLeadsPage';
+import RootLayout from '../components/RootLayout';
 
 export const router = createBrowserRouter([
+  {
+    element: <RootLayout />,
+    children: [
   { path: '/', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
@@ -341,4 +345,6 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+  ],  // end children of RootLayout
+  },  // end RootLayout route
 ]);

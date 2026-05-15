@@ -1,0 +1,5 @@
+/* Redirige todas las rutas al index.html para que React Router maneje el enrutamiento SPA */
+/*   Cloudflare Pages / Netlify                                                             */
+/* ──────────────────────────────────────────────────────────────────────────────────────── */
+/api/*  https://api.caspete.com/api/:splat  200
+/*      /index.html                         200

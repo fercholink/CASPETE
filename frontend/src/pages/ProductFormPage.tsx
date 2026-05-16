@@ -29,6 +29,7 @@ interface ProductData {
 const emptyForm = {
   name: '', description: '', base_price: '', image_url: '',
   category_id: '',  // UUID FK a ProductCategory
+  supplier_id: '',  // UUID FK a Supplier
   age_segment: 'ALL_AGES' as 'PRESCHOOL' | 'PRIMARY' | 'SECONDARY' | 'ALL_AGES',
   product_type: 'FOOD' as 'FOOD' | 'DRINK' | 'SNACK' | 'SUPPLEMENT' | 'COMBO',
   is_healthy: true, customizable_options: '',
@@ -51,12 +52,14 @@ export default function ProductFormPage() {
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [showNutrition, setShowNutrition] = useState(false);
   // Brecha #7 — alérgenos
+  const [suppliers, setSuppliers] = useState<{id: string; name: string; nit: string | null; city: string | null; is_verified: boolean}[]>([]);
   const [allAllergies, setAllAllergies] = useState<AllergyOption[]>([]);
   const [selectedAllergyIds, setSelectedAllergyIds] = useState<string[]>([]);
 
   useEffect(() => {
     apiClient.get<{ data: CategoryOption[] }>('/categories').then(r => setCategories(r.data.data)).catch(() => {});
     apiClient.get<{ data: AllergyOption[] }>('/allergies').then(r => setAllAllergies(r.data.data)).catch(() => {});
+    apiClient.get<{ data: {id: string; name: string; nit: string | null; city: string | null; is_verified: boolean}[] }>('/suppliers').then(r => setSuppliers(r.data.data)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -67,6 +70,7 @@ export default function ProductFormPage() {
         name: p.name, description: p.description ?? '', base_price: parseFloat(p.base_price).toString(),
         image_url: p.image_url ?? '',
         category_id: p.category_id ?? '',
+        supplier_id: p.supplier_id ?? '',
         age_segment: p.age_segment ?? 'ALL_AGES',
         product_type: p.product_type ?? 'FOOD',
         is_healthy: p.is_healthy,
@@ -120,6 +124,7 @@ export default function ProductFormPage() {
       ...(form.description && { description: form.description }),
       ...(form.image_url && { image_url: form.image_url }),
       ...(form.category_id && { category_id: form.category_id }),
+      ...(form.supplier_id && { supplier_id: form.supplier_id }),  // Brecha #6
       product_type: form.product_type,
       age_segment: form.age_segment,
       ...(showNutrition && {
@@ -324,6 +329,15 @@ export default function ProductFormPage() {
                   </label>
                   <input id="supplier_tech_sheet_url" name="supplier_tech_sheet_url" className="form-input" type="text"
                     value={form.supplier_tech_sheet_url} onChange={handleChange} placeholder="https://..." style={{ marginBottom: 0 }} />
+                </div>
+
+                {/* Proveedor FK -- Brecha #6 */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="supplier_id">Proveedor B2B <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(Art. 32 Res. 2492 — trazabilidad)</span></label>
+                  <select id="supplier_id" name="supplier_id" className="form-select" value={form.supplier_id} onChange={handleChange}>
+                    <option value="">Sin proveedor asignado</option>
+                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.is_verified ? '✅' : '⚪'} {s.name}{s.nit ?  — NIT  : ''}{s.city ?  ·  : ''}</option>)}
+                  </select>
                 </div>
               </div>
             )}

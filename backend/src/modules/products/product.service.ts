@@ -26,6 +26,8 @@ const productSelect = {
   saturated_fat_pct: true, trans_fat_pct: true, has_sweeteners: true,
   seal_sodium: true, seal_sugars: true, seal_saturated_fat: true,
   seal_trans_fat: true, seal_sweeteners: true,
+  supplier_id: true,
+  supplier_rel: { select: { id: true, name: true, nit: true, city: true, is_verified: true } },  // Brecha #6
   supplier_tech_sheet_url: true, last_nutritional_audit: true,
   serving_size_g: true, serving_size_ml: true, servings_per_package: true,  // Brecha #5
   // Alérgenos declarados (Art. 26 Ley 2120)
@@ -109,6 +111,7 @@ export async function createProduct(input: CreateProductInput, actor: JwtPayload
       trans_fat_pct: input.trans_fat_pct ?? null,
       has_sweeteners: input.has_sweeteners ?? false,
       supplier_tech_sheet_url: input.supplier_tech_sheet_url ?? null,
+      supplier_id: input.supplier_id ?? null,  // Brecha #6
       serving_size_g:       input.serving_size_g       ?? null,
       serving_size_ml:      input.serving_size_ml      ?? null,
       servings_per_package: input.servings_per_package ?? null,
@@ -188,6 +191,7 @@ export async function updateProduct(id: string, input: UpdateProductInput, actor
   const catData = (input.category_id !== undefined || input.category !== undefined)
     ? await resolveCategorySlug(input.category_id, input.category)
     : {};
+  const supplierData = input.supplier_id !== undefined ? { supplier_id: input.supplier_id ?? null } : {};
   return prisma.product.update({
     where: { id },
     data: {

@@ -245,13 +245,15 @@ model Product {
   serving_size_ml       Decimal?        @db.Decimal(8, 2)  // ml por porcion (liquidos, geles)
   servings_per_package  Decimal?        @db.Decimal(6, 1)  // porciones por empaque
   
-  supplier_tech_sheet_url String?        @db.VarChar(500)
+  supplier_id           String?         @db.Uuid            // FK a Supplier -- Brecha #6
+    supplier_tech_sheet_url String?        @db.VarChar(500)
   last_nutritional_audit  DateTime?
 
   active               Boolean         @default(true)
   created_at           DateTime        @default(now())
 
-  category_rel   ProductCategory? @relation(fields: [category_id], references: [id])
+  supplier_rel   Supplier?        @relation(fields: [supplier_id], references: [id])
+    category_rel   ProductCategory? @relation(fields: [category_id], references: [id])
   store_products StoreProduct[]
   allergens      ProductAllergy[]
 }
@@ -408,6 +410,9 @@ model Supplier {
   active          Boolean  @default(true)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+
+  // Relacion inversa -- Brecha #6
+  products   Product[]
 }
 
 // Modelos Ley 2120

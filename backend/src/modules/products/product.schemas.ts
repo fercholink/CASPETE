@@ -22,6 +22,8 @@ export const createProductSchema = z.object({
   image_url:            z.string().max(500).optional(),
   // Clasificación de categoría — usar category_id (FK) preferentemente
   category_id:          z.string().uuid('category_id debe ser un UUID válido').optional().nullable(),
+  // Proveedor FK -- Brecha #6 (Art. 32 Res. 2492/2022: trazabilidad B2B)
+  supplier_id:          z.string().uuid('supplier_id debe ser UUID').optional().nullable(),
   category:             z.string().max(50).optional(),  // legacy — se sincroniza automáticamente
   // Tipo de producto — Brecha #2 corregida
   product_type:         z.enum(['FOOD', 'DRINK', 'SNACK', 'SUPPLEMENT', 'COMBO']).default('FOOD'),
@@ -40,6 +42,8 @@ export const updateProductSchema = z.object({
   image_url:            z.string().max(500).optional(),
   // Clasificación de categoría — usar category_id (FK) preferentemente
   category_id:          z.string().uuid('category_id debe ser un UUID válido').optional().nullable(),
+  // Proveedor FK -- Brecha #6 (Art. 32 Res. 2492/2022: trazabilidad B2B)
+  supplier_id:          z.string().uuid('supplier_id debe ser UUID').optional().nullable(),
   category:             z.string().max(50).optional(),  // legacy
   // Tipo de producto — Brecha #2 corregida
   product_type:         z.enum(['FOOD', 'DRINK', 'SNACK', 'SUPPLEMENT', 'COMBO']).optional(),

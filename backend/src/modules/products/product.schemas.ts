@@ -8,6 +8,10 @@ const nutritionalDataSchema = z.object({
   trans_fat_pct:     z.number().min(0).max(100).optional(),
   has_sweeteners:    z.boolean().optional(),
   supplier_tech_sheet_url: z.string().max(500).optional(),
+  // Porcion nutricional -- Brecha #5 (Art. 6 Res. 2492/2022)
+  serving_size_g:        z.number().min(0).max(10000).optional(),  // g por porcion
+  serving_size_ml:       z.number().min(0).max(10000).optional(),  // ml por porcion
+  servings_per_package:  z.number().min(0).max(1000).optional(),   // porciones por empaque
   last_nutritional_audit:  z.coerce.date().optional(),
 });
 

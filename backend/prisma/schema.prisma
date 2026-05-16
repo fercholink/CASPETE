@@ -239,6 +239,12 @@ model Product {
   seal_trans_fat         Boolean         @default(false)
   seal_sweeteners        Boolean         @default(false)
   // Trazabilidad
+  // -- Porcion nutricional -- Brecha #5 corregida
+  // Art. 6 Res. 2492/2022: etiquetado nutricional referenciado por porcion
+  serving_size_g        Decimal?        @db.Decimal(8, 2)  // gramos por porcion (solidos/semis.)
+  serving_size_ml       Decimal?        @db.Decimal(8, 2)  // ml por porcion (liquidos, geles)
+  servings_per_package  Decimal?        @db.Decimal(6, 1)  // porciones por empaque
+  
   supplier_tech_sheet_url String?        @db.VarChar(500)
   last_nutritional_audit  DateTime?
 

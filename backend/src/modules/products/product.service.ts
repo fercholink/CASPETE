@@ -27,6 +27,7 @@ const productSelect = {
   seal_sodium: true, seal_sugars: true, seal_saturated_fat: true,
   seal_trans_fat: true, seal_sweeteners: true,
   supplier_tech_sheet_url: true, last_nutritional_audit: true,
+  serving_size_g: true, serving_size_ml: true, servings_per_package: true,  // Brecha #5
   // Alérgenos declarados (Art. 26 Ley 2120)
   allergens: {
     select: { allergy: { select: { id: true, name: true, severity: true } } },
@@ -108,6 +109,9 @@ export async function createProduct(input: CreateProductInput, actor: JwtPayload
       trans_fat_pct: input.trans_fat_pct ?? null,
       has_sweeteners: input.has_sweeteners ?? false,
       supplier_tech_sheet_url: input.supplier_tech_sheet_url ?? null,
+      serving_size_g:       input.serving_size_g       ?? null,
+      serving_size_ml:      input.serving_size_ml      ?? null,
+      servings_per_package: input.servings_per_package ?? null,
       last_nutritional_audit: input.last_nutritional_audit ?? null,
       ...seals,
     },
@@ -204,6 +208,9 @@ export async function updateProduct(id: string, input: UpdateProductInput, actor
       ...(input.trans_fat_pct !== undefined && { trans_fat_pct: input.trans_fat_pct ?? null }),
       ...(input.has_sweeteners !== undefined && { has_sweeteners: input.has_sweeteners }),
       ...(input.supplier_tech_sheet_url !== undefined && { supplier_tech_sheet_url: input.supplier_tech_sheet_url ?? null }),
+      ...(input.serving_size_g       !== undefined && { serving_size_g:       input.serving_size_g       ?? null }),
+      ...(input.serving_size_ml      !== undefined && { serving_size_ml:      input.serving_size_ml      ?? null }),
+      ...(input.servings_per_package !== undefined && { servings_per_package: input.servings_per_package ?? null }),
       ...(input.last_nutritional_audit !== undefined && { last_nutritional_audit: input.last_nutritional_audit ?? null }),
       ...seals,
     },
@@ -233,6 +240,9 @@ export async function updateNutritionalData(id: string, input: UpdateNutritional
       ...seals,
       last_nutritional_audit: new Date(),
       ...(input.supplier_tech_sheet_url !== undefined && { supplier_tech_sheet_url: input.supplier_tech_sheet_url }),
+      ...(input.serving_size_g       !== undefined && { serving_size_g:       input.serving_size_g       ?? null }),
+      ...(input.serving_size_ml      !== undefined && { serving_size_ml:      input.serving_size_ml      ?? null }),
+      ...(input.servings_per_package !== undefined && { servings_per_package: input.servings_per_package ?? null }),
     },
     select: productSelect,
   });

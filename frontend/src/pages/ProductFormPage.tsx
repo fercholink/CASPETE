@@ -20,6 +20,7 @@ interface ProductData {
   nutritional_level: 'LEVEL_1' | 'LEVEL_2';
   sodium_per_100: string | null; added_sugars_pct: string | null;
   saturated_fat_pct: string | null; trans_fat_pct: string | null;
+  serving_size_g: string | null; serving_size_ml: string | null; servings_per_package: string | null;  // Brecha #5
   has_sweeteners: boolean; supplier_tech_sheet_url: string | null;
   seal_sodium: boolean; seal_sugars: boolean; seal_saturated_fat: boolean;
   seal_trans_fat: boolean; seal_sweeteners: boolean;
@@ -34,6 +35,7 @@ const emptyForm = {
   // Ley 2120
   product_form: 'SOLID' as ProductFormClient,
   sodium_per_100: '', added_sugars_pct: '', saturated_fat_pct: '',
+  serving_size_g: '', serving_size_ml: '', servings_per_package: '',  // Brecha #5
   trans_fat_pct: '', has_sweeteners: false, supplier_tech_sheet_url: '',
 };
 
@@ -75,6 +77,9 @@ export default function ProductFormPage() {
         saturated_fat_pct: p.saturated_fat_pct ? parseFloat(p.saturated_fat_pct).toString() : '',
         trans_fat_pct: p.trans_fat_pct ? parseFloat(p.trans_fat_pct).toString() : '',
         has_sweeteners: p.has_sweeteners ?? false,
+        serving_size_g: p.serving_size_g ? parseFloat(p.serving_size_g).toString() : '',
+        serving_size_ml: p.serving_size_ml ? parseFloat(p.serving_size_ml).toString() : '',
+        servings_per_package: p.servings_per_package ? parseFloat(p.servings_per_package).toString() : '',
         supplier_tech_sheet_url: p.supplier_tech_sheet_url ?? '',
       });
       if (p.nutritional_level === 'LEVEL_2') setShowNutrition(true);
@@ -125,6 +130,9 @@ export default function ProductFormPage() {
         ...(form.saturated_fat_pct && { saturated_fat_pct: parseFloat(form.saturated_fat_pct) }),
         ...(form.trans_fat_pct && { trans_fat_pct: parseFloat(form.trans_fat_pct) }),
         ...(form.supplier_tech_sheet_url && { supplier_tech_sheet_url: form.supplier_tech_sheet_url }),
+        ...(form.serving_size_g       && { serving_size_g:       parseFloat(form.serving_size_g) }),
+        ...(form.serving_size_ml      && { serving_size_ml:      parseFloat(form.serving_size_ml) }),
+        ...(form.servings_per_package && { servings_per_package: parseFloat(form.servings_per_package) }),
       }),
     };
 
@@ -302,6 +310,16 @@ export default function ProductFormPage() {
                 {/* Ficha técnica proveedor */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" htmlFor="supplier_tech_sheet_url">
+                {/* Porcion nutricional -- Brecha #5 */}
+                <div style={{ borderTop: '1px dashed var(--color-border)', paddingTop: 12 }}>
+                  <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Porci\u00f3n nutricional (Art. 6 Res. 2492/2022)</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                    {inputNum('Tama\u00f1o porci\u00f3n (g)', 'serving_size_g', 'gramos', 'Para s\u00f3lidos/semis\u00f3lidos')}
+                    {inputNum('Tama\u00f1o porci\u00f3n (ml)', 'serving_size_ml', 'ml', 'Para l\u00edquidos/geles')}
+                    {inputNum('Porciones/empaque', 'servings_per_package', 'ud.', 'Ej: 1, 2.5, 8')}
+                  </div>
+                </div>
+
                     Ficha técnica del proveedor <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(Art. 32 Res. 2492)</span>
                   </label>
                   <input id="supplier_tech_sheet_url" name="supplier_tech_sheet_url" className="form-input" type="text"

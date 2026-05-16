@@ -16,12 +16,12 @@ interface ProductData {
   is_healthy: boolean;
   customizable_options: string[];
   // Ley 2120
-  product_form: 'SOLID' | 'LIQUID';
+  product_form: 'SOLID' | 'LIQUID' | 'SEMI_SOLID' | 'POWDER' | 'GEL';
   nutritional_level: 'LEVEL_1' | 'LEVEL_2';
   sodium_per_100: string | null; added_sugars_pct: string | null;
   saturated_fat_pct: string | null; trans_fat_pct: string | null;
   serving_size_g: string | null; serving_size_ml: string | null; servings_per_package: string | null;  // Brecha #5
-  has_sweeteners: boolean; supplier_tech_sheet_url: string | null;
+  has_sweeteners: boolean; supplier_tech_sheet_url: string | null; supplier_id: string | null;  // FK Brecha #6
   seal_sodium: boolean; seal_sugars: boolean; seal_saturated_fat: boolean;
   seal_trans_fat: boolean; seal_sweeteners: boolean;
 }

@@ -11,6 +11,7 @@ interface ProductData {
   id: string; name: string; description: string | null; base_price: string;
   image_url: string | null; category: string | null;
   category_id: string | null;
+  age_segment: 'PRESCHOOL' | 'PRIMARY' | 'SECONDARY' | 'ALL_AGES';  // Brecha #4
   product_type: 'FOOD' | 'DRINK' | 'SNACK' | 'SUPPLEMENT' | 'COMBO';
   is_healthy: boolean;
   customizable_options: string[];
@@ -27,6 +28,7 @@ interface ProductData {
 const emptyForm = {
   name: '', description: '', base_price: '', image_url: '',
   category_id: '',  // UUID FK a ProductCategory
+  age_segment: 'ALL_AGES' as 'PRESCHOOL' | 'PRIMARY' | 'SECONDARY' | 'ALL_AGES',
   product_type: 'FOOD' as 'FOOD' | 'DRINK' | 'SNACK' | 'SUPPLEMENT' | 'COMBO',
   is_healthy: true, customizable_options: '',
   // Ley 2120
@@ -63,6 +65,7 @@ export default function ProductFormPage() {
         name: p.name, description: p.description ?? '', base_price: parseFloat(p.base_price).toString(),
         image_url: p.image_url ?? '',
         category_id: p.category_id ?? '',
+        age_segment: p.age_segment ?? 'ALL_AGES',
         product_type: p.product_type ?? 'FOOD',
         is_healthy: p.is_healthy,
         customizable_options: p.customizable_options?.join(', ') ?? '',
@@ -113,6 +116,7 @@ export default function ProductFormPage() {
       ...(form.image_url && { image_url: form.image_url }),
       ...(form.category_id && { category_id: form.category_id }),
       product_type: form.product_type,
+      age_segment: form.age_segment,
       ...(showNutrition && {
         product_form: form.product_form,
         has_sweeteners: form.has_sweeteners,
@@ -182,7 +186,7 @@ export default function ProductFormPage() {
           </div>
 
           {/* Tipo de producto + Categoría */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="product_type">Tipo de producto</label>
               <select id="product_type" name="product_type" className="form-select" value={form.product_type} onChange={handleChange}>
@@ -191,6 +195,15 @@ export default function ProductFormPage() {
                 <option value="SNACK">🍪 Mecato / Snack</option>
                 <option value="SUPPLEMENT">💪 Suplemento nutricional</option>
                 <option value="COMBO">🧳 Combo</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="age_segment">Segmento de edad</label>
+              <select id="age_segment" name="age_segment" className="form-select" value={form.age_segment} onChange={handleChange}>
+                <option value="ALL_AGES">👥 Todas las edades</option>
+                <option value="PRESCHOOL">🌼 Preescolar (3-5 a\u00f1os)</option>
+                <option value="PRIMARY">🏡 Primaria (6-11 a\u00f1os)</option>
+                <option value="SECONDARY">🏫 Secundaria (12-17 a\u00f1os)</option>
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>

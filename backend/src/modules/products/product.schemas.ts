@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
 const nutritionalDataSchema = z.object({
   product_form:      z.enum(['SOLID', 'LIQUID', 'SEMI_SOLID', 'POWDER', 'GEL']).optional(),
@@ -21,6 +21,8 @@ export const createProductSchema = z.object({
   category:             z.string().max(50).optional(),  // legacy — se sincroniza automáticamente
   // Tipo de producto — Brecha #2 corregida
   product_type:         z.enum(['FOOD', 'DRINK', 'SNACK', 'SUPPLEMENT', 'COMBO']).default('FOOD'),
+  // Segmento de edad -- Brecha #4
+  age_segment:          z.enum(['PRESCHOOL', 'PRIMARY', 'SECONDARY', 'ALL_AGES']).default('ALL_AGES'),
   is_healthy:           z.boolean().default(true),
   customizable_options: z.array(z.string()).default([]),
   // Ley 2120 — product_form es requerido para clasificación correcta (Art. 7 Res. 2492)
@@ -37,6 +39,8 @@ export const updateProductSchema = z.object({
   category:             z.string().max(50).optional(),  // legacy
   // Tipo de producto — Brecha #2 corregida
   product_type:         z.enum(['FOOD', 'DRINK', 'SNACK', 'SUPPLEMENT', 'COMBO']).optional(),
+  // Segmento de edad -- Brecha #4
+  age_segment:          z.enum(['PRESCHOOL', 'PRIMARY', 'SECONDARY', 'ALL_AGES']).optional(),
   is_healthy:           z.boolean().optional(),
   active:               z.boolean().optional(),
   customizable_options: z.array(z.string()).optional(),

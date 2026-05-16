@@ -56,6 +56,14 @@ enum ProductForm {
 }
 
 // Tipo de producto — Brecha #2
+// Segmento de edad - Brecha #4
+enum AgeSegment {
+  PRESCHOOL
+  PRIMARY
+  SECONDARY
+  ALL_AGES
+}
+
 enum ProductType {
   FOOD
   DRINK
@@ -210,7 +218,9 @@ model Product {
   category             String?         @db.VarChar(50)  // @deprecated â€” legacy slug; usar category_id
   category_id          String?         @db.Uuid         // FK formal a ProductCategory
   // -- Tipo de producto -- Brecha #2 corregida
-  product_type         ProductType     @default(FOOD)  // FOOD|DRINK|SNACK|SUPPLEMENT|COMBO
+  product_type         ProductType     @default(FOOD)
+  // -- Segmento de edad -- Brecha #4 corregida
+  age_segment          AgeSegment      @default(ALL_AGES)  // FOOD|DRINK|SNACK|SUPPLEMENT|COMBO
   is_healthy           Boolean         @default(true)
   customizable_options String[]        @default([])
 

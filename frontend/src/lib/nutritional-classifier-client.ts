@@ -1,9 +1,11 @@
-/** Espejo cliente del NutritionalClassifier del backend.
- *  Permite calcular los sellos en tiempo real en el formulario de productos
- *  sin depender de una llamada al servidor. */
+/** Espejo cliente del NutritionalClassifier del backend — v2.
+ *  Brecha #3: soporta 5 formas de producto con umbrales distintos de sodio.
+ *  Permite calcular los sellos en tiempo real sin depender del servidor. */
+
+export type ProductFormClient = 'SOLID' | 'LIQUID' | 'SEMI_SOLID' | 'POWDER' | 'GEL';
 
 export interface NutritionalClientInput {
-  product_form: 'SOLID' | 'LIQUID';
+  product_form: ProductFormClient;
   sodium_per_100?: number | null;
   added_sugars_pct?: number | null;
   saturated_fat_pct?: number | null;
@@ -20,10 +22,19 @@ export interface NutritionalClientResult {
   nutritional_level: 'LEVEL_1' | 'LEVEL_2';
 }
 
+/** Umbrales de sodio por forma — espejo de SODIUM_THRESHOLDS del backend */
+export const SODIUM_THRESHOLDS_CLIENT: Record<ProductFormClient, number> = {
+  SOLID:      300,
+  LIQUID:      40,
+  SEMI_SOLID: 100,
+  POWDER:     400,
+  GEL:        100,
+};
+
 const n = (v?: number | null) => v ?? 0;
 
 export function classifyProductClient(input: NutritionalClientInput): NutritionalClientResult {
-  const sodiumThreshold = input.product_form === 'LIQUID' ? 40 : 300;
+  const sodiumThreshold = SODIUM_THRESHOLDS_CLIENT[input.product_form] ?? 300;
   const seal_sodium        = n(input.sodium_per_100) >= sodiumThreshold;
   const seal_sugars        = n(input.added_sugars_pct)  >= 10;
   const seal_saturated_fat = n(input.saturated_fat_pct) >= 10;
@@ -34,4 +45,9 @@ export function classifyProductClient(input: NutritionalClientInput): Nutritiona
     seal_sodium, seal_sugars, seal_saturated_fat, seal_trans_fat, seal_sweeteners,
     nutritional_level: hasAnySeal ? 'LEVEL_2' : 'LEVEL_1',
   };
+}
+
+/** Devuelve el umbral de sodio para mostrar en la UI junto al selector de forma */
+export function getSodiumThresholdClient(form: ProductFormClient): number {
+  return SODIUM_THRESHOLDS_CLIENT[form] ?? 300;
 }

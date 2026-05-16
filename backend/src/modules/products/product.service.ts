@@ -45,7 +45,7 @@ function buildNutritionalSeals(input: Partial<CreateProductInput>) {
   ) return {};
 
   const seals = classifyProduct({
-    product_form:      (input.product_form ?? 'SOLID') as 'SOLID' | 'LIQUID',
+    product_form:      (input.product_form ?? 'SOLID') as 'SOLID' | 'LIQUID' | 'SEMI_SOLID' | 'POWDER' | 'GEL',
     sodium_per_100:    input.sodium_per_100    != null ? Number(input.sodium_per_100)    : null,
     added_sugars_pct:  input.added_sugars_pct  != null ? Number(input.added_sugars_pct)  : null,
     saturated_fat_pct: input.saturated_fat_pct != null ? Number(input.saturated_fat_pct) : null,
@@ -214,7 +214,7 @@ export async function updateNutritionalData(id: string, input: UpdateNutritional
 
   // Merge con valores actuales para recalcular sellos completos
   const merged = {
-    product_form:      (input.product_form ?? product.product_form) as 'SOLID' | 'LIQUID',
+    product_form:      (input.product_form ?? product.product_form) as 'SOLID' | 'LIQUID' | 'SEMI_SOLID' | 'POWDER' | 'GEL',
     sodium_per_100:    input.sodium_per_100    != null ? Number(input.sodium_per_100)    : product.sodium_per_100    != null ? Number(product.sodium_per_100)    : null,
     added_sugars_pct:  input.added_sugars_pct  != null ? Number(input.added_sugars_pct)  : product.added_sugars_pct  != null ? Number(product.added_sugars_pct)  : null,
     saturated_fat_pct: input.saturated_fat_pct != null ? Number(input.saturated_fat_pct) : product.saturated_fat_pct != null ? Number(product.saturated_fat_pct) : null,

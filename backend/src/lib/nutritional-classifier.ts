@@ -1,4 +1,4 @@
-export type ProductFormInput = 'SOLID' | 'LIQUID';
+export type ProductFormInput = 'SOLID' | 'LIQUID' | 'SEMI_SOLID' | 'POWDER' | 'GEL';
 
 export interface NutritionalInput {
   product_form: ProductFormInput;
@@ -21,23 +21,42 @@ export interface NutritionalClassification {
 const toNum = (v?: number | null): number => v == null ? 0 : v;
 
 /**
- * Motor de clasificación nutricional según Resolución 2492 de 2022.
+ * Umbrales de sodio por forma de producto — Resolución 2492 de 2022 (Art. 7)
+ *
+ * | Forma      | Umbral sodio  | Justificación normativa                         |
+ * |------------|---------------|-------------------------------------------------|
+ * | SOLID      | ≥ 300 mg/100g | Art. 7, Tabla 1 — sólidos                       |
+ * | LIQUID     | ≥  40 mg/100ml| Art. 7, Tabla 2 — bebidas                       |
+ * | SEMI_SOLID | ≥ 100 mg/100g | Criterio intermedio (yogur, puré, crema)        |
+ * | POWDER     | ≥ 400 mg/100g | Polvo analizado por porción equivalente sólida  |
+ * | GEL        | ≥ 100 mg/100g | Asimilado a semisólido (gelatina, agar)         |
+ */
+const SODIUM_THRESHOLDS: Record<ProductFormInput, number> = {
+  SOLID:      300,
+  LIQUID:      40,
+  SEMI_SOLID: 100,
+  POWDER:     400,
+  GEL:        100,
+};
+
+/**
+ * Motor de clasificación nutricional v2 — Resolución 2492 de 2022.
+ * Brecha #3: diferencia umbrales según ProductForm (5 formas).
  * Los sellos son COMPUTADOS — nunca editables manualmente.
  *
- * Umbrales sólidos: sodio ≥ 300 mg/100g | Umbrales líquidos: sodio ≥ 40 mg/100ml
- * Azúcares añadidos ≥ 10% energía total → sello
- * Grasas saturadas  ≥ 10% energía total → sello
+ * Azúcares añadidos ≥ 10% energía total → sello (igual para todas las formas)
+ * Grasas saturadas  ≥ 10% energía total → sello (igual para todas las formas)
  * Grasas trans      > 0  (cualquier presencia) → sello
  * Edulcorantes confirmados → sello
  */
 export function classifyProduct(input: NutritionalInput): NutritionalClassification {
   const sodium = toNum(input.sodium_per_100);
-  const sodiumThreshold = input.product_form === 'LIQUID' ? 40 : 300;
+  const sodiumThreshold = SODIUM_THRESHOLDS[input.product_form] ?? 300;
 
   const seal_sodium        = sodium >= sodiumThreshold;
-  const seal_sugars        = toNum(input.added_sugars_pct)    >= 10;
-  const seal_saturated_fat = toNum(input.saturated_fat_pct)   >= 10;
-  const seal_trans_fat     = toNum(input.trans_fat_pct)        > 0;
+  const seal_sugars        = toNum(input.added_sugars_pct)  >= 10;
+  const seal_saturated_fat = toNum(input.saturated_fat_pct) >= 10;
+  const seal_trans_fat     = toNum(input.trans_fat_pct)      > 0;
   const seal_sweeteners    = input.has_sweeteners === true;
 
   const hasAnySeal = seal_sodium || seal_sugars || seal_saturated_fat || seal_trans_fat || seal_sweeteners;
@@ -53,9 +72,15 @@ export function classifyProduct(input: NutritionalInput): NutritionalClassificat
 }
 
 /**
- * Calcula el compliance score y los campos de cumplimiento de una lonchera
- * a partir del array de productos que la componen.
+ * Devuelve el umbral de sodio aplicable a una forma de producto.
+ * Útil para mostrar en la UI el valor de referencia correcto.
  */
+export function getSodiumThreshold(form: ProductFormInput): number {
+  return SODIUM_THRESHOLDS[form] ?? 300;
+}
+
+// ─── Compliance de lonchera ────────────────────────────────────────────────
+
 export interface ProductSummaryForOrder {
   nutritional_level: 'LEVEL_1' | 'LEVEL_2';
   seal_sodium: boolean;
@@ -78,11 +103,11 @@ export function calculateOrderCompliance(products: ProductSummaryForOrder[]): Or
   }
 
   const seal_summary = {
-    sodium: products.filter(p => p.seal_sodium).length,
-    sugars: products.filter(p => p.seal_sugars).length,
+    sodium:        products.filter(p => p.seal_sodium).length,
+    sugars:        products.filter(p => p.seal_sugars).length,
     saturated_fat: products.filter(p => p.seal_saturated_fat).length,
-    trans_fat: products.filter(p => p.seal_trans_fat).length,
-    sweeteners: products.filter(p => p.seal_sweeteners).length,
+    trans_fat:     products.filter(p => p.seal_trans_fat).length,
+    sweeteners:    products.filter(p => p.seal_sweeteners).length,
   };
 
   const is_seal_free = products.every(p => p.nutritional_level === 'LEVEL_1');

@@ -45,9 +45,14 @@ enum NutritionalLevel {
   LEVEL_2  // Con advertencias
 }
 
+// Forma fisicoquimica del producto (Art. 4 Res. 2492/2022)
+// Define el umbral de sodio aplicable en la clasificacion nutricional
 enum ProductForm {
-  SOLID
-  LIQUID
+  SOLID       // Solido convencional: umbral sodio >= 300 mg/100g
+  LIQUID      // Liquido convencional: umbral sodio >= 40 mg/100ml
+  SEMI_SOLID  // Yogur, pure, crema: umbral sodio >= 100 mg/100g
+  POWDER      // Polvo (avena, saborizante): umbral sodio >= 400 mg/100g
+  GEL         // Gel comestible (gelatina): umbral sodio >= 100 mg/100g
 }
 
 // Tipo de producto — Brecha #2

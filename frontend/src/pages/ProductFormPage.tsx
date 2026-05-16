@@ -2,7 +2,7 @@
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { SealBadgeGroup, NutritionalLevelBadge } from '../components/SealBadge';
-import { classifyProductClient } from '../lib/nutritional-classifier-client';
+import { classifyProductClient, getSodiumThresholdClient, type ProductFormClient } from '../lib/nutritional-classifier-client';
 
 interface AllergyOption { id: string; name: string; severity: string; }
 interface CategoryOption { id: string; name: string; label: string; icon: string | null; }
@@ -30,7 +30,7 @@ const emptyForm = {
   product_type: 'FOOD' as 'FOOD' | 'DRINK' | 'SNACK' | 'SUPPLEMENT' | 'COMBO',
   is_healthy: true, customizable_options: '',
   // Ley 2120
-  product_form: 'SOLID' as 'SOLID' | 'LIQUID',
+  product_form: 'SOLID' as ProductFormClient,
   sodium_per_100: '', added_sugars_pct: '', saturated_fat_pct: '',
   trans_fat_pct: '', has_sweeteners: false, supplier_tech_sheet_url: '',
 };
@@ -260,14 +260,17 @@ export default function ProductFormPage() {
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" htmlFor="product_form">Forma del producto</label>
                   <select id="product_form" name="product_form" className="form-select" value={form.product_form} onChange={handleChange}>
-                    <option value="SOLID">Sólido (umbral sodio: ≥ 300 mg/100g)</option>
-                    <option value="LIQUID">Líquido (umbral sodio: ≥ 40 mg/100ml)</option>
+                    <option value="SOLID">\ud83e\uddf1 S\u00f3lido (\u2265 300 mg/100g)</option>
+                    <option value="LIQUID">\ud83d\udca7 L\u00edquido (\u2265 40 mg/100ml)</option>
+                    <option value="SEMI_SOLID">\ud83e\udd5b Semis\u00f3lido \u2014 yogur, pur\u00e9 (\u2265 100 mg/100g)</option>
+                    <option value="POWDER">\ud83e\udeb4 Polvo \u2014 avena, saborizante (\u2265 400 mg/100g)</option>
+                    <option value="GEL">\ud83c\udf6e Gel \u2014 gelatina, agar (\u2265 100 mg/100g)</option>
                   </select>
                 </div>
 
                 {/* Grid de valores nutricionales */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {inputNum('Sodio', 'sodium_per_100', 'mg por 100g/ml', `Umbral: ${form.product_form === 'LIQUID' ? '40' : '300'} mg`)}
+                  {inputNum('Sodio', 'sodium_per_100', 'mg por 100g/ml', `Umbral: ${getSodiumThresholdClient(form.product_form as ProductFormClient)} mg/100`)}
                   {inputNum('Azúcares añadidos %', 'added_sugars_pct', '% energía', 'Umbral: 10%', 100)}
                   {inputNum('Grasas saturadas %', 'saturated_fat_pct', '% energía', 'Umbral: 10%', 100)}
                   {inputNum('Grasas trans %', 'trans_fat_pct', '% energía', 'Cualquier presencia', 100)}

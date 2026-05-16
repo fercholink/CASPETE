@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const nutritionalDataSchema = z.object({
-  product_form:      z.enum(['SOLID', 'LIQUID']).optional(),
+  product_form:      z.enum(['SOLID', 'LIQUID', 'SEMI_SOLID', 'POWDER', 'GEL']).optional(),
   sodium_per_100:    z.number().min(0).max(10000).optional(),  // Art. 7 Res. 2492: max fisiológico
   added_sugars_pct:  z.number().min(0).max(100).optional(),
   saturated_fat_pct: z.number().min(0).max(100).optional(),
@@ -24,7 +24,7 @@ export const createProductSchema = z.object({
   is_healthy:           z.boolean().default(true),
   customizable_options: z.array(z.string()).default([]),
   // Ley 2120 — product_form es requerido para clasificación correcta (Art. 7 Res. 2492)
-  product_form:         z.enum(['SOLID', 'LIQUID']).default('SOLID'),
+  product_form:         z.enum(['SOLID', 'LIQUID', 'SEMI_SOLID', 'POWDER', 'GEL']).default('SOLID'),
 }).merge(nutritionalDataSchema.omit({ product_form: true }));
 
 export const updateProductSchema = z.object({

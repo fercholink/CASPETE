@@ -137,6 +137,7 @@ model User {
   topup_requests   TopupRequest[]
   push_subscriptions PushSubscription[]
   audit_logs       AuditLog[]
+  nutritional_audit_edits NutritionalAuditLog[] @relation("NutritionalAuditEditor")
   vendor_threads   ChatThread[]       @relation("VendorThreads")
   parent_threads   ChatThread[]       @relation("ParentThreads")
   sent_messages    ChatMessage[]
@@ -252,7 +253,8 @@ model Product {
   active               Boolean         @default(true)
   created_at           DateTime        @default(now())
 
-  supplier_rel   Supplier?        @relation(fields: [supplier_id], references: [id])
+  nutritional_logs NutritionalAuditLog[]  // Brecha #7
+    supplier_rel   Supplier?        @relation(fields: [supplier_id], references: [id])
     category_rel   ProductCategory? @relation(fields: [category_id], references: [id])
   store_products StoreProduct[]
   allergens      ProductAllergy[]
@@ -446,6 +448,38 @@ model ProductAllergy {
   allergy Allergy @relation(fields: [allergy_id], references: [id], onDelete: Cascade)
 
   @@id([product_id, allergy_id])
+}
+
+// Historial de cambios nutricionales por producto -- Brecha #7
+// Cumple Art. 29 Res. 2492/2022: trazabilidad de actualizaciones en etiquetado
+model NutritionalAuditLog {
+  id              String   @id @default(uuid()) @db.Uuid
+  product_id      String   @db.Uuid
+  editor_id       String   @db.Uuid   // SUPER_ADMIN que realizo el cambio
+  changed_at      DateTime @default(now())
+
+  // Estado nutricional ANTES del cambio
+  prev_level      String   @default("LEVEL_1") @db.VarChar(10)
+  prev_seals      String[] @default([])         // ['sodium','sugars',...]
+
+  // Estado nutricional DESPUES del cambio
+  new_level       String   @default("LEVEL_1") @db.VarChar(10)
+  new_seals       String[] @default([])
+
+  // Snapshot de valores cargados (post-cambio)
+  product_form    String?  @db.VarChar(20)
+  sodium_per_100  Decimal? @db.Decimal(8, 2)
+  added_sugars_pct  Decimal? @db.Decimal(5, 2)
+  saturated_fat_pct Decimal? @db.Decimal(5, 2)
+  trans_fat_pct   Decimal? @db.Decimal(5, 2)
+  has_sweeteners  Boolean  @default(false)
+  notes           String?  @db.Text  // justificacion del cambio
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  editor  User    @relation("NutritionalAuditEditor", fields: [editor_id], references: [id])
+
+  @@index([product_id, changed_at])
+  @@index([editor_id])
 }
 
 model NutritionDailyReport {

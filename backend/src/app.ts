@@ -22,6 +22,7 @@ import complianceRouter from './modules/reports/compliance.router.js';
 import allergyRouter from './modules/allergies/allergy.router.js';
 import arcoRouter from './modules/arco/arco.router.js';
 import chatRouter from './modules/chat/chat.router.js';
+import { nutritionalAuditRouter } from './modules/products/nutritional-audit.router.js';
 import leadsRouter from './modules/leads/leads.router.js';
 
 const app = express();
@@ -54,6 +55,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/schools', schoolRouter);
 app.use('/api/students', studentRouter);
 app.use('/api/products', productRouter);
+app.use('/api', nutritionalAuditRouter); // Historial nutricional Brecha #7
 app.use('/api/stores', storeRouter);
 app.use('/api/stores/:storeId/products', storeProductsSubRouter);
 app.use('/api/store-products', storeProductDirectRouter);

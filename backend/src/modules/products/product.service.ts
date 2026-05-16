@@ -1,5 +1,6 @@
 ﻿import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
+import { createNutritionalAuditEntry } from './nutritional-audit.service.js';
 import { classifyProduct } from '../../lib/nutritional-classifier.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type {
@@ -236,6 +237,29 @@ export async function updateNutritionalData(id: string, input: UpdateNutritional
     has_sweeteners:    input.has_sweeteners    ?? product.has_sweeteners,
   };
   const seals = classifyProduct(merged);
+
+  // Brecha #7 -- Historial de cambios nutricionales
+  const prevSeals: string[] = [];
+  if (product.seal_sodium)        prevSeals.push('sodium');
+  if (product.seal_sugars)        prevSeals.push('sugars');
+  if (product.seal_saturated_fat) prevSeals.push('saturated_fat');
+  if (product.seal_trans_fat)     prevSeals.push('trans_fat');
+  if (product.seal_sweeteners)    prevSeals.push('sweeteners');
+  const newSeals: string[] = [];
+  if (seals.seal_sodium)        newSeals.push('sodium');
+  if (seals.seal_sugars)        newSeals.push('sugars');
+  if (seals.seal_saturated_fat) newSeals.push('saturated_fat');
+  if (seals.seal_trans_fat)     newSeals.push('trans_fat');
+  if (seals.seal_sweeteners)    newSeals.push('sweeteners');
+  await createNutritionalAuditEntry({
+    product_id: id, editor_id: actor.sub,
+    prev_level: product.nutritional_level ?? 'LEVEL_1', prev_seals: prevSeals,
+    new_level: seals.nutritional_level, new_seals: newSeals,
+    product_form: merged.product_form ?? null, sodium_per_100: merged.sodium_per_100 ?? null,
+    added_sugars_pct: merged.added_sugars_pct ?? null, saturated_fat_pct: merged.saturated_fat_pct ?? null,
+    trans_fat_pct: merged.trans_fat_pct ?? null, has_sweeteners: merged.has_sweeteners,
+  });
+
 
   return prisma.product.update({
     where: { id },

@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../api/client';
+import AllergenWarningModal from '../components/AllergenWarningModal';
 import { SealBadgeGroup, NutritionalLevelBadge } from '../components/SealBadge';
 import { SweetenerAlert, ComplianceScoreBadge } from '../components/NutritionCompliance';
 
@@ -82,6 +83,8 @@ export default function NewOrderPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fetching, setFetching] = useState(true);
+  const [showAllergenModal, setShowAllergenModal] = useState(false);
+  const [allergenConfirmed, setAllergenConfirmed] = useState(false);
   const [allergenAlerts, setAllergenAlerts] = useState<{ allergy: { name: string; severity: string }; product: string }[]>([]);
 
   useEffect(() => {
@@ -184,10 +187,21 @@ export default function NewOrderPage() {
     return acc;
   }, {});
 
+  // Brecha #8: interceptar submit para mostrar modal si hay alergias
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedStudent || !storeId || cart.length === 0) return;
-    setSubmitting(true);
+    // Si hay alertas de alergias y aun no se han confirmado, mostrar modal
+    if (allergenAlerts.length > 0 && !allergenConfirmed) {
+      setShowAllergenModal(true);
+      return;
+    }
+    await doSubmitOrder();
+  }
+
+  async function doSubmitOrder() {
+    if (!selectedStudent || !storeId || cart.length === 0) return;
+    setShowAllergenModal(false);
     setError('');
     try {
       const r = await apiClient.post<{ data: { id: string } }>('/orders', {
@@ -211,6 +225,9 @@ export default function NewOrderPage() {
       setSubmitting(false);
     }
   }
+
+  // IDs de productos que el estudiante es alergico (para marcar en carrito)
+  const allergenicProductIds = new Set(allergenAlerts.map(a => a.product));
 
   if (fetching) {
     return (
@@ -430,11 +447,20 @@ export default function NewOrderPage() {
             type="submit"
             className="btn-primary"
             disabled={submitting || !hasEnough || !storeId || cart.length === 0}
-            style={{ marginTop: 20 }}
+            style={{ marginTop: 20, background: allergenAlerts.length > 0 && !allergenConfirmed ? '#f59e0b' : undefined }}
           >
-            {submitting ? 'Creando pedido...' : 'Confirmar pedido'}
+            {submitting ? 'Creando pedido...' : allergenAlerts.length > 0 && !allergenConfirmed ? '⚠️ Confirmar (revisar alergias)' : 'Confirmar pedido'}
           </button>
         </form>
+
+      {/* Brecha #8: Modal de confirmacion de alergias */}
+      <AllergenWarningModal
+        open={showAllergenModal}
+        alerts={allergenAlerts}
+        studentName={selectedStudent?.full_name ?? ''}
+        onConfirm={() => { setAllergenConfirmed(true); setShowAllergenModal(false); void doSubmitOrder(); }}
+        onCancel={() => setShowAllergenModal(false)}
+      />
       </div>
     </div>
   );

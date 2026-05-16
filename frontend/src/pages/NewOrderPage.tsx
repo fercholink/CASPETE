@@ -227,7 +227,6 @@ export default function NewOrderPage() {
   }
 
   // IDs de productos que el estudiante es alergico (para marcar en carrito)
-  const allergenicProductIds = new Set(allergenAlerts.map(a => a.product));
 
   if (fetching) {
     return (

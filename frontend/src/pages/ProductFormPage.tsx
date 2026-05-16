@@ -59,7 +59,7 @@ export default function ProductFormPage() {
   useEffect(() => {
     apiClient.get<{ data: CategoryOption[] }>('/categories').then(r => setCategories(r.data.data)).catch(() => {});
     apiClient.get<{ data: AllergyOption[] }>('/allergies').then(r => setAllAllergies(r.data.data)).catch(() => {});
-    apiClient.get<{ data: {id: string; name: string; nit: string | null; city: string | null; is_verified: boolean}[] }>('/suppliers').then(r => setSuppliers(r.data.data)).catch(() => {});
+    apiClient.get<{ data: { suppliers: {id: string; name: string; nit: string | null; city: string | null; is_verified: boolean}[] } }>('/suppliers?limit=100').then(r => setSuppliers(r.data.data.suppliers ?? [])).catch(() => {});
   }, []);
 
   useEffect(() => {

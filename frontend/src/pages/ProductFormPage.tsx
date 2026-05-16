@@ -336,7 +336,7 @@ export default function ProductFormPage() {
                   <label className="form-label" htmlFor="supplier_id">Proveedor B2B <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(Art. 32 Res. 2492 — trazabilidad)</span></label>
                   <select id="supplier_id" name="supplier_id" className="form-select" value={form.supplier_id} onChange={handleChange}>
                     <option value="">Sin proveedor asignado</option>
-                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.is_verified ? '✅' : '⚪'} {s.name}{s.nit ?  — NIT  : ''}{s.city ?  ·  : ''}</option>)}
+                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.is_verified ? '\u2705' : '\u26aa'} {s.name}{s.nit ? ' — NIT ' + s.nit : ''}{s.city ? ' · ' + s.city : ''}</option>)}
                   </select>
                 </div>
               </div>

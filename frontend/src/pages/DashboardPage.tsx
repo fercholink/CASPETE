@@ -485,6 +485,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* VENDOR: métricas primero, luego accesos rápidos */}
+        {user?.role === 'VENDOR' && <VendorDashboard key={refreshKey} />}
+
         {/* Accesos rápidos */}
         {quickLinks.length > 0 && (
           <>
@@ -504,10 +507,9 @@ export default function DashboardPage() {
           </>
         )}
 
-        {/* Métricas por rol */}
+        {/* Métricas por rol (todos excepto VENDOR que ya se renderizó arriba) */}
         {user?.role === 'SUPER_ADMIN'  && <SuperAdminDashboard key={refreshKey} />}
         {user?.role === 'SCHOOL_ADMIN' && <SchoolAdminDashboard key={refreshKey} />}
-        {user?.role === 'VENDOR'       && <VendorDashboard key={refreshKey} />}
         {user?.role === 'PARENT'       && <ParentDashboard key={refreshKey} />}
       </main>
     </>

@@ -300,6 +300,137 @@ function SchoolAdminDashboard() {
 }
 
 // ─── Vista VENDOR ─────────────────────────────────────────────
+
+interface Novedad {
+  kind: 'chat' | 'order';
+  type: string;
+  icon: string;
+  id: string;
+  student_name: string;
+  student_grade: string | null;
+  message: string;
+  scheduled_date: string | null;
+  total_amount: { toString(): string } | null;
+  updated_at: string;
+  unread_count?: number;
+  order_id?: string | null;
+}
+
+const NOVEDAD_STYLES: Record<string, { bg: string; border: string; badge: string; label: string }> = {
+  chat:    { bg: 'rgba(99,102,241,0.05)', border: 'rgba(99,102,241,0.35)',  badge: '#6366f1', label: 'Mensaje' },
+  pickup:  { bg: 'rgba(59,130,246,0.05)', border: 'rgba(59,130,246,0.35)', badge: '#3b82f6', label: 'Retiro' },
+  donate:  { bg: 'rgba(236,72,153,0.05)', border: 'rgba(236,72,153,0.35)', badge: '#ec4899', label: 'Donación' },
+  gift:    { bg: 'rgba(245,158,11,0.05)', border: 'rgba(245,158,11,0.35)', badge: '#f59e0b', label: 'Regalo' },
+};
+
+function VendorNovedadesPanel() {
+  const [novedades, setNovedades] = useState<Novedad[]>([]);
+  const navigate = useNavigate();
+
+  const fetchNovedades = useCallback(() => {
+    apiClient
+      .get<{ success: boolean; data: { novedades: Novedad[]; total: number } }>('/orders/novedades')
+      .then(r => { if (r.data.success) setNovedades(r.data.data.novedades); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchNovedades();
+    const i = setInterval(fetchNovedades, 10_000);
+    return () => clearInterval(i);
+  }, [fetchNovedades]);
+
+  if (novedades.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      {/* Encabezado */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <p className="dashboard-label" style={{ margin: 0 }}>🔔 Novedades de padres</p>
+          <span style={{ background: '#dc2626', color: '#fff', borderRadius: 999, padding: '2px 9px', fontSize: 11, fontWeight: 700 }}>
+            {novedades.length}
+          </span>
+        </div>
+        <button
+          onClick={() => navigate('/chat')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--color-brand)', fontWeight: 600, padding: 0 }}
+        >
+          Ver chats →
+        </button>
+      </div>
+
+      {/* Lista */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {novedades.slice(0, 8).map(nov => {
+          const style = NOVEDAD_STYLES[nov.type] ?? NOVEDAD_STYLES['chat'];
+          const dateStr = nov.scheduled_date
+            ? new Date(nov.scheduled_date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+            : null;
+
+          const handleClick = () => {
+            if (nov.kind === 'chat') navigate(`/chat/${nov.id}`);
+            else navigate(`/orders/${nov.id}`);
+          };
+
+          return (
+            <div
+              key={`${nov.kind}-${nov.id}`}
+              onClick={handleClick}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 14px', borderRadius: 14, cursor: 'pointer',
+                background: style.bg,
+                border: `2px solid ${style.border}`,
+                transition: 'transform 0.15s, box-shadow 0.15s',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 14px rgba(0,0,0,0.08)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.transform = 'none';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '';
+              }}
+            >
+              {/* Icono */}
+              <div style={{
+                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                background: `${style.badge}18`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
+              }}>
+                {nov.icon}
+              </div>
+
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {nov.student_name}
+                    {nov.student_grade && <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}> · {nov.student_grade}</span>}
+                  </p>
+                  {dateStr && <span style={{ fontSize: 10, color: 'var(--color-text-muted)', flexShrink: 0 }}>· {dateStr}</span>}
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {nov.message}
+                </p>
+              </div>
+
+              {/* Badge tipo */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                <span style={{ background: style.badge, color: '#fff', borderRadius: 999, padding: '2px 9px', fontSize: 10, fontWeight: 700 }}>
+                  {style.label}{nov.unread_count ? ` (${nov.unread_count})` : ''}
+                </span>
+                <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>→</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function VendorDashboard() {
   const [data, setData] = useState<VendorSummary | null>(null);
   const navigate = useNavigate();
@@ -327,6 +458,9 @@ function VendorDashboard() {
           📋 Ver {data.pending_orders} pedido{data.pending_orders !== 1 ? 's' : ''} pendiente{data.pending_orders !== 1 ? 's' : ''}
         </button>
       )}
+
+      {/* ── Novedades de padres ─────────────────────────────────── */}
+      <VendorNovedadesPanel />
 
       {data.top_products_today.length > 0 && (
         <div className="user-card" style={{ marginBottom: 20 }}>

@@ -16,6 +16,9 @@ router.post('/', requireRole('PARENT'), orderController.create);
 // GET    /api/orders/stats
 router.get('/stats', allRoles, orderController.getStats);
 
+// GET    /api/orders/novedades              — novedades del padre para el tendero (VENDOR)
+router.get('/novedades', requireRole('VENDOR'), orderController.getNovedades);
+
 // GET    /api/orders?status=                 — listar pedidos (por rol)
 router.get('/', allRoles, orderController.list);
 

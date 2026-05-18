@@ -111,3 +111,8 @@ export async function cancelPartial(req: Request, res: Response) {
   const order = await orderService.cancelOrderPartial(id, req.user!);
   sendSuccess(res, order, 'Pedido cancelado. Se reembolsó el 50% del valor a la lonchera.');
 }
+
+export async function getNovedades(req: Request, res: Response) {
+  const data = await orderService.getNovedades(req.user!);
+  sendSuccess(res, data);
+}

@@ -544,6 +544,115 @@ export async function cancelOrderPartial(id: string, actor: JwtPayload) {
   });
 }
 
+// ── Panel de novedades para el tendero ────────────────────────────────────────
+// Devuelve: pedidos confirmados con notas especiales de padres (pickup, donate, gift)
+// y hilos de chat con mensajes no leídos del padre.
+export async function getNovedades(actor: JwtPayload) {
+  const schoolId = actor.schoolId ?? (await prisma.user.findUnique({
+    where: { id: actor.sub }, select: { school_id: true },
+  }))?.school_id;
+  if (!schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
+
+  // ── 1. Pedidos confirmados con notas especiales de padres ──────────────────
+  const NOTE_KEYWORDS = ['🛍️ RETIRO SOLICITADO', '❤️ DONADO', '🎁 Regalado'];
+
+  const flaggedOrders = await prisma.lunchOrder.findMany({
+    where: {
+      school_id: schoolId,
+      status: 'CONFIRMED',
+      notes: { not: null },
+    },
+    orderBy: { updated_at: 'desc' },
+    select: {
+      id: true,
+      notes: true,
+      scheduled_date: true,
+      total_amount: true,
+      updated_at: true,
+      student: { select: { id: true, full_name: true, grade: true } },
+    },
+  });
+
+  // Filtrar solo los que tienen notas de acción de padres
+  const orderNovedades = flaggedOrders
+    .filter(o => NOTE_KEYWORDS.some(kw => o.notes?.includes(kw)))
+    .map(o => {
+      const notes = o.notes ?? '';
+      let type = 'note';
+      let icon = '📝';
+      let message = notes.split('\n').filter(l => NOTE_KEYWORDS.some(kw => l.includes(kw))).at(-1) ?? notes;
+
+      if (notes.includes('🛍️ RETIRO SOLICITADO')) { type = 'pickup'; icon = '🛍️'; message = 'El padre retirará el pedido a la salida del colegio.'; }
+      else if (notes.includes('❤️ DONADO')) { type = 'donate'; icon = '❤️'; message = 'El padre donó el pedido. Puedes entregarlo a quien lo necesite.'; }
+      else if (notes.includes('🎁 Regalado')) { type = 'gift'; icon = '🎁'; message = notes.split('\n').find(l => l.includes('🎁')) ?? 'Pedido regalado a otro estudiante.'; }
+
+      return {
+        kind: 'order' as const,
+        type,
+        icon,
+        id: o.id,
+        student_name: o.student.full_name,
+        student_grade: o.student.grade,
+        message,
+        scheduled_date: o.scheduled_date,
+        total_amount: o.total_amount,
+        updated_at: o.updated_at,
+      };
+    });
+
+  // ── 2. Hilos de chat con mensajes no leídos del padre ─────────────────────
+  const threads = await prisma.chatThread.findMany({
+    where: { school_id: schoolId, vendor_id: actor.sub, status: 'OPEN' },
+    orderBy: { updated_at: 'desc' },
+    select: {
+      id: true,
+      subject: true,
+      updated_at: true,
+      parent: { select: { id: true, full_name: true } },
+      order: { select: { id: true, scheduled_date: true } },
+      messages: {
+        orderBy: { created_at: 'desc' },
+        take: 1,
+        select: { content: true, sender_id: true, created_at: true },
+      },
+    },
+  });
+
+  const threadIds = threads.map(t => t.id);
+  const unreadRows = threadIds.length
+    ? await prisma.chatMessage.groupBy({
+        by: ['thread_id'],
+        where: { thread_id: { in: threadIds }, sender_id: { not: actor.sub }, read_at: null },
+        _count: { id: true },
+      })
+    : [];
+  const unreadMap = new Map(unreadRows.map(r => [r.thread_id, r._count.id]));
+
+  const chatNovedades = threads
+    .filter(t => (unreadMap.get(t.id) ?? 0) > 0)
+    .map(t => ({
+      kind: 'chat' as const,
+      type: 'chat',
+      icon: '💬',
+      id: t.id,
+      student_name: t.parent.full_name,
+      student_grade: null as string | null,
+      message: t.messages[0]?.content ?? t.subject,
+      scheduled_date: t.order?.scheduled_date ?? null,
+      total_amount: null,
+      updated_at: t.updated_at,
+      unread_count: unreadMap.get(t.id) ?? 0,
+      order_id: t.order?.id ?? null,
+    }));
+
+  // ── 3. Combinar y ordenar por updated_at desc ──────────────────────────────
+  const all = [...chatNovedades, ...orderNovedades].sort(
+    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+  );
+
+  return { novedades: all, total: all.length };
+}
+
 export async function deliverOrder(id: string, otpCode: string, actor: JwtPayload) {
   let order = await prisma.lunchOrder.findUnique({
     where: { id },

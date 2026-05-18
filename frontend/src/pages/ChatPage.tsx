@@ -3,6 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { apiClient } from '../api/client';
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isMobile;
+}
+
 const POLL_INTERVAL_MS = 5000;
 
 interface Sender {
@@ -39,6 +49,7 @@ export default function ChatPage() {
   const user = ctx?.user ?? null;
   const navigate = useNavigate();
   const { threadId } = useParams<{ threadId?: string }>();
+  const isMobile = useIsMobile();
 
 
   // ── Estado ────────────────────────────────────────────────────────────────
@@ -150,8 +161,11 @@ export default function ChatPage() {
 
       {/* ── Sidebar: lista de hilos ────────────────────────────────── */}
       <div style={{
-        width: 320, minWidth: 220, borderRight: '1px solid var(--color-border)',
-        display: 'flex', flexDirection: 'column', background: 'var(--color-surface)',
+        width: isMobile ? '100%' : 320,
+        minWidth: isMobile ? 0 : 220,
+        borderRight: isMobile ? 'none' : '1px solid var(--color-border)',
+        display: isMobile && activeThread ? 'none' : 'flex',
+        flexDirection: 'column', background: 'var(--color-surface)',
       }}>
         {/* Header sidebar */}
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -234,7 +248,14 @@ export default function ChatPage() {
             padding: '14px 20px', borderBottom: '1px solid var(--color-border)',
             background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
           }}>
-            <div style={{ flex: 1 }}>
+            {isMobile && (
+              <button
+                onClick={() => { setActiveThread(null); navigate('/chat', { replace: true }); }}
+                className="btn-ghost"
+                style={{ padding: '6px 10px', fontSize: 13, flexShrink: 0 }}
+              >←</button>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 15 }}>{otherParty?.full_name}</div>
               <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
                 {activeThread.subject}

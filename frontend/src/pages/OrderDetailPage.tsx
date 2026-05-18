@@ -77,12 +77,15 @@ export default function OrderDetailPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [photoZoom, setPhotoZoom] = useState(false);
 
-  // ── Chat: Reportar novedad ───────────────────────────────────────────
+  // ── Chat: Reportar novedad (VENDOR) ─────────────────────────────────
   const [chatOpen, setChatOpen] = useState(false);
   const [chatSubject, setChatSubject] = useState('');
   const [chatMessage, setChatMessage] = useState('');
   const [chatSending, setChatSending] = useState(false);
   const [chatError, setChatError] = useState('');
+
+  // ── Chat: Hilo existente del pedido (PARENT) ─────────────────────────
+  const [orderThread, setOrderThread] = useState<{ id: string; subject: string; unread_count: number } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -92,6 +95,20 @@ export default function OrderDetailPage() {
       .catch((e) => setError((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Buscar hilo de chat vinculado a este pedido (solo para PARENT)
+  useEffect(() => {
+    if (!id || user?.role !== 'PARENT') return;
+    apiClient
+      .get<{ success: boolean; data: Array<{ id: string; subject: string; unread_count: number; order_id: string | null }> }>('/chat/threads')
+      .then((res) => {
+        if (res.data.success) {
+          const thread = res.data.data.find((t) => t.order_id === id);
+          setOrderThread(thread ?? null);
+        }
+      })
+      .catch(() => {});
+  }, [id, user?.role]);
 
   async function submitChatReport(e: React.FormEvent) {
     e.preventDefault();
@@ -243,6 +260,35 @@ export default function OrderDetailPage() {
             </p>
           )}
         </div>
+
+        {/* Banner chat del tendero — visible solo al padre */}
+        {isParent && orderThread && (
+          <div
+            onClick={() => navigate(`/chat/${orderThread.id}`)}
+            style={{
+              marginBottom: 12, padding: '14px 16px', borderRadius: 14,
+              background: orderThread.unread_count > 0 ? 'rgba(24,226,153,0.08)' : 'var(--color-surface)',
+              border: `2px solid ${orderThread.unread_count > 0 ? 'var(--color-brand)' : 'var(--color-border)'}`,
+              display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
+            }}
+          >
+            <span style={{ fontSize: 26, flexShrink: 0 }}>💬</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: orderThread.unread_count > 0 ? 'var(--color-text)' : 'var(--color-text-muted)' }}>
+                {orderThread.unread_count > 0 ? '¡El tendero te ha escrito!' : 'Mensaje del tendero'}
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {orderThread.subject}
+              </p>
+            </div>
+            {orderThread.unread_count > 0 && (
+              <span style={{ background: 'var(--color-brand)', color: '#fff', borderRadius: 999, padding: '3px 11px', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+                {orderThread.unread_count} nuevo{orderThread.unread_count > 1 ? 's' : ''}
+              </span>
+            )}
+            <span style={{ fontSize: 16, color: 'var(--color-text-muted)', flexShrink: 0 }}>→</span>
+          </div>
+        )}
 
         {/* Items */}
         <div className="user-card" style={{ marginBottom: 12 }}>

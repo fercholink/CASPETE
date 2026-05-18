@@ -176,10 +176,20 @@ export async function listThreads(actor: JwtPayload) {
     },
   });
 
-  // Añadir contador de mensajes no leídos para el actor
+  const threadIds = threads.map((t) => t.id);
+  const unreadRows = threadIds.length
+    ? await prisma.chatMessage.groupBy({
+        by: ['thread_id'],
+        where: { thread_id: { in: threadIds }, sender_id: { not: actor.sub }, read_at: null },
+        _count: { id: true },
+      })
+    : [];
+  const unreadMap = new Map(unreadRows.map((r) => [r.thread_id, r._count.id]));
+
   return threads.map((t) => ({
     ...t,
     last_message: t.messages[0] ?? null,
+    unread_count: unreadMap.get(t.id) ?? 0,
     messages: undefined,
   }));
 }

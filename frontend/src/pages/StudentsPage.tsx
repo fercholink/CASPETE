@@ -56,6 +56,7 @@ export default function StudentsPage() {
   const [rechargeBank, setRechargeBank] = useState<PaymentMethodInfo | null>(null);
   const [rechargeAmount, setRechargeAmount] = useState('');
   const [rechargeScreenshot, setRechargeScreenshot] = useState('');
+  const [rechargeRef, setRechargeRef] = useState('');
   const [rechargeLoading, setRechargeLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodInfo[]>([]);
 
@@ -175,15 +176,20 @@ export default function StudentsPage() {
   }
 
   async function handleSubmitTopupRequest() {
-    if (!rechargeStudentId || !rechargeAmount || !rechargeScreenshot) return;
+    if (!rechargeStudentId || !rechargeAmount) return;
+    if (!rechargeScreenshot && !rechargeRef.trim()) {
+      alert('Debes subir el comprobante o ingresar el número de referencia');
+      return;
+    }
     setRechargeLoading(true);
     try {
       await apiClient.post('/topup-requests', {
         studentId: rechargeStudentId,
         amount: Number(rechargeAmount),
         receiptUrl: rechargeScreenshot,
+        paymentReference: rechargeRef.trim() || undefined,
       });
-      alert('¡Comprobante enviado! El colegio validará el pago pronto.');
+      alert('¡Solicitud enviada! El colegio validará el pago pronto.');
       setRechargeStudentId(null);
     } catch (err) {
       alert((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al enviar comprobante');
@@ -339,6 +345,7 @@ export default function StudentsPage() {
                           setRechargeBank(null);
                           setRechargeAmount('');
                           setRechargeScreenshot('');
+                          setRechargeRef('');
                         }}
                       >
                         + Recargar
@@ -550,10 +557,29 @@ export default function StudentsPage() {
                     />
                   </div>
 
+                  {/* Referencia de pago */}
+                  <div className="form-group" style={{ marginBottom: 16 }}>
+                    <label className="form-label" htmlFor="recharge-ref">
+                      Número de referencia / aprobación
+                    </label>
+                    <input
+                      id="recharge-ref"
+                      className="form-input"
+                      type="text"
+                      value={rechargeRef}
+                      onChange={(e) => setRechargeRef(e.target.value)}
+                      placeholder="Ej: 1234567890"
+                      style={{ marginBottom: 0 }}
+                    />
+                    <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>
+                      Número que aparece en el mensaje de confirmación de tu banco.
+                    </p>
+                  </div>
+
                   {/* Comprobante */}
                   <div style={{ background: 'rgba(24,226,153,0.06)', border: '1.5px solid rgba(24,226,153,0.25)', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
                     <p style={{ margin: '0 0 10px', fontSize: 13, lineHeight: 1.6, color: 'var(--color-text)' }}>
-                      📩 Después de hacer la transferencia, <strong>carga aquí el comprobante (pantallazo)</strong>.
+                      📩 Opcional: también puedes <strong>cargar el comprobante (pantallazo)</strong>.
                     </p>
                     <input
                       type="file"
@@ -563,10 +589,10 @@ export default function StudentsPage() {
                       style={{ padding: '8px', fontSize: 13, cursor: 'pointer', marginBottom: 10 }}
                     />
                     {rechargeScreenshot && (
-                      <img 
-                        src={rechargeScreenshot} 
-                        alt="Comprobante" 
-                        style={{ width: '100%', maxHeight: 150, objectFit: 'contain', borderRadius: 8, border: '1px solid var(--color-border)' }} 
+                      <img
+                        src={rechargeScreenshot}
+                        alt="Comprobante"
+                        style={{ width: '100%', maxHeight: 150, objectFit: 'contain', borderRadius: 8, border: '1px solid var(--color-border)' }}
                       />
                     )}
                   </div>
@@ -574,11 +600,11 @@ export default function StudentsPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <button
                       onClick={handleSubmitTopupRequest}
-                      disabled={!rechargeAmount || !rechargeScreenshot || rechargeLoading}
+                      disabled={!rechargeAmount || (!rechargeScreenshot && !rechargeRef.trim()) || rechargeLoading}
                       className="btn-primary"
                       style={{ textDecoration: 'none', textAlign: 'center' }}
                     >
-                      {rechargeLoading ? 'Enviando...' : '📤 Enviar comprobante para validación'}
+                      {rechargeLoading ? 'Enviando...' : '📤 Enviar solicitud de recarga'}
                     </button>
                     <button className="btn-ghost" style={{ width: '100%' }} onClick={() => setRechargeStep(1)}>
                       ← Cambiar banco

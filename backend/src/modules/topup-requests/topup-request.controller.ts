@@ -7,8 +7,12 @@ import type { JwtPayload } from '../../middleware/auth.middleware.js';
 const createSchema = z.object({
   studentId: z.string().uuid(),
   amount: z.number().positive().max(10_000_000),
-  receiptUrl: z.string().min(1),
-});
+  receiptUrl: z.string().default(''),
+  paymentReference: z.string().max(100).optional(),
+}).refine(
+  (d) => d.receiptUrl.length > 0 || (d.paymentReference && d.paymentReference.length > 0),
+  { message: 'Debes subir el comprobante o ingresar el número de referencia' },
+);
 
 const nequiSchema = z.object({
   studentId: z.string().uuid(),

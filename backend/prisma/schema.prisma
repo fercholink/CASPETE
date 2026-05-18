@@ -359,7 +359,8 @@ model TopupRequest {
   amount                Decimal            @db.Decimal(10, 2)
   receipt_url           String             @db.Text
   status                TopupRequestStatus @default(PENDING)
-  payment_method        String?            @db.VarChar(20) // TRANSFERENCIA, NEQUI
+  payment_method        String?            @db.VarChar(20) // TRANSFERENCIA, NEQUI, EPAYCO
+  payment_reference     String?            @db.VarChar(100) // número de referencia/aprobación del banco
   nequi_transaction_id  String?            @db.VarChar(100)
   created_at            DateTime           @default(now())
   updated_at            DateTime           @updatedAt

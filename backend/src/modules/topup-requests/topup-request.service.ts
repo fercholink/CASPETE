@@ -15,11 +15,12 @@ export interface CreateTopupRequestInput {
   studentId: string;
   amount: number;
   receiptUrl: string;
+  paymentReference?: string | undefined;
 }
 
 const topupSelect = {
   id: true, school_id: true, student_id: true, parent_id: true,
-  amount: true, receipt_url: true, status: true, payment_method: true,
+  amount: true, receipt_url: true, payment_reference: true, status: true, payment_method: true,
   nequi_transaction_id: true, created_at: true, updated_at: true,
   student: { select: { full_name: true, grade: true } },
   parent: { select: { full_name: true, email: true } },
@@ -43,6 +44,7 @@ export async function createTopupRequest(input: CreateTopupRequestInput, actor: 
       parent_id: actor.sub,
       amount: input.amount,
       receipt_url: input.receiptUrl,
+      payment_reference: input.paymentReference ?? null,
       payment_method: 'TRANSFERENCIA',
     },
     select: topupSelect,

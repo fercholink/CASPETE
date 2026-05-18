@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { apiClient } from '../api/client';
 
-const API = import.meta.env.VITE_API_URL ?? '';
 const POLL_INTERVAL_MS = 5000;
 
 interface Sender {
@@ -40,8 +40,6 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const { threadId } = useParams<{ threadId?: string }>();
 
-  const token = localStorage.getItem('caspete_token');
-  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   // ── Estado ────────────────────────────────────────────────────────────────
   const [threads, setThreads] = useState<(ChatThread & { last_message?: { content: string; created_at: string } | null })[]>([]);
@@ -58,26 +56,21 @@ export default function ChatPage() {
   const fetchThreads = useCallback(async () => {
     setLoadingList(true);
     try {
-      const res = await fetch(`${API}/api/chat/threads`, { headers: { Authorization: `Bearer ${token}` } });
-      const json = await res.json() as { success: boolean; data: typeof threads };
-      if (json.success) setThreads(json.data);
+      const res = await apiClient.get<{ success: boolean; data: typeof threads }>('/chat/threads');
+      if (res.data.success) setThreads(res.data.data);
     } finally { setLoadingList(false); }
-  }, [token]);
+  }, []);
 
   // ── Fetch hilo activo (polling) ───────────────────────────────────────────
   const fetchThread = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`${API}/api/chat/threads/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-      const json = await res.json() as { success: boolean; data: ChatThread };
-      if (json.success) {
-        setActiveThread(json.data);
-        // Marcar como leídos
-        fetch(`${API}/api/chat/threads/${id}/read`, {
-          method: 'PATCH', headers: { Authorization: `Bearer ${token}` },
-        }).catch(() => {});
+      const res = await apiClient.get<{ success: boolean; data: ChatThread }>(`/chat/threads/${id}`);
+      if (res.data.success) {
+        setActiveThread(res.data.data);
+        apiClient.patch(`/chat/threads/${id}/read`).catch(() => {});
       }
     } catch { /* silencioso en polling */ }
-  }, [token]);
+  }, []);
 
   // ── Inicialización ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -125,12 +118,11 @@ export default function ChatPage() {
     if (!activeThread || !msgText.trim()) return;
     setSending(true); setError('');
     try {
-      const res = await fetch(`${API}/api/chat/threads/${activeThread.id}/messages`, {
-        method: 'POST', headers,
-        body: JSON.stringify({ content: msgText.trim() }),
-      });
-      const json = await res.json() as { success: boolean; message?: string };
-      if (!json.success) throw new Error(json.message ?? 'Error al enviar');
+      const res = await apiClient.post<{ success: boolean; message?: string }>(
+        `/chat/threads/${activeThread.id}/messages`,
+        { content: msgText.trim() },
+      );
+      if (!res.data.success) throw new Error(res.data.message ?? 'Error al enviar');
       setMsgText('');
       await fetchThread(activeThread.id);
       await fetchThreads();
@@ -142,10 +134,7 @@ export default function ChatPage() {
   // ── Cerrar hilo ───────────────────────────────────────────────────────────
   async function closeThread(status: 'CLOSED' | 'RESOLVED') {
     if (!activeThread) return;
-    await fetch(`${API}/api/chat/threads/${activeThread.id}/close`, {
-      method: 'PATCH', headers,
-      body: JSON.stringify({ status }),
-    });
+    await apiClient.patch(`/chat/threads/${activeThread.id}/close`, { status });
     await fetchThread(activeThread.id);
     await fetchThreads();
   }
@@ -185,7 +174,7 @@ export default function ChatPage() {
           )}
           {threads.map((t) => {
             const isActive = activeThread?.id === t.id;
-            const unread = (t as { _count?: { messages: number } })._count?.messages ?? 0;
+            const unread = (t as { unread_count?: number }).unread_count ?? 0;
             const other = user?.id === t.vendor.id ? t.parent : t.vendor;
             return (
               <button key={t.id} onClick={() => openThread(t)}

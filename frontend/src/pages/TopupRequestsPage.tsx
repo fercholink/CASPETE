@@ -7,6 +7,7 @@ interface TopupRequest {
   id: string;
   amount: string;
   receipt_url: string;
+  payment_reference: string | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   payment_method: string | null;
   nequi_transaction_id: string | null;
@@ -206,6 +207,11 @@ export default function TopupRequestsPage() {
                       </p>
                     )}
                     {req.school && <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>{req.school.name}</p>}
+                    {req.payment_reference && (
+                      <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
+                        Ref: <strong>{req.payment_reference}</strong>
+                      </p>
+                    )}
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>

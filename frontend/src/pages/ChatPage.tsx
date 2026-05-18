@@ -124,8 +124,7 @@ export default function ChatPage() {
   }
 
   // ── Enviar mensaje ────────────────────────────────────────────────────────
-  async function sendMessage(e: React.FormEvent) {
-    e.preventDefault();
+  async function doSendMessage() {
     if (!activeThread || !msgText.trim()) return;
     setSending(true); setError('');
     try {
@@ -333,7 +332,7 @@ export default function ChatPage() {
               🔒 Conversación cerrada
             </div>
           ) : (
-            <form onSubmit={sendMessage} style={{
+            <form onSubmit={(e) => { e.preventDefault(); void doSendMessage(); }} style={{
               padding: '12px 20px', borderTop: '1px solid var(--color-border)',
               background: 'var(--color-surface)', display: 'flex', gap: 10, alignItems: 'flex-end',
             }}>
@@ -342,7 +341,7 @@ export default function ChatPage() {
                 <textarea
                   value={msgText}
                   onChange={(e) => setMsgText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void sendMessage(e as unknown as React.FormEvent); } }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void doSendMessage(); } }}
                   placeholder="Escribe un mensaje... (Enter para enviar, Shift+Enter para nueva línea)"
                   rows={2}
                   maxLength={1000}
@@ -357,7 +356,7 @@ export default function ChatPage() {
                 <div style={{ fontSize: 10, color: 'var(--color-text-muted)', textAlign: 'right', marginTop: 2 }}>{msgText.length}/1000</div>
               </div>
               <button type="submit" disabled={sending || !msgText.trim()} className="btn-primary"
-                style={{ padding: '10px 20px', fontSize: 14, borderRadius: 12, flexShrink: 0 }}>
+                style={{ padding: '10px 20px', fontSize: 14, borderRadius: 12, flexShrink: 0, width: 'auto', marginTop: 0 }}>
                 {sending ? '...' : '➤ Enviar'}
               </button>
             </form>

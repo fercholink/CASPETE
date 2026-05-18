@@ -122,9 +122,9 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/ley2120',        label: 'Ley 2120',      icon: '⬛' },
   ],
   VENDOR: [
-    { to: '/products', label: 'Mis productos',   icon: '🍱' },
-    { to: '/stores',   label: 'Tiendas',         icon: '🏪' },
+    { to: '/stores',   label: 'Mi Tienda',       icon: '🏪' },
     { to: '/orders',   label: 'Pedidos del día', icon: '📋' },
+    { to: '/products', label: 'Catálogo global', icon: '🍱' },
   ],
   PARENT: [
     { to: '/students',    label: 'Mis hijos',     icon: '🎒' },

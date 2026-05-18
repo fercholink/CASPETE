@@ -15,7 +15,7 @@ export async function create(req: Request, res: Response) {
 
 export async function list(req: Request, res: Response) {
   const page  = Math.max(1, Number(req.query['page'])  || 1);
-  const limit = Math.min(100, Math.max(1, Number(req.query['limit']) || 50));
+  const limit = Math.min(500, Math.max(1, Number(req.query['limit']) || 50));
   const opts: Record<string, string | number> = { page, limit };
   ['search', 'category', 'active', 'is_healthy', 'level', 'seal_free'].forEach(k => {
     if (typeof req.query[k] === 'string') opts[k] = req.query[k] as string;

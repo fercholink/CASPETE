@@ -91,6 +91,7 @@ export default function StoreProductsPage() {
 
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [catalogError, setCatalogError] = useState('');
 
   // ─── Fetch store info ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -115,14 +116,15 @@ export default function StoreProductsPage() {
   // ─── Fetch catalog ─────────────────────────────────────────────────────────
   const fetchCatalog = useCallback(() => {
     setLoadingCatalog(true);
+    setCatalogError('');
     const assignedIds = new Set(storeProducts.map(sp => sp.product_id));
-    apiClient.get<{ data: { products: CatalogProduct[]; total: number; categories: unknown[] } }>('/products?active=true&limit=200')
+    apiClient.get<{ data: { products: CatalogProduct[]; total: number; categories: unknown[] } }>('/products?active=true&limit=500')
       .then(r => {
         const all = r.data.data.products ?? [];
         // Excluir los que ya están asignados
         setCatalog(all.filter(p => !assignedIds.has(p.id)));
       })
-      .catch(() => setError('Error al cargar el catálogo'))
+      .catch((e: any) => setCatalogError(e?.response?.data?.error ?? 'Error al cargar el catálogo. Intenta de nuevo.'))
       .finally(() => setLoadingCatalog(false));
   }, [storeProducts]);
 
@@ -405,7 +407,7 @@ export default function StoreProductsPage() {
       {showAddModal && (
         <div
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
-          onClick={() => !adding && setShowAddModal(false)}
+          onClick={() => { if (!adding) { setShowAddModal(false); setCatalogError(''); } }}
         >
           <div
             className="user-card"
@@ -415,7 +417,7 @@ export default function StoreProductsPage() {
             {/* Modal header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>📦 Agregar productos al menú</h2>
-              <button className="btn-ghost" style={{ padding: '4px 10px', fontSize: 16 }} onClick={() => setShowAddModal(false)}>×</button>
+              <button className="btn-ghost" style={{ padding: '4px 10px', fontSize: 16 }} onClick={() => { setShowAddModal(false); setCatalogError(''); }}>×</button>
             </div>
 
             {/* Búsqueda */}
@@ -431,9 +433,15 @@ export default function StoreProductsPage() {
             {/* Lista catálogo */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 0, maxHeight: '50vh' }}>
               {loadingCatalog && <p style={{ fontSize: 14, color: 'var(--color-text-muted)', textAlign: 'center', padding: 24 }}>Cargando catálogo...</p>}
-              {!loadingCatalog && filteredCatalog.length === 0 && (
+              {!loadingCatalog && catalogError && (
+                <p className="form-error" style={{ textAlign: 'center', padding: 16 }}>
+                  ⚠️ {catalogError}
+                  <button onClick={fetchCatalog} style={{ display: 'block', margin: '8px auto 0', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--color-brand-deep)', textDecoration: 'underline' }}>Reintentar</button>
+                </p>
+              )}
+              {!loadingCatalog && !catalogError && filteredCatalog.length === 0 && (
                 <p style={{ fontSize: 14, color: 'var(--color-text-muted)', textAlign: 'center', padding: 24 }}>
-                  {catalog.length === 0 ? 'No hay productos disponibles en el catálogo global' : 'No se encontraron productos'}
+                  {catalog.length === 0 ? 'No hay productos disponibles en el catálogo global. El administrador debe crear productos primero.' : 'No se encontraron productos con ese criterio'}
                 </p>
               )}
               {filteredCatalog.map(p => {
@@ -479,7 +487,7 @@ export default function StoreProductsPage() {
               <span style={{ fontSize: 13, color: 'var(--color-text-muted)', flex: 1 }}>
                 {selectedToAdd.size > 0 ? `${selectedToAdd.size} seleccionado(s)` : 'Selecciona productos'}
               </span>
-              <button className="btn-ghost" style={{ padding: '8px 16px' }} onClick={() => setShowAddModal(false)} disabled={adding}>
+              <button className="btn-ghost" style={{ padding: '8px 16px' }} onClick={() => { setShowAddModal(false); setCatalogError(''); }} disabled={adding}>
                 Cancelar
               </button>
               <button

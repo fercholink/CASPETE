@@ -315,6 +315,12 @@ export default function NewOrderPage() {
                         {items.map((sp) => {
                           const qty = getQty(sp.id);
                           const price = getEffectivePrice(sp);
+                          const cartItem = cart.find(i => i.storeProduct.id === sp.id);
+                          const extrasForDisplay = (cartItem?.customizations ?? []).reduce((sum, custLabel) => {
+                            const match = (sp.product.customizable_options ?? []).map(parseOption).find(o => o.label === custLabel);
+                            return sum + (match?.price ?? 0);
+                          }, 0);
+                          const displayPrice = price + extrasForDisplay;
                           const hasCustomPrice = sp.price !== null;
                           const isLevel2 = sp.product.nutritional_level === 'LEVEL_2';
                           return (
@@ -328,7 +334,7 @@ export default function NewOrderPage() {
                                   </div>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                     <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
-                                      {fmt(price)}
+                                      {fmt(displayPrice)}
                                       {hasCustomPrice && (
                                         <span style={{ textDecoration: 'line-through', marginLeft: 6, fontSize: 11, opacity: 0.5 }}>{fmt(sp.product.base_price)}</span>
                                       )}
@@ -374,11 +380,6 @@ export default function NewOrderPage() {
                                             style={{ accentColor: 'var(--color-brand)' }}
                                           />
                                           {parsed.label}
-                                          {parsed.price > 0 && (
-                                            <span style={{ fontSize: 11, fontWeight: 600, color: isSelected ? '#059669' : 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
-                                              +{fmt(parsed.price)}
-                                            </span>
-                                          )}
                                         </label>
                                       );
                                     })}

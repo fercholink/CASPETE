@@ -1,8 +1,7 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
-import { AuthContext } from '../context/AuthContext';
 import QRCodeLib from 'react-qr-code';
 import QRScanner from '../components/QRScanner';
 
@@ -79,14 +78,11 @@ export default function OrderDetailPage() {
   const [photoZoom, setPhotoZoom] = useState(false);
 
   // ── Chat: Reportar novedad ───────────────────────────────────────────
-  const chatCtx = useContext(AuthContext);
-  const chatToken = localStorage.getItem('caspete_token');
   const [chatOpen, setChatOpen] = useState(false);
   const [chatSubject, setChatSubject] = useState('');
   const [chatMessage, setChatMessage] = useState('');
   const [chatSending, setChatSending] = useState(false);
   const [chatError, setChatError] = useState('');
-  void chatCtx; // usado solo para verificar contexto
 
   useEffect(() => {
     if (!id) return;
@@ -102,24 +98,19 @@ export default function OrderDetailPage() {
     if (!order) return;
     setChatSending(true); setChatError('');
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ''}/api/chat/threads`,
+      const res = await apiClient.post<{ success: boolean; data?: { id: string }; message?: string }>(
+        '/chat/threads',
         {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${chatToken}` },
-          body: JSON.stringify({
-            order_id: order.id,
-            parent_id: order.student.parent_id,
-            subject: chatSubject || `Novedad pedido ${new Date(order.scheduled_date).toLocaleDateString('es-CO')}`,
-            first_message: chatMessage,
-          }),
+          order_id: order.id,
+          parent_id: order.student.parent_id,
+          subject: chatSubject || `Novedad pedido ${new Date(order.scheduled_date).toLocaleDateString('es-CO')}`,
+          first_message: chatMessage,
         },
       );
-      const json = await res.json() as { success: boolean; data?: { id: string }; message?: string };
-      if (!json.success) throw new Error(json.message ?? 'Error al enviar');
+      if (!res.data.success) throw new Error(res.data.message ?? 'Error al enviar');
       setChatOpen(false);
       setChatSubject(''); setChatMessage('');
-      navigate(`/chat/${json.data!.id}`);
+      navigate(`/chat/${res.data.data!.id}`);
     } catch (err: unknown) {
       setChatError(err instanceof Error ? err.message : 'Error al crear la conversación');
     } finally { setChatSending(false); }

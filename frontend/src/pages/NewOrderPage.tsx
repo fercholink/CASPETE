@@ -45,6 +45,13 @@ interface CartItem {
   customizations: string[];
 }
 
+function parseOption(opt: string): { label: string; price: number } {
+  const idx = opt.lastIndexOf('|');
+  if (idx === -1) return { label: opt, price: 0 };
+  const n = parseFloat(opt.slice(idx + 1));
+  return { label: opt.slice(0, idx).trim(), price: isNaN(n) || n < 0 ? 0 : n };
+}
+
 function getEffectivePrice(sp: StoreProduct): number {
   return parseFloat(sp.price ?? sp.product.base_price);
 }
@@ -162,7 +169,16 @@ export default function NewOrderPage() {
     return cart.find((i) => i.storeProduct.id === spId)?.quantity ?? 0;
   }
 
-  const total = cart.reduce((s, i) => s + getEffectivePrice(i.storeProduct) * i.quantity, 0);
+  const total = cart.reduce((s, i) => {
+    const base = getEffectivePrice(i.storeProduct);
+    const extras = i.customizations.reduce((sum, custLabel) => {
+      const match = (i.storeProduct.product.customizable_options ?? [])
+        .map(parseOption)
+        .find(o => o.label === custLabel);
+      return sum + (match?.price ?? 0);
+    }, 0);
+    return s + (base + extras) * i.quantity;
+  }, 0);
   const balance = selectedStudent ? parseFloat(selectedStudent.balance) : 0;
   const hasEnough = balance >= total && total > 0;
 
@@ -346,17 +362,23 @@ export default function NewOrderPage() {
                                 <div style={{ background: 'var(--color-gray-50)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--color-border)' }}>
                                   <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: 'var(--color-text)' }}>Personalizar:</p>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                                    {sp.product.customizable_options.map((opt) => {
-                                      const isSelected = cart.find(i => i.storeProduct.id === sp.id)?.customizations.includes(opt);
+                                    {sp.product.customizable_options.map((rawOpt) => {
+                                      const parsed = parseOption(rawOpt);
+                                      const isSelected = cart.find(i => i.storeProduct.id === sp.id)?.customizations.includes(parsed.label);
                                       return (
-                                        <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                        <label key={rawOpt} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: isSelected ? 'var(--color-text)' : 'var(--color-text-muted)' }}>
                                           <input
                                             type="checkbox"
                                             checked={isSelected ?? false}
-                                            onChange={() => toggleCustomization(sp.id, opt)}
+                                            onChange={() => toggleCustomization(sp.id, parsed.label)}
                                             style={{ accentColor: 'var(--color-brand)' }}
                                           />
-                                          {opt}
+                                          {parsed.label}
+                                          {parsed.price > 0 && (
+                                            <span style={{ fontSize: 11, fontWeight: 600, color: isSelected ? '#059669' : 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
+                                              +{fmt(parsed.price)}
+                                            </span>
+                                          )}
                                         </label>
                                       );
                                     })}

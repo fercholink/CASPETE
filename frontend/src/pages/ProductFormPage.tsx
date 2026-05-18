@@ -51,6 +51,8 @@ export default function ProductFormPage() {
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [showNutrition, setShowNutrition] = useState(false);
+  // Opciones de personalización con precio
+  const [options, setOptions] = useState<{ label: string; price: string }[]>([]);
   // Brecha #7 — alérgenos
   const [suppliers, setSuppliers] = useState<{id: string; name: string; nit: string | null; city: string | null; is_verified: boolean}[]>([]);
   const [allAllergies, setAllAllergies] = useState<AllergyOption[]>([]);
@@ -74,7 +76,7 @@ export default function ProductFormPage() {
         age_segment: p.age_segment ?? 'ALL_AGES',
         product_type: p.product_type ?? 'FOOD',
         is_healthy: p.is_healthy,
-        customizable_options: p.customizable_options?.join(', ') ?? '',
+        customizable_options: '',
         product_form: p.product_form ?? 'SOLID',
         sodium_per_100: p.sodium_per_100 ? parseFloat(p.sodium_per_100).toString() : '',
         added_sugars_pct: p.added_sugars_pct ? parseFloat(p.added_sugars_pct).toString() : '',
@@ -86,6 +88,13 @@ export default function ProductFormPage() {
         servings_per_package: p.servings_per_package ? parseFloat(p.servings_per_package).toString() : '',
         supplier_tech_sheet_url: p.supplier_tech_sheet_url ?? '',
       });
+      // Parsear opciones con precio "Label|500" → { label, price }
+      setOptions((p.customizable_options ?? []).map(opt => {
+        const idx = opt.lastIndexOf('|');
+        if (idx === -1) return { label: opt, price: '0' };
+        const n = parseFloat(opt.slice(idx + 1));
+        return { label: opt.slice(0, idx).trim(), price: isNaN(n) || n < 0 ? '0' : String(Math.round(n)) };
+      }));
       if (p.nutritional_level === 'LEVEL_2') setShowNutrition(true);
       // Cargar alérgenos actuales del producto
       if (id) {
@@ -120,7 +129,12 @@ export default function ProductFormPage() {
 
     const payload = {
       name: form.name, base_price, is_healthy: form.is_healthy,
-      customizable_options: form.customizable_options.split(',').map(s => s.trim()).filter(Boolean),
+      customizable_options: options
+        .filter(o => o.label.trim())
+        .map(o => {
+          const price = parseFloat(o.price) || 0;
+          return price > 0 ? `${o.label.trim()}|${price}` : o.label.trim();
+        }),
       ...(form.description && { description: form.description }),
       ...(form.image_url && { image_url: form.image_url }),
       ...(form.category_id && { category_id: form.category_id }),
@@ -239,9 +253,48 @@ export default function ProductFormPage() {
             <label className="form-label" htmlFor="description">Descripción <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span></label>
             <input id="description" name="description" className="form-input" type="text" value={form.description} onChange={handleChange} placeholder="Rellena con pollo desmenuzado y queso" />
           </div>
+          {/* ── Opciones de personalización con precio ─── */}
           <div className="form-group">
-            <label className="form-label" htmlFor="customizable_options">Opciones de personalización <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(separadas por comas)</span></label>
-            <input id="customizable_options" name="customizable_options" className="form-input" type="text" value={form.customizable_options} onChange={handleChange} placeholder="Sin cebolla, Doble queso" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <label className="form-label" style={{ margin: 0 }}>Adicionales / Personalizaciones</label>
+              <button type="button" className="btn-ghost" style={{ fontSize: 12, padding: '3px 10px' }}
+                onClick={() => setOptions(o => [...o, { label: '', price: '0' }])}>
+                + Agregar opción
+              </button>
+            </div>
+            {options.length === 0 && (
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: 0 }}>Sin opciones. Los adicionales permiten al padre personalizar el pedido y aumentan el precio.</p>
+            )}
+            {options.map((opt, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                <input
+                  className="form-input"
+                  placeholder="Ej: Doble queso"
+                  value={opt.label}
+                  onChange={e => setOptions(prev => prev.map((o, j) => j === i ? { ...o, label: e.target.value } : o))}
+                  style={{ flex: 2, marginBottom: 0 }}
+                />
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--color-text-muted)', pointerEvents: 'none' }}>$</span>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    step="100"
+                    placeholder="0"
+                    value={opt.price}
+                    onChange={e => setOptions(prev => prev.map((o, j) => j === i ? { ...o, price: e.target.value } : o))}
+                    style={{ paddingLeft: 22, marginBottom: 0, fontFamily: 'var(--font-mono)' }}
+                  />
+                </div>
+                <button type="button" className="btn-ghost"
+                  style={{ padding: '4px 8px', fontSize: 14, color: '#dc2626', flexShrink: 0 }}
+                  onClick={() => setOptions(prev => prev.filter((_, j) => j !== i))}>✕</button>
+              </div>
+            ))}
+            {options.length > 0 && (
+              <p style={{ fontSize: 11, color: 'var(--color-text-muted)', margin: '4px 0 0' }}>Precio $0 = incluido sin costo extra. Precio mayor = se suma al total del pedido.</p>
+            )}
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="image_url">URL de imagen <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span></label>

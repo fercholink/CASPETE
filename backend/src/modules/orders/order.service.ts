@@ -93,6 +93,14 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   if (store.school_id !== student.school_id)
     throw new AppError('La tienda no pertenece al colegio del estudiante', 400);
 
+  // Parsear precio de una opción "Label|precio" → { label, price }
+  function parseOptionPrice(opt: string): { label: string; price: number } {
+    const idx = opt.lastIndexOf('|');
+    if (idx === -1) return { label: opt, price: 0 };
+    const n = parseFloat(opt.slice(idx + 1));
+    return { label: opt.slice(0, idx).trim(), price: isNaN(n) || n < 0 ? 0 : n };
+  }
+
   // Cargar los StoreProducts solicitados con datos nutricionales Ley 2120
   const storeProductIds = input.items.map((i) => i.store_product_id);
   const storeProducts = await prisma.storeProduct.findMany({
@@ -102,6 +110,7 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
       product: {
         select: {
           id: true, name: true, base_price: true,
+          customizable_options: true,
           // Ley 2120
           nutritional_level: true, seal_sodium: true, seal_sugars: true,
           seal_saturated_fat: true, seal_trans_fat: true, seal_sweeteners: true,
@@ -119,8 +128,15 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
     if (sp.stock !== null && sp.stock < item.quantity) {
       throw new AppError(`Stock insuficiente para "${sp.product.name}". (Quedan ${sp.stock})`, 400);
     }
-    // Usar precio de la tienda si existe, si no el precio base del catálogo
-    const unitPrice = sp.price ? sp.price.toNumber() : sp.product.base_price.toNumber();
+    // Precio base (tienda o catálogo)
+    const basePrice = sp.price ? sp.price.toNumber() : sp.product.base_price.toNumber();
+    // Precio extra por adicionales seleccionados
+    const optionParsed = (sp.product.customizable_options ?? []).map(parseOptionPrice);
+    const extrasPrice = (item.customizations ?? []).reduce((sum, custLabel) => {
+      const match = optionParsed.find(o => o.label === custLabel);
+      return sum + (match?.price ?? 0);
+    }, 0);
+    const unitPrice = Math.round((basePrice + extrasPrice) * 100) / 100;
     const subtotal = Math.round(unitPrice * item.quantity * 100) / 100;
     totalAmount += subtotal;
     return {

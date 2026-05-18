@@ -196,6 +196,7 @@ export async function updateProduct(id: string, input: UpdateProductInput, actor
   return prisma.product.update({
     where: { id },
     data: {
+      ...supplierData,
       ...(input.name !== undefined && { name: input.name }),
       ...(input.description !== undefined && { description: input.description ?? null }),
       ...(input.base_price !== undefined && { base_price: input.base_price }),

@@ -24,6 +24,13 @@ const storeProductSelect = {
       is_healthy: true,
       customizable_options: true,
       active: true,
+      nutritional_level: true,
+      seal_sodium: true,
+      seal_sugars: true,
+      seal_saturated_fat: true,
+      seal_trans_fat: true,
+      seal_sweeteners: true,
+      has_sweeteners: true,
     },
   },
   store: {

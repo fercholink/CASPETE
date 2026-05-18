@@ -25,6 +25,10 @@ export default function PaymentMethodsPage() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState('');
 
+  // Create modal
+  const [createMode, setCreateMode] = useState(false);
+  const [newKey, setNewKey] = useState('');
+
   useEffect(() => { fetchMethods(); }, []);
 
   async function fetchMethods() {
@@ -45,7 +49,22 @@ export default function PaymentMethodsPage() {
     setSaveError('');
   }
 
-  function closeEdit() { setEditTarget(null); setSaveError(''); }
+  function openCreate() {
+    setCreateMode(true);
+    setNewKey('');
+    setEditLabel('');
+    setEditIcon('🏦');
+    setEditColor('#0ea5e9');
+    setEditFields([{ label: '', value: '' }]);
+    setEditActive(true);
+    setSaveError('');
+  }
+
+  function closeEdit() {
+    setEditTarget(null);
+    setCreateMode(false);
+    setSaveError('');
+  }
 
   function updateField(idx: number, key: 'label' | 'value', val: string) {
     setEditFields(f => f.map((ff, i) => i === idx ? { ...ff, [key]: val } : ff));
@@ -55,14 +74,23 @@ export default function PaymentMethodsPage() {
   function removeField(idx: number) { setEditFields(f => f.filter((_, i) => i !== idx)); }
 
   async function handleSave() {
-    if (!editTarget) return;
     setSaveLoading(true); setSaveError('');
     try {
-      await apiClient.put(`/payment-methods/${editTarget.id}`, {
-        label: editLabel, icon: editIcon, color: editColor,
+      const body = {
+        label: editLabel.trim(),
+        icon: editIcon.trim(),
+        color: editColor,
         fields: editFields.filter(f => f.label && f.value),
         active: editActive,
-      });
+      };
+      if (createMode) {
+        if (!newKey.trim()) { setSaveError('La clave es requerida'); setSaveLoading(false); return; }
+        if (!body.label) { setSaveError('El nombre es requerido'); setSaveLoading(false); return; }
+        await apiClient.post('/payment-methods', { ...body, key: newKey.trim().toUpperCase().replace(/\s+/g, '_') });
+      } else {
+        if (!editTarget) return;
+        await apiClient.put(`/payment-methods/${editTarget.id}`, body);
+      }
       closeEdit();
       fetchMethods();
     } catch (e: any) {
@@ -91,12 +119,17 @@ export default function PaymentMethodsPage() {
       </nav>
 
       <main className="dashboard-body">
-        <div style={{ marginBottom: 24 }}>
-          <p className="dashboard-label">Configuración</p>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.56px' }}>Métodos de Pago</h1>
-          <p style={{ margin: '4px 0 0', fontSize: 14, color: 'var(--color-text-muted)' }}>
-            Estos datos aparecen cuando un padre va a recargar saldo.
-          </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <p className="dashboard-label">Configuración</p>
+            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.56px' }}>Métodos de Pago</h1>
+            <p style={{ margin: '4px 0 0', fontSize: 14, color: 'var(--color-text-muted)' }}>
+              Estos datos aparecen cuando un padre va a recargar saldo.
+            </p>
+          </div>
+          <button className="btn-primary" style={{ flexShrink: 0, fontSize: 13, padding: '8px 18px' }} onClick={openCreate}>
+            + Nuevo método
+          </button>
         </div>
 
         {loading && <div className="roadmap-note">Cargando...</div>}
@@ -141,15 +174,31 @@ export default function PaymentMethodsPage() {
         )}
       </main>
 
-      {/* Edit modal */}
-      {editTarget && (
+      {/* Create / Edit modal */}
+      {(editTarget || createMode) && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}
           onClick={() => !saveLoading && closeEdit()}>
           <div className="user-card" style={{ maxWidth: 520, width: '100%', padding: '32px 28px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Editar {editTarget.label}</h2>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>
+                {createMode ? 'Nuevo método de pago' : `Editar ${editTarget?.label}`}
+              </h2>
               <button className="btn-ghost" style={{ padding: '4px 10px', fontSize: 18, lineHeight: 1 }} onClick={closeEdit}>×</button>
             </div>
+
+            {createMode && (
+              <div className="form-group" style={{ marginBottom: 16 }}>
+                <label className="form-label">Clave única <span style={{ color: '#dc2626' }}>*</span></label>
+                <input
+                  className="form-input"
+                  placeholder="Ej: BANCOLOMBIA"
+                  value={newKey}
+                  onChange={e => setNewKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''))}
+                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
+                />
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>Solo letras mayúsculas y guiones bajos. Ej: BANCOLOMBIA, DAVIPLATA, NEQUI_TRANSFER</p>
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div className="form-group" style={{ marginBottom: 0 }}>

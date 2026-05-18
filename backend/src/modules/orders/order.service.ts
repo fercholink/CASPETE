@@ -388,6 +388,50 @@ export async function cancelOrder(id: string, actor: JwtPayload) {
   });
 }
 
+// ── Donar pedido — el padre autoriza al tendero para darlo a quien lo necesite
+export async function donateOrder(id: string, actor: JwtPayload) {
+  const order = await prisma.lunchOrder.findUnique({ where: { id }, select: orderSelect });
+  if (!order) throw new AppError('Pedido no encontrado', 404);
+  if (actor.role !== 'PARENT' || actor.sub !== order.student.parent_id)
+    throw new AppError('Solo el padre del pedido puede donarlo', 403);
+  if (order.status !== 'CONFIRMED')
+    throw new AppError('Solo puedes donar pedidos confirmados', 400);
+
+  const donationNote = '❤️ DONADO: El padre autorizó al tendero para entregar este pedido a quien lo necesite.';
+  const updatedNotes = order.notes ? `${order.notes}\n${donationNote}` : donationNote;
+
+  const updated = await prisma.lunchOrder.update({
+    where: { id },
+    data: { notes: updatedNotes },
+    select: orderSelect,
+  });
+
+  // Obtener el delivery_code del estudiante para enviarlo al tendero
+  const student = await prisma.student.findUnique({
+    where: { id: order.student.id },
+    select: { delivery_code: true },
+  });
+
+  const deliveryCode = student?.delivery_code ?? '(ver pedido)';
+
+  // Notificar al tendero del colegio con el código
+  const vendor = await prisma.user.findFirst({
+    where: { role: 'VENDOR', school_id: order.school_id },
+    select: { id: true },
+  });
+  if (vendor) {
+    sendPushToUser(vendor.id, {
+      title: '❤️ Pedido donado',
+      body: `El padre de ${order.student.full_name} donó su pedido. Código de entrega: ${deliveryCode}. Puedes entregarlo a quien lo necesite.`,
+      icon: '/favicon.png',
+      tag: `order-donate-${id}`,
+      url: `/orders/${id}`,
+    }).catch(() => {});
+  }
+
+  return updated;
+}
+
 // ── Regalar pedido a otro estudiante del mismo padre ─────────────────────────
 export async function giftOrder(id: string, toStudentId: string, actor: JwtPayload) {
   const order = await prisma.lunchOrder.findUnique({ where: { id }, select: orderSelect });

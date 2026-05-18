@@ -86,6 +86,12 @@ export async function previewDelivery(req: Request, res: Response) {
   sendSuccess(res, result);
 }
 
+export async function donateOrder(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  const order = await orderService.donateOrder(id, req.user!);
+  sendSuccess(res, order, '❤️ Pedido donado. El tendero fue notificado con el código de entrega.');
+}
+
 export async function giftOrder(req: Request, res: Response) {
   const id = req.params['id'] as string;
   const { to_student_id } = req.body as { to_student_id?: string };

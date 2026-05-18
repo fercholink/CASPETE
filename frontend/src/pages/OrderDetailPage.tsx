@@ -94,8 +94,13 @@ export default function OrderDetailPage() {
   const [giftError, setGiftError]         = useState('');
   const [parentStudents, setParentStudents] = useState<Array<{ id: string; full_name: string; grade: string | null }>>([]);
 
-  const [pickupSending, setPickupSending] = useState(false);
-  const [pickupDone, setPickupDone]       = useState(false);
+  const [pickupModalOpen, setPickupModalOpen] = useState(false);
+  const [pickupSending, setPickupSending]     = useState(false);
+  const [pickupDone, setPickupDone]           = useState(false);
+
+  const [donateModalOpen, setDonateModalOpen] = useState(false);
+  const [donateSending, setDonateSending]     = useState(false);
+  const [donateDone, setDonateDone]           = useState(false);
 
   const [chatInitOpen, setChatInitOpen]   = useState(false);
   const [chatInitMsg, setChatInitMsg]     = useState('');
@@ -161,6 +166,18 @@ export default function OrderDetailPage() {
     } catch (err: unknown) {
       alert((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al solicitar retiro');
     } finally { setPickupSending(false); }
+  }
+
+  async function handleDonate() {
+    setDonateSending(true);
+    try {
+      await apiClient.patch(`/orders/${id}/donate`);
+      setDonateDone(true);
+      setDonateModalOpen(false);
+      setOrder((prev) => prev ? { ...prev, notes: (prev.notes ? prev.notes + '\n' : '') + '❤️ DONADO: El padre autorizó al tendero para entregar este pedido a quien lo necesite.' } : prev);
+    } catch (err: unknown) {
+      alert((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al donar el pedido');
+    } finally { setDonateSending(false); }
   }
 
   async function handleChatInit(e: React.FormEvent) {
@@ -403,7 +420,7 @@ export default function OrderDetailPage() {
 
               {/* Opción 3: Retiro */}
               <button
-                onClick={() => { if (!pickupDone && !pickupSending) { if (confirm('¿Confirmas que retirarás el pedido a la salida del colegio? El tendero será notificado.')) handlePickup(); } }}
+                onClick={() => { if (!pickupDone && !pickupSending) setPickupModalOpen(true); }}
                 disabled={pickupDone || pickupSending}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${pickupDone ? 'var(--color-brand)' : 'var(--color-border)'}`, background: pickupDone ? 'rgba(24,226,153,0.08)' : 'var(--color-surface)', cursor: pickupDone ? 'default' : 'pointer', textAlign: 'left', width: '100%', opacity: pickupSending ? 0.6 : 1 }}
               >
@@ -416,6 +433,69 @@ export default function OrderDetailPage() {
                 </div>
                 {!pickupDone && <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>→</span>}
               </button>
+
+              {/* Opción 4: Donar */}
+              <button
+                onClick={() => { if (!donateDone && !donateSending) setDonateModalOpen(true); }}
+                disabled={donateDone || donateSending}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${donateDone ? '#ec4899' : 'var(--color-border)'}`, background: donateDone ? 'rgba(236,72,153,0.06)' : 'var(--color-surface)', cursor: donateDone ? 'default' : 'pointer', textAlign: 'left', width: '100%' }}
+              >
+                <span style={{ fontSize: 22, flexShrink: 0 }}>❤️</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>Donar el pedido</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    {donateDone ? '✅ Autorización enviada al tendero' : 'Autoriza al tendero para darlo a quien lo necesite'}
+                  </p>
+                </div>
+                {!donateDone && <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>→</span>}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal: Donar pedido ───────────────────────────────────── */}
+        {donateModalOpen && (
+          <div onClick={(e) => { if (e.target === e.currentTarget) setDonateModalOpen(false); }}
+            style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 24px' }}>
+            <div style={{ background: 'var(--color-surface)', borderRadius: '20px 20px 12px 12px', padding: '24px 22px', width: '100%', maxWidth: 520, boxShadow: '0 -8px 40px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>❤️ Donar pedido</p>
+                <button onClick={() => setDonateModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--color-text-muted)' }}>✕</button>
+              </div>
+
+              {/* Explicación */}
+              <div style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(236,72,153,0.07)', border: '1.5px solid rgba(236,72,153,0.25)', marginBottom: 18 }}>
+                <p style={{ margin: 0, fontSize: 13, color: '#9d174d', lineHeight: 1.6 }}>
+                  Al confirmar, el sistema enviará al tendero el <strong>código de entrega</strong> de tu pedido para que pueda dárselo a otro niño que lo necesite. Esta acción no genera reembolso.
+                </p>
+              </div>
+
+              {/* Código de 6 dígitos que se enviará al tendero */}
+              {order.otp_code && (
+                <div style={{ textAlign: 'center', marginBottom: 16, padding: '14px', borderRadius: 12, background: 'var(--color-gray-50)', border: '1px solid var(--color-border)' }}>
+                  <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Código que recibirá el tendero</p>
+                  <p style={{ margin: 0, fontSize: 38, fontWeight: 800, letterSpacing: 8, fontFamily: 'var(--font-mono)', color: 'var(--color-text)' }}>
+                    {order.otp_code}
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+                    <div style={{ padding: 10, background: '#fff', borderRadius: 10, border: '1px solid var(--color-border)', display: 'inline-block' }}>
+                      <QRCode value={`CASPETE:ORDER:${order.id}:${order.otp_code}`} size={100} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn-ghost" style={{ flex: 1 }} onClick={() => setDonateModalOpen(false)}>Cancelar</button>
+                <button
+                  className="btn-primary"
+                  style={{ flex: 1, width: 'auto', marginTop: 0, background: '#9d174d' }}
+                  disabled={donateSending}
+                  onClick={() => void handleDonate()}
+                >
+                  {donateSending ? 'Enviando...' : '❤️ Confirmar donación'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -483,6 +563,59 @@ export default function OrderDetailPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal: Retiro a la salida ─────────────────────────────── */}
+        {pickupModalOpen && (
+          <div onClick={(e) => { if (e.target === e.currentTarget) setPickupModalOpen(false); }}
+            style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 24px' }}>
+            <div style={{ background: 'var(--color-surface)', borderRadius: '20px 20px 12px 12px', padding: '24px 22px', width: '100%', maxWidth: 520, boxShadow: '0 -8px 40px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>🛍️ Retiro a la salida</p>
+                <button onClick={() => setPickupModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--color-text-muted)' }}>✕</button>
+              </div>
+
+              {/* Aviso obligatorio del código */}
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 12, background: 'rgba(220,38,38,0.07)', border: '1.5px solid rgba(220,38,38,0.25)', marginBottom: 18 }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>⚠️</span>
+                <p style={{ margin: 0, fontSize: 13, color: '#991b1b', lineHeight: 1.6 }}>
+                  <strong>¡Importante!</strong> Para retirar el pedido debes presentar al tendero el <strong>código QR</strong> o el <strong>código de 6 dígitos</strong> que aparece abajo. Sin este código <strong>no se entregará el pedido</strong>.
+                </p>
+              </div>
+
+              {/* Código de 6 dígitos */}
+              {order.otp_code && (
+                <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                  <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 600 }}>CÓDIGO DE RETIRO</p>
+                  <p style={{ margin: 0, fontSize: 40, fontWeight: 800, letterSpacing: 8, fontFamily: 'var(--font-mono)', color: 'var(--color-text)' }}>
+                    {order.otp_code}
+                  </p>
+                  <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>Muestra este número al tendero o presenta el QR del pedido</p>
+                </div>
+              )}
+
+              {/* QR del pedido */}
+              {order.otp_code && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+                  <div style={{ padding: 12, background: '#fff', borderRadius: 12, border: '1px solid var(--color-border)', display: 'inline-block' }}>
+                    <QRCode value={`CASPETE:ORDER:${order.id}:${order.otp_code}`} size={120} />
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn-ghost" style={{ flex: 1 }} onClick={() => setPickupModalOpen(false)}>Cancelar</button>
+                <button
+                  className="btn-primary"
+                  style={{ flex: 1, width: 'auto', marginTop: 0 }}
+                  disabled={pickupSending}
+                  onClick={() => { setPickupModalOpen(false); void handlePickup(); }}
+                >
+                  {pickupSending ? 'Enviando...' : '✅ Confirmar retiro'}
+                </button>
+              </div>
             </div>
           </div>
         )}

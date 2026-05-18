@@ -16,10 +16,10 @@ router.get('/unread', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// ── POST /api/chat/threads — Crear hilo (solo VENDOR) ───────────────────────
+// ── POST /api/chat/threads — Crear hilo (VENDOR o PARENT) ──────────────────
 router.post(
   '/threads',
-  requireRole(['VENDOR']),
+  requireRole(['VENDOR', 'PARENT']),
   async (req, res, next) => {
     try {
       const body = CreateThreadSchema.parse(req.body);

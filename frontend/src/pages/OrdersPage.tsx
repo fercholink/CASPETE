@@ -82,6 +82,10 @@ export default function OrdersPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
 
+  const fetchStats = useCallback(() => {
+    apiClient.get<{ data: OrderStats }>('/orders/stats').then(r => setStats(r.data.data)).catch(() => {});
+  }, []);
+
   const fetchOrders = useCallback((isBackground = false, pg = page) => {
     if (!isBackground) setLoading(true);
     const params = new URLSearchParams();
@@ -96,15 +100,15 @@ export default function OrdersPage() {
       .finally(() => setLoading(false));
   }, [statusFilter, dateFilter, search, page]);
 
-  useEffect(() => { 
-    fetchOrders(false); 
+  useEffect(() => {
+    fetchOrders(false);
+    fetchStats();
     const interval = setInterval(() => {
       fetchOrders(true);
+      fetchStats();
     }, 5000);
     return () => clearInterval(interval);
-  }, [fetchOrders]);
-
-  useEffect(() => { apiClient.get<{ data: OrderStats }>('/orders/stats').then(r => setStats(r.data.data)).catch(() => {}); }, []);
+  }, [fetchOrders, fetchStats]);
 
   async function handleConfirm(id: string) {
     try {

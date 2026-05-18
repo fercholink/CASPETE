@@ -71,36 +71,69 @@ async function assertThreadAccess(threadId: string, actor: JwtPayload) {
   throw new AppError('No tienes acceso a este hilo', 403);
 }
 
-// ── Crear hilo (solo VENDOR) ─────────────────────────────────────────────────
+// ── Crear hilo (VENDOR o PARENT) ─────────────────────────────────────────────
 
 export async function createThread(input: CreateThreadInput, actor: JwtPayload) {
-  if (actor.role !== 'VENDOR') {
-    throw new AppError('Solo el tendero puede iniciar una conversación', 403);
+  if (actor.role !== 'VENDOR' && actor.role !== 'PARENT') {
+    throw new AppError('Solo tenderos y padres pueden iniciar conversaciones', 403);
   }
 
-  const schoolId = await getActorSchoolId(actor);
-  if (!schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
+  let vendorId: string;
+  let parentId: string;
+  let schoolId: string;
 
-  // Validar que el padre existe y pertenece al mismo colegio
-  const parent = await prisma.user.findUnique({
-    where: { id: input.parent_id },
-    select: { id: true, full_name: true, school_id: true, role: true },
-  });
-  if (!parent || parent.role !== 'PARENT') {
-    throw new AppError('El destinatario no es un padre registrado', 404);
-  }
+  if (actor.role === 'PARENT') {
+    parentId = actor.sub;
+    if (!input.order_id) throw new AppError('Debes indicar el pedido al que hace referencia', 400);
 
-  // Validar orden si se provee
-  if (input.order_id) {
     const order = await prisma.lunchOrder.findUnique({
       where: { id: input.order_id },
-      select: { id: true, school_id: true },
+      select: { school_id: true, student: { select: { parent_id: true } } },
     });
-    if (!order || order.school_id !== schoolId) {
-      throw new AppError('El pedido no existe o no pertenece a tu colegio', 404);
+    if (!order) throw new AppError('Pedido no encontrado', 404);
+    if (order.student.parent_id !== actor.sub) throw new AppError('No tienes acceso a este pedido', 403);
+    schoolId = order.school_id;
+
+    // Buscar el tendero del colegio
+    const vendor = await prisma.user.findFirst({
+      where: { role: 'VENDOR', school_id: schoolId },
+      select: { id: true },
+    });
+    if (!vendor) throw new AppError('No hay un tendero disponible para este colegio', 404);
+    vendorId = vendor.id;
+
+  } else {
+    // VENDOR crea el hilo
+    vendorId = actor.sub;
+    if (!input.parent_id) throw new AppError('Debes indicar el padre destinatario', 400);
+    parentId = input.parent_id;
+
+    const resolvedSchoolId = await getActorSchoolId(actor);
+    if (!resolvedSchoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
+    schoolId = resolvedSchoolId;
+
+    const parent = await prisma.user.findUnique({
+      where: { id: parentId },
+      select: { id: true, role: true },
+    });
+    if (!parent || parent.role !== 'PARENT') {
+      throw new AppError('El destinatario no es un padre registrado', 404);
     }
 
-    // Regla: máximo 1 hilo activo por pedido
+    // Validar orden si se provee
+    if (input.order_id) {
+      const order = await prisma.lunchOrder.findUnique({
+        where: { id: input.order_id },
+        select: { id: true, school_id: true },
+      });
+      if (!order || order.school_id !== schoolId) {
+        throw new AppError('El pedido no existe o no pertenece a tu colegio', 404);
+      }
+    }
+  }
+
+  // Regla: máximo 1 hilo activo por pedido
+  if (input.order_id) {
     const existingThread = await prisma.chatThread.findFirst({
       where: { order_id: input.order_id, status: 'OPEN' },
       select: { id: true },
@@ -113,31 +146,20 @@ export async function createThread(input: CreateThreadInput, actor: JwtPayload) 
   // Crear hilo + primer mensaje en una transacción
   const thread = await prisma.$transaction(async (tx) => {
     const newThread = await tx.chatThread.create({
-      data: {
-        school_id: schoolId,
-        order_id: input.order_id ?? null,
-        vendor_id: actor.sub,
-        parent_id: input.parent_id,
-        subject: input.subject,
-      },
+      data: { school_id: schoolId, order_id: input.order_id ?? null, vendor_id: vendorId, parent_id: parentId, subject: input.subject },
       select: threadSelect,
     });
-
     await tx.chatMessage.create({
-      data: {
-        thread_id: newThread.id,
-        sender_id: actor.sub,
-        content: input.first_message,
-      },
+      data: { thread_id: newThread.id, sender_id: actor.sub, content: input.first_message },
     });
-
     return newThread;
   });
 
-  // Notificar al padre por Web Push
-  const vendorName = thread.vendor.full_name;
-  sendPushToUser(input.parent_id, {
-    title: `💬 Mensaje de ${vendorName}`,
+  // Notificar al destinatario
+  const recipientId = actor.role === 'PARENT' ? vendorId : parentId;
+  const senderName = actor.role === 'PARENT' ? thread.parent.full_name : thread.vendor.full_name;
+  sendPushToUser(recipientId, {
+    title: `💬 Mensaje de ${senderName}`,
     body: input.subject,
     icon: '/favicon.png',
     tag: `chat-thread-${thread.id}`,

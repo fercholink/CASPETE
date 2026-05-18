@@ -264,6 +264,14 @@ export default function NewOrderPage() {
         <h1 className="auth-title">Nuevo pedido</h1>
         <p className="auth-subtitle">Elige el estudiante, la tienda y los productos</p>
 
+        {/* Aviso horario límite */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 12, background: 'rgba(59,130,246,0.07)', border: '1.5px solid rgba(59,130,246,0.2)', marginBottom: 18 }}>
+          <span style={{ fontSize: 18, flexShrink: 0 }}>🕛</span>
+          <p style={{ margin: 0, fontSize: 12, color: '#1e40af', lineHeight: 1.6 }}>
+            <strong>Horario de pedidos:</strong> Los pedidos deben realizarse <strong>antes de las 12:00 de la noche del día anterior</strong> a la entrega programada. Después de que el tendero confirme tu pedido <strong>no se realizan devoluciones de dinero</strong>, pero tendrás opciones disponibles si tienes un contratiempo.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit}>
           {/* Estudiante */}
           <div className="form-group">

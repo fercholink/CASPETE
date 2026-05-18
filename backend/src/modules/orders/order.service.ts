@@ -388,6 +388,118 @@ export async function cancelOrder(id: string, actor: JwtPayload) {
   });
 }
 
+// ── Regalar pedido a otro estudiante del mismo padre ─────────────────────────
+export async function giftOrder(id: string, toStudentId: string, actor: JwtPayload) {
+  const order = await prisma.lunchOrder.findUnique({ where: { id }, select: orderSelect });
+  if (!order) throw new AppError('Pedido no encontrado', 404);
+  if (actor.role !== 'PARENT' || actor.sub !== order.student.parent_id)
+    throw new AppError('Solo el padre del pedido puede realizar esta acción', 403);
+  if (order.status !== 'CONFIRMED')
+    throw new AppError('Solo puedes regalar pedidos ya confirmados', 400);
+  if (toStudentId === order.student.id)
+    throw new AppError('El destinatario es el mismo estudiante del pedido', 400);
+
+  const target = await prisma.student.findUnique({
+    where: { id: toStudentId },
+    select: { id: true, full_name: true, parent_id: true, school_id: true },
+  });
+  if (!target || target.parent_id !== actor.sub)
+    throw new AppError('El estudiante destino no está en tu cuenta', 404);
+  if (target.school_id !== order.school_id)
+    throw new AppError('El estudiante destino pertenece a otro colegio', 400);
+
+  const giftNote = `🎁 Regalado a ${target.full_name}`;
+  const updatedNotes = order.notes ? `${order.notes}\n${giftNote}` : giftNote;
+
+  return prisma.lunchOrder.update({
+    where: { id },
+    data: { student_id: toStudentId, notes: updatedNotes },
+    select: orderSelect,
+  });
+}
+
+// ── Solicitar retiro a la salida del colegio ──────────────────────────────────
+export async function requestPickup(id: string, actor: JwtPayload) {
+  const order = await prisma.lunchOrder.findUnique({ where: { id }, select: orderSelect });
+  if (!order) throw new AppError('Pedido no encontrado', 404);
+  if (actor.role !== 'PARENT' || actor.sub !== order.student.parent_id)
+    throw new AppError('Solo el padre del pedido puede solicitar retiro', 403);
+  if (order.status !== 'CONFIRMED')
+    throw new AppError('Solo puedes solicitar retiro de pedidos confirmados', 400);
+
+  const pickupNote = '🛍️ RETIRO SOLICITADO: El padre retira el pedido a la salida del colegio.';
+  const updatedNotes = order.notes ? `${order.notes}\n${pickupNote}` : pickupNote;
+
+  const updated = await prisma.lunchOrder.update({
+    where: { id },
+    data: { notes: updatedNotes },
+    select: orderSelect,
+  });
+
+  // Notificar al tendero del colegio
+  const vendor = await prisma.user.findFirst({
+    where: { role: 'VENDOR', school_id: order.school_id },
+    select: { id: true },
+  });
+  if (vendor) {
+    sendPushToUser(vendor.id, {
+      title: '🛍️ Solicitud de retiro',
+      body: `El padre de ${order.student.full_name} solicita retirar el pedido a la salida.`,
+      icon: '/favicon.png',
+      tag: `order-pickup-${id}`,
+      url: `/orders/${id}`,
+    }).catch(() => {});
+  }
+
+  return updated;
+}
+
+// ── Cancelar con cobro de insumos (reembolso parcial 50%) ────────────────────
+export async function cancelOrderPartial(id: string, actor: JwtPayload) {
+  const order = await prisma.lunchOrder.findUnique({ where: { id }, select: orderSelect });
+  if (!order) throw new AppError('Pedido no encontrado', 404);
+  if (actor.role !== 'PARENT' || actor.sub !== order.student.parent_id)
+    throw new AppError('Solo el padre del pedido puede solicitar esta cancelación', 403);
+  if (order.status !== 'CONFIRMED')
+    throw new AppError('Solo puedes cancelar con cobro de insumos pedidos confirmados', 400);
+
+  const totalAmount = order.total_amount.toNumber();
+  const refundAmount = Math.round(totalAmount * 0.5 * 100) / 100;
+
+  return prisma.$transaction(async (tx) => {
+    const cancelNote = `❌ Cancelado por padre — cobro de insumos. Reembolso: 50% ($${refundAmount.toLocaleString('es-CO')})`;
+    const updated = await tx.lunchOrder.update({
+      where: { id },
+      data: {
+        status: 'CANCELLED',
+        notes: order.notes ? `${order.notes}\n${cancelNote}` : cancelNote,
+      },
+      select: orderSelect,
+    });
+
+    const student = await tx.student.findUnique({
+      where: { id: order.student.id },
+      select: { balance: true },
+    });
+    if (!student) return updated;
+
+    const newBalance = Math.round((student.balance.toNumber() + refundAmount) * 100) / 100;
+    await tx.student.update({ where: { id: order.student.id }, data: { balance: newBalance } });
+    await tx.transaction.create({
+      data: {
+        school_id: order.school_id,
+        student_id: order.student.id,
+        type: 'REFUND',
+        amount: refundAmount,
+        balance_after: newBalance,
+        order_id: id,
+      },
+    });
+
+    return updated;
+  });
+}
+
 export async function deliverOrder(id: string, otpCode: string, actor: JwtPayload) {
   let order = await prisma.lunchOrder.findUnique({
     where: { id },

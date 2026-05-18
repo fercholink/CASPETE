@@ -85,3 +85,23 @@ export async function previewDelivery(req: Request, res: Response) {
   const result = await orderService.previewStudentDelivery(student_id, delivery_code, req.user!);
   sendSuccess(res, result);
 }
+
+export async function giftOrder(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  const { to_student_id } = req.body as { to_student_id?: string };
+  if (!to_student_id) throw new Error('Debes indicar el estudiante destino');
+  const order = await orderService.giftOrder(id, to_student_id, req.user!);
+  sendSuccess(res, order, 'Pedido regalado exitosamente');
+}
+
+export async function requestPickup(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  const order = await orderService.requestPickup(id, req.user!);
+  sendSuccess(res, order, 'Solicitud de retiro registrada. El tendero ha sido notificado.');
+}
+
+export async function cancelPartial(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  const order = await orderService.cancelOrderPartial(id, req.user!);
+  sendSuccess(res, order, 'Pedido cancelado. Se reembolsó el 50% del valor a la lonchera.');
+}

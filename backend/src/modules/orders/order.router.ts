@@ -46,4 +46,14 @@ router.post('/topup/:studentId', adminRoles, orderController.topup);
 // DELETE /api/orders/:id/permanent            — eliminar permanentemente (solo SUPER_ADMIN)
 router.delete('/:id/permanent', requireRole('SUPER_ADMIN'), orderController.deleteOne);
 
+// ── Acciones del padre sobre pedidos confirmados ────────────────────────────
+// PATCH /api/orders/:id/gift            — regalar a otro hijo (PARENT)
+router.patch('/:id/gift', requireRole('PARENT'), orderController.giftOrder);
+
+// PATCH /api/orders/:id/pickup          — solicitar retiro a la salida (PARENT)
+router.patch('/:id/pickup', requireRole('PARENT'), orderController.requestPickup);
+
+// PATCH /api/orders/:id/cancel-partial  — cancelar con cobro de insumos 50% (PARENT)
+router.patch('/:id/cancel-partial', requireRole('PARENT'), orderController.cancelPartial);
+
 export default router;

@@ -87,6 +87,21 @@ export default function OrderDetailPage() {
   // ── Chat: Hilo existente del pedido (PARENT) ─────────────────────────
   const [orderThread, setOrderThread] = useState<{ id: string; subject: string; unread_count: number } | null>(null);
 
+  // ── Contratiempo: estado de modales ──────────────────────────────────
+  const [giftOpen, setGiftOpen]           = useState(false);
+  const [giftStudentId, setGiftStudentId] = useState('');
+  const [giftSending, setGiftSending]     = useState(false);
+  const [giftError, setGiftError]         = useState('');
+  const [parentStudents, setParentStudents] = useState<Array<{ id: string; full_name: string; grade: string | null }>>([]);
+
+  const [pickupSending, setPickupSending] = useState(false);
+  const [pickupDone, setPickupDone]       = useState(false);
+
+  const [chatInitOpen, setChatInitOpen]   = useState(false);
+  const [chatInitMsg, setChatInitMsg]     = useState('');
+  const [chatInitSending, setChatInitSending] = useState(false);
+  const [chatInitError, setChatInitError] = useState('');
+
   useEffect(() => {
     if (!id) return;
     apiClient
@@ -109,6 +124,60 @@ export default function OrderDetailPage() {
       })
       .catch(() => {});
   }, [id, user?.role]);
+
+  // Cargar hermanos del padre para la opción de regalo
+  useEffect(() => {
+    if (!order || user?.role !== 'PARENT') return;
+    apiClient
+      .get<{ success: boolean; data: { students: Array<{ id: string; full_name: string; grade: string | null }> } }>('/students')
+      .then((res) => {
+        if (res.data.success) {
+          const others = (res.data.data.students ?? []).filter((s) => s.id !== order.student.id);
+          setParentStudents(others);
+        }
+      })
+      .catch(() => {});
+  }, [order, user?.role]);
+
+  async function handleGift(e: React.FormEvent) {
+    e.preventDefault();
+    if (!giftStudentId) return;
+    setGiftSending(true); setGiftError('');
+    try {
+      await apiClient.patch(`/orders/${id}/gift`, { to_student_id: giftStudentId });
+      setGiftOpen(false);
+      window.location.reload();
+    } catch (err: unknown) {
+      setGiftError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al regalar el pedido');
+    } finally { setGiftSending(false); }
+  }
+
+  async function handlePickup() {
+    setPickupSending(true);
+    try {
+      await apiClient.patch(`/orders/${id}/pickup`);
+      setPickupDone(true);
+      setOrder((prev) => prev ? { ...prev, notes: (prev.notes ? prev.notes + '\n' : '') + '🛍️ RETIRO SOLICITADO: El padre retira el pedido a la salida del colegio.' } : prev);
+    } catch (err: unknown) {
+      alert((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al solicitar retiro');
+    } finally { setPickupSending(false); }
+  }
+
+  async function handleChatInit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!chatInitMsg.trim()) return;
+    setChatInitSending(true); setChatInitError('');
+    try {
+      const res = await apiClient.post<{ success: boolean; data?: { id: string }; message?: string }>(
+        '/chat/threads',
+        { order_id: id, subject: `Consulta pedido ${new Date(order!.scheduled_date).toLocaleDateString('es-CO')}`, first_message: chatInitMsg.trim() },
+      );
+      if (!res.data.success) throw new Error(res.data.message ?? 'Error');
+      navigate(`/chat/${res.data.data!.id}`);
+    } catch (err: unknown) {
+      setChatInitError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? (err instanceof Error ? err.message : 'Error'));
+    } finally { setChatInitSending(false); }
+  }
 
   async function submitChatReport(e: React.FormEvent) {
     e.preventDefault();
@@ -287,6 +356,134 @@ export default function OrderDetailPage() {
               </span>
             )}
             <span style={{ fontSize: 16, color: 'var(--color-text-muted)', flexShrink: 0 }}>→</span>
+          </div>
+        )}
+
+        {/* ── Panel contratiempo — visible al padre con pedido CONFIRMED ── */}
+        {isParent && order.status === 'CONFIRMED' && (
+          <div className="user-card" style={{ marginBottom: 12, border: '1.5px solid rgba(220,160,0,0.3)', background: 'rgba(255,251,235,0.6)' }}>
+            {/* Aviso sin devolución */}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 14, padding: '10px 12px', borderRadius: 10, background: 'rgba(220,160,0,0.10)', border: '1px solid rgba(220,160,0,0.25)' }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
+              <p style={{ margin: 0, fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>
+                <strong>Tu pedido fue confirmado.</strong> Una vez confirmado no se realizan devoluciones de dinero. Si tuviste un contratiempo usa las opciones disponibles:
+              </p>
+            </div>
+
+            <p style={{ margin: '0 0 12px', fontWeight: 700, fontSize: 13, color: 'var(--color-text)' }}>¿Tuviste un contratiempo?</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* Opción 1: Chat */}
+              <button
+                onClick={() => orderThread ? navigate(`/chat/${orderThread.id}`) : setChatInitOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'var(--color-surface)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+              >
+                <span style={{ fontSize: 22, flexShrink: 0 }}>💬</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>Escribir al Tendero</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>Envíale un mensaje directo</p>
+                </div>
+                <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>→</span>
+              </button>
+
+              {/* Opción 2: Regalar */}
+              {parentStudents.length > 0 && (
+                <button
+                  onClick={() => setGiftOpen(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'var(--color-surface)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+                >
+                  <span style={{ fontSize: 22, flexShrink: 0 }}>🎁</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>Regalar a un Hermano/Compañero</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>Reasignar el pedido a otro estudiante</p>
+                  </div>
+                  <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>→</span>
+                </button>
+              )}
+
+              {/* Opción 3: Retiro */}
+              <button
+                onClick={() => { if (!pickupDone && !pickupSending) { if (confirm('¿Confirmas que retirarás el pedido a la salida del colegio? El tendero será notificado.')) handlePickup(); } }}
+                disabled={pickupDone || pickupSending}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${pickupDone ? 'var(--color-brand)' : 'var(--color-border)'}`, background: pickupDone ? 'rgba(24,226,153,0.08)' : 'var(--color-surface)', cursor: pickupDone ? 'default' : 'pointer', textAlign: 'left', width: '100%', opacity: pickupSending ? 0.6 : 1 }}
+              >
+                <span style={{ fontSize: 22, flexShrink: 0 }}>🛍️</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>Retirar a la salida del colegio</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    {pickupDone ? '✅ Solicitud enviada al tendero' : 'El tendero preparará tu pedido para retiro'}
+                  </p>
+                </div>
+                {!pickupDone && <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>→</span>}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal: Escribir al tendero (padre inicia) ─────────────── */}
+        {chatInitOpen && (
+          <div onClick={(e) => { if (e.target === e.currentTarget) setChatInitOpen(false); }}
+            style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 24px' }}>
+            <div style={{ background: 'var(--color-surface)', borderRadius: '20px 20px 12px 12px', padding: '24px 22px', width: '100%', maxWidth: 520, boxShadow: '0 -8px 40px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>💬 Escribir al Tendero</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>El tendero recibirá tu mensaje</p>
+                </div>
+                <button onClick={() => setChatInitOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--color-text-muted)' }}>✕</button>
+              </div>
+              <form onSubmit={handleChatInit}>
+                <textarea required rows={4} value={chatInitMsg} onChange={(e) => setChatInitMsg(e.target.value)}
+                  placeholder="Describe tu contratiempo al tendero..."
+                  maxLength={1000}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--color-border)', fontSize: 14, resize: 'vertical', boxSizing: 'border-box', background: 'var(--color-bg)', color: 'var(--color-text)' }}
+                />
+                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'right', marginTop: 2, marginBottom: 10 }}>{chatInitMsg.length}/1000</div>
+                {chatInitError && <p style={{ color: '#dc2626', fontSize: 12, marginBottom: 8 }}>{chatInitError}</p>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button type="button" className="btn-ghost" style={{ flex: 1 }} onClick={() => setChatInitOpen(false)}>Cancelar</button>
+                  <button type="submit" className="btn-primary" style={{ flex: 1, width: 'auto', marginTop: 0 }} disabled={chatInitSending || !chatInitMsg.trim()}>
+                    {chatInitSending ? 'Enviando...' : '📨 Enviar'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal: Regalar pedido ──────────────────────────────────── */}
+        {giftOpen && (
+          <div onClick={(e) => { if (e.target === e.currentTarget) setGiftOpen(false); }}
+            style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 24px' }}>
+            <div style={{ background: 'var(--color-surface)', borderRadius: '20px 20px 12px 12px', padding: '24px 22px', width: '100%', maxWidth: 520, boxShadow: '0 -8px 40px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>🎁 Regalar el pedido</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>Selecciona a quién le vas a dar el pedido</p>
+                </div>
+                <button onClick={() => setGiftOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--color-text-muted)' }}>✕</button>
+              </div>
+              <form onSubmit={handleGift}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                  {parentStudents.map((s) => (
+                    <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: `2px solid ${giftStudentId === s.id ? 'var(--color-brand)' : 'var(--color-border)'}`, background: giftStudentId === s.id ? 'rgba(24,226,153,0.06)' : 'transparent', cursor: 'pointer' }}>
+                      <input type="radio" name="gift_student" value={s.id} checked={giftStudentId === s.id} onChange={() => setGiftStudentId(s.id)} style={{ accentColor: 'var(--color-brand)' }} />
+                      <div>
+                        <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>{s.full_name}</p>
+                        {s.grade && <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-muted)' }}>Grado {s.grade}</p>}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                {giftError && <p style={{ color: '#dc2626', fontSize: 12, marginBottom: 8 }}>{giftError}</p>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button type="button" className="btn-ghost" style={{ flex: 1 }} onClick={() => setGiftOpen(false)}>Cancelar</button>
+                  <button type="submit" className="btn-primary" style={{ flex: 1, width: 'auto', marginTop: 0 }} disabled={giftSending || !giftStudentId}>
+                    {giftSending ? 'Procesando...' : '🎁 Regalar'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 

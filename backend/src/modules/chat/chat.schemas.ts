@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const CreateThreadSchema = z.object({
   order_id: z.string().uuid().optional(),
-  parent_id: z.string().uuid(),
+  parent_id: z.string().uuid().optional(), // requerido solo cuando VENDOR crea el hilo
   subject: z.string().min(3).max(200),
   first_message: z.string().min(1).max(1000),
 });

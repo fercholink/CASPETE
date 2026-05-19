@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { apiClient } from '../api/client';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -10,12 +11,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [emailNotFound, setEmailNotFound] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState(false);
+  const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [resendMessage, setResendMessage] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError('');
     setEmailNotFound(false);
+    setUnverifiedEmail(false);
+    setResendStatus('idle');
+    setResendMessage('');
     try {
       await login(form.email, form.password);
       navigate('/dashboard');
@@ -28,8 +35,28 @@ export default function LoginPage() {
       if (msg.toLowerCase().includes('credenciales') || msg.toLowerCase().includes('inválid')) {
         setEmailNotFound(true);
       }
+      // Si el correo no ha sido verificado, mostramos la opción de reenviar el enlace
+      if (msg.toLowerCase().includes('no ha sido verificado')) {
+        setUnverifiedEmail(true);
+      }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResendVerification() {
+    setResendStatus('loading');
+    setResendMessage('');
+    try {
+      await apiClient.post('/auth/resend-verification', { email: form.email });
+      setResendStatus('success');
+      setResendMessage('¡Enlace enviado! Revisa tu bandeja de entrada.');
+    } catch (err: unknown) {
+      setResendStatus('error');
+      const msg =
+        (err as { response?: { data?: { error?: string } } }).response?.data
+          ?.error ?? 'No se pudo reenviar el correo de verificación.';
+      setResendMessage(msg);
     }
   }
 
@@ -116,15 +143,59 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div>
-              <p className="form-error">{error}</p>
+            <div style={{ marginBottom: 16 }}>
+              <p className="form-error" style={{ margin: 0 }}>{error}</p>
               {emailNotFound && (
-                <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 4, textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 8, textAlign: 'center', margin: '8px 0 0' }}>
                   ¿No recuerdas tu contraseña?{' '}
                   <Link to={`/forgot-password?email=${encodeURIComponent(form.email)}`} style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
                     Recupérala aquí
                   </Link>
                 </p>
+              )}
+              {unverifiedEmail && (
+                <div style={{
+                  marginTop: 12,
+                  background: 'rgba(217, 119, 6, 0.05)',
+                  border: '1px solid rgba(217, 119, 6, 0.2)',
+                  borderRadius: 8,
+                  padding: '12px',
+                  textAlign: 'left'
+                }}>
+                  <p style={{ fontSize: 13, color: '#b45309', margin: '0 0 8px', fontWeight: 500, lineHeight: 1.4 }}>
+                    ¿No recibiste el correo de confirmación? Puedes solicitar uno nuevo ahora mismo.
+                  </p>
+                  {resendStatus === 'success' ? (
+                    <p style={{ fontSize: 12, color: '#15803d', margin: 0, fontWeight: 600 }}>
+                      ✓ {resendMessage}
+                    </p>
+                  ) : (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={resendStatus === 'loading'}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#b45309',
+                          textDecoration: 'underline',
+                          fontWeight: 700,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                          padding: 0
+                        }}
+                      >
+                        {resendStatus === 'loading' ? 'Enviando enlace...' : 'Reenviar enlace de verificación'}
+                      </button>
+                      {resendStatus === 'error' && (
+                        <p style={{ fontSize: 12, color: '#b91c1c', margin: '4px 0 0' }}>
+                          ⚠️ {resendMessage}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}

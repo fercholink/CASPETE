@@ -34,6 +34,12 @@ router.post('/forgot-password', authController.forgotPassword);
 // POST  /api/auth/reset-password — establecer nueva contraseña con token
 router.post('/reset-password', authController.resetPassword);
 
+// POST  /api/auth/verify-email — confirmar correo electrónico
+router.post('/verify-email', authController.verifyEmail);
+
+// POST  /api/auth/resend-verification — reenviar enlace de confirmación
+router.post('/resend-verification', authController.resendVerification);
+
 // ── Google OAuth ─────────────────────────────────────────────────────────────
 // GET  /api/auth/google         — redirige a Google para autenticación
 router.get(

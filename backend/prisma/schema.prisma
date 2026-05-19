@@ -109,6 +109,9 @@ model User {
   full_name     String   @db.VarChar(200)
   avatar_url    String?  @db.Text
   active        Boolean  @default(true)
+  email_verified             Boolean   @default(false)
+  verification_token         String?   @db.Text
+  verification_token_expires DateTime?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 

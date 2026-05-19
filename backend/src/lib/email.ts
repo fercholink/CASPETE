@@ -8,6 +8,14 @@ function fmtCOP(v: number) {
 }
 
 export async function sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
+  if (env.RESEND_API_KEY === 'mock_key' || !env.RESEND_API_KEY || env.RESEND_API_KEY.startsWith('mock_')) {
+    console.log('\n🔑 [MOCK EMAIL] Enlace de recuperación de contraseña enviado a:', to);
+    console.log('👤 Nombre:', name);
+    console.log('🔗 Enlace:', resetUrl);
+    console.log('--------------------------------------------------\n');
+    return;
+  }
+
   await resend.emails.send({
     from: `Caspete <${env.EMAIL_FROM}>`,
     to,
@@ -85,6 +93,14 @@ export async function sendTopupConfirmationEmail(
   newBalance: number,
   paymentMethod: string,
 ) {
+  if (env.RESEND_API_KEY === 'mock_key' || !env.RESEND_API_KEY || env.RESEND_API_KEY.startsWith('mock_')) {
+    console.log('\n✅ [MOCK EMAIL] Recarga confirmada para:', to);
+    console.log('👤 Padre:', parentName, 'Estudiante:', studentName);
+    console.log('💰 Monto:', amount, 'Saldo:', newBalance);
+    console.log('--------------------------------------------------\n');
+    return;
+  }
+
   const methodLabel: Record<string, string> = {
     NEQUI: 'Nequi',
     BANCOLOMBIA: 'Bancolombia',
@@ -166,6 +182,14 @@ export async function sendTopupRejectionEmail(
   studentName: string,
   amount: number,
 ) {
+  if (env.RESEND_API_KEY === 'mock_key' || !env.RESEND_API_KEY || env.RESEND_API_KEY.startsWith('mock_')) {
+    console.log('\n❌ [MOCK EMAIL] Recarga rechazada para:', to);
+    console.log('👤 Padre:', parentName, 'Estudiante:', studentName);
+    console.log('💰 Monto:', amount);
+    console.log('--------------------------------------------------\n');
+    return;
+  }
+
   await resend.emails.send({
     from: `Caspete <${env.EMAIL_FROM}>`,
     to,
@@ -206,6 +230,83 @@ export async function sendTopupRejectionEmail(
           </p>
         </td></tr>
 
+        <tr><td style="padding:24px 0;text-align:center;">
+          <p style="color:#9ca3af;font-size:12px;margin:0;">
+            © ${new Date().getFullYear()} Caspete · Loncheras Escolares Inteligentes<br/>
+            <a href="https://caspete.com" style="color:#1a4731;">caspete.com</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+    `,
+  });
+}
+
+export async function sendEmailVerificationEmail(to: string, name: string, verificationUrl: string) {
+  if (env.RESEND_API_KEY === 'mock_key' || !env.RESEND_API_KEY || env.RESEND_API_KEY.startsWith('mock_')) {
+    console.log('\n✉️  [MOCK EMAIL] Enlace de verificación de correo enviado a:', to);
+    console.log('👤 Nombre:', name);
+    console.log('🔗 Enlace:', verificationUrl);
+    console.log('--------------------------------------------------\n');
+    return;
+  }
+
+  await resend.emails.send({
+    from: `Caspete <${env.EMAIL_FROM}>`,
+    to,
+    subject: '📧 Confirma tu correo electrónico en Caspete',
+    html: `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Confirmar correo electrónico - Caspete</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f0;padding:40px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+        
+        <!-- Header -->
+        <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
+          <div style="font-size:36px;margin-bottom:8px;">🎒</div>
+          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">CASPETE</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
+        </td></tr>
+
+        <!-- Body -->
+        <tr><td style="background:#ffffff;padding:40px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 8px;">¡Bienvenido/a, ${name}! 👋</h1>
+          <p style="color:#6b7280;font-size:15px;line-height:1.6;margin:0 0 24px;">
+            Gracias por registrarte en Caspete. Para comenzar a programar las loncheras escolares de tus hijos de forma inteligente y segura, por favor confirma tu dirección de correo electrónico.
+          </p>
+
+          <!-- Botón -->
+          <div style="text-align:center;margin:32px 0;">
+            <a href="${verificationUrl}" style="display:inline-block;background:linear-gradient(135deg,#1a4731,#2d6a4f);color:#fff;font-size:16px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:0.3px;">
+              📧 Confirmar correo electrónico
+            </a>
+          </div>
+
+          <!-- Aviso de expiración -->
+          <div style="background:#f9fafb;border-left:4px solid #1a4731;border-radius:4px;padding:14px 16px;margin:24px 0;">
+            <p style="color:#374151;font-size:13px;margin:0;">
+              ⏰ <strong>Este enlace expira en 24 horas</strong> por razones de seguridad.
+            </p>
+          </div>
+
+          <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:24px 0 0;">
+            Si el botón no funciona, copia y pega este enlace en tu navegador:<br/>
+            <a href="${verificationUrl}" style="color:#1a4731;word-break:break-all;">${verificationUrl}</a>
+          </p>
+        </td></tr>
+
+        <!-- Footer -->
         <tr><td style="padding:24px 0;text-align:center;">
           <p style="color:#9ca3af;font-size:12px;margin:0;">
             © ${new Date().getFullYear()} Caspete · Loncheras Escolares Inteligentes<br/>

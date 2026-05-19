@@ -5,6 +5,7 @@ import RegisterPage from '../pages/RegisterPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
 import AuthCallbackPage from '../pages/AuthCallbackPage';
+import VerifyEmailPage from '../pages/VerifyEmailPage';
 import DashboardPage from '../pages/DashboardPage';
 import SchoolsPage from '../pages/SchoolsPage';
 import SchoolFormPage from '../pages/SchoolFormPage';
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
   { path: '/register', element: <RegisterPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
+  { path: '/verify-email', element: <VerifyEmailPage /> },
   { path: '/auth/callback', element: <AuthCallbackPage /> },
   // ── Páginas legales públicas (accesibles sin login) ──────────────
   { path: '/privacidad', element: <PrivacyPolicyPage /> },

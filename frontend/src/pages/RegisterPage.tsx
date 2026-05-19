@@ -35,6 +35,8 @@ export default function RegisterPage() {
   const [consentGeneral, setConsentGeneral] = useState(false);
   const [consentSensitive, setConsentSensitive] = useState(false);
   const [consentLegalRep, setConsentLegalRep] = useState(false);
+  const [verificationRequired, setVerificationRequired] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -52,7 +54,7 @@ export default function RegisterPage() {
     if (!allConsentsGiven) { setError('Debe aceptar las tres declaraciones de privacidad para continuar.'); return; }
     setLoading(true); setError(''); setEmailExists(false);
     try {
-      await apiClient.post('/auth/register', {
+      const res = await apiClient.post<{ success: boolean; data: { requiresVerification?: boolean; email?: string } }>('/auth/register', {
         email: form.email,
         password: form.password,
         full_name: `${form.firstName.trim()} ${form.lastName.trim()}`,
@@ -64,8 +66,13 @@ export default function RegisterPage() {
         consent_sensitive: true,
         consent_legal_rep: true,
       });
-      await login(form.email, form.password);
-      navigate('/dashboard');
+      if (res.data.data?.requiresVerification) {
+        setRegisteredEmail(res.data.data.email ?? form.email);
+        setVerificationRequired(true);
+      } else {
+        await login(form.email, form.password);
+        navigate('/dashboard');
+      }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al registrarse';
       setError(msg);
@@ -97,208 +104,233 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#111827', marginBottom: 4, letterSpacing: '-0.5px' }}>Crear cuenta</h1>
-        <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 28 }}>Únete a la comunidad Caspete</p>
-
-        <form onSubmit={handleSubmit}>
-          {/* Nombre y Apellido */}
-          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-          <div>
-            <label className="form-label" htmlFor="firstName">Nombre(s)</label>
-            <input id="firstName" name="firstName" className="form-input" type="text" value={form.firstName} onChange={handleChange} required placeholder="Juan" autoComplete="given-name" />
-            <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>📋 Usado para identificarte en la plataforma (Art. 12 Ley 1581)</p>
-          </div>
-          <div>
-            <label className="form-label" htmlFor="lastName">Apellido(s)</label>
-            <input id="lastName" name="lastName" className="form-input" type="text" value={form.lastName} onChange={handleChange} required placeholder="García" autoComplete="family-name" />
-          </div>
-          </div>
-
-          {/* Email y Teléfono */}
-          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-          <div>
-            <label className="form-label" htmlFor="email">Correo electrónico</label>
-            <input id="email" name="email" className="form-input" type="email" value={form.email} onChange={handleChange} required placeholder="tu@correo.com" autoComplete="email" />
-            <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>📧 Para notificaciones de pedidos y recuperación de contraseña. No compartimos tu correo.</p>
-          </div>
-          <div>
-            <label className="form-label" htmlFor="phone">Teléfono <span style={{ color: '#9ca3af', fontWeight: 400 }}>(opc.)</span></label>
-            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden', background: '#fff', transition: 'border-color 0.2s' }}
-              onFocusCapture={e => (e.currentTarget.style.borderColor = '#1a4731')}
-              onBlurCapture={e => (e.currentTarget.style.borderColor = '#d1d5db')}
-            >
-              <span style={{ padding: '0 10px', fontSize: 14, fontWeight: 600, color: '#374151', background: '#f3f4f6', borderRight: '1px solid #d1d5db', height: '100%', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', userSelect: 'none' }}>🇨🇴 +57</span>
-              <input
-                id="phone" name="phone" type="tel"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="300 123 4567"
-                autoComplete="tel-national"
-                maxLength={10}
-                style={{ flex: 1, border: 'none', outline: 'none', padding: '10px 12px', fontSize: 14, color: '#111827', background: 'transparent', minWidth: 0 }}
-              />
+        {verificationRequired ? (
+          <div style={{ textAlign: 'center', padding: '16px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(26,71,49,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1a4731" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
             </div>
-            <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>📱 Opcional. Solo para alertas urgentes. Nunca con fines publicitarios.</p>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: '#111827', marginBottom: 12, letterSpacing: '-0.5px' }}>¡Registro exitoso!</h1>
+            <p style={{ color: '#4b5563', fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
+              Hemos enviado un enlace de confirmación a tu correo electrónico. Por favor revisa la bandeja de entrada de <strong>{registeredEmail}</strong> (y la carpeta de spam o correo no deseado) y haz clic en el enlace para activar tu cuenta.
+            </p>
+            <p style={{ color: '#6b7280', fontSize: 13, marginBottom: 32, lineHeight: 1.5 }}>
+              Este paso es obligatorio para cuentas de padres o acudientes antes de poder iniciar sesión en la plataforma.
+            </p>
+            <Link to="/login" className="btn-primary" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+              Ir al inicio de sesión
+            </Link>
           </div>
-          </div>
+        ) : (
+          <>
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: '#111827', marginBottom: 4, letterSpacing: '-0.5px' }}>Crear cuenta</h1>
+            <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 28 }}>Únete a la comunidad Caspete</p>
 
-          {/* Contraseñas */}
-          <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-          <div>
-            <label className="form-label" htmlFor="password">Contraseña</label>
-            <div style={{ position: 'relative' }}>
-              <input id="password" name="password" className="form-input" type={showPassword ? 'text' : 'password'} value={form.password} onChange={handleChange} required minLength={8} placeholder="Mín. 8 caracteres" autoComplete="new-password" style={{ paddingRight: 44 }} />
-              <button type="button" onClick={() => setShowPassword(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
-                <EyeIcon open={showPassword} />
-              </button>
-            </div>
-            <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>🔐 Almacenada cifrada. No la compartimos ni la conocemos.</p>
-          </div>
-          <div>
-            <label className="form-label" htmlFor="confirmPassword">Confirmar contraseña</label>
-            <div style={{ position: 'relative' }}>
-              <input id="confirmPassword" name="confirmPassword" className="form-input" type={showConfirm ? 'text' : 'password'} value={form.confirmPassword} onChange={handleChange} required placeholder="Repite la contraseña" autoComplete="new-password" style={{ paddingRight: 44, borderColor: !passwordsMatch ? '#ef4444' : undefined }} />
-              <button type="button" onClick={() => setShowConfirm(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
-                <EyeIcon open={showConfirm} />
-              </button>
-            </div>
-            {!passwordsMatch && <p style={{ fontSize: 11, color: '#ef4444', marginTop: 3 }}>⚠ No coinciden</p>}
-            {passwordsMatch && form.confirmPassword.length > 0 && <p style={{ fontSize: 11, color: '#16a34a', marginTop: 3 }}>✓ Coinciden</p>}
-          </div>
-          </div>
+            <form onSubmit={handleSubmit}>
+              {/* Nombre y Apellido */}
+              <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label className="form-label" htmlFor="firstName">Nombre(s)</label>
+                <input id="firstName" name="firstName" className="form-input" type="text" value={form.firstName} onChange={handleChange} required placeholder="Juan" autoComplete="given-name" />
+                <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>📋 Usado para identificarte en la plataforma (Art. 12 Ley 1581)</p>
+              </div>
+              <div>
+                <label className="form-label" htmlFor="lastName">Apellido(s)</label>
+                <input id="lastName" name="lastName" className="form-input" type="text" value={form.lastName} onChange={handleChange} required placeholder="García" autoComplete="family-name" />
+              </div>
+              </div>
 
-          {/* Tipo de usuario */}
-          <div style={{ marginBottom: 20 }}>
-            <label className="form-label" style={{ marginBottom: 8, display: 'block' }}>Tipo de usuario</label>
-            <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-              {ROLE_OPTIONS.map((opt, idx) => (
-                <button key={idx} type="button" onClick={() => setForm(p => ({ ...p, roleIndex: idx }))}
-                  style={{ border: `2px solid ${form.roleIndex === idx ? '#1a4731' : '#e5e7eb'}`, borderRadius: 10, padding: '10px 8px', background: form.roleIndex === idx ? 'rgba(26,71,49,0.07)' : 'transparent', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
-                  <div style={{ fontSize: 22, marginBottom: 4 }}>{opt.icon}</div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: form.roleIndex === idx ? '#1a4731' : '#374151', lineHeight: 1.3 }}>{opt.label}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+              {/* Email y Teléfono */}
+              <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label className="form-label" htmlFor="email">Correo electrónico</label>
+                <input id="email" name="email" className="form-input" type="email" value={form.email} onChange={handleChange} required placeholder="tu@correo.com" autoComplete="email" />
+                <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>📧 Para notificaciones de pedidos y recuperación de contraseña. No compartimos tu correo.</p>
+              </div>
+              <div>
+                <label className="form-label" htmlFor="phone">Teléfono <span style={{ color: '#9ca3af', fontWeight: 400 }}>(opc.)</span></label>
+                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden', background: '#fff', transition: 'border-color 0.2s' }}
+                  onFocusCapture={e => (e.currentTarget.style.borderColor = '#1a4731')}
+                  onBlurCapture={e => (e.currentTarget.style.borderColor = '#d1d5db')}
+                >
+                  <span style={{ padding: '0 10px', fontSize: 14, fontWeight: 600, color: '#374151', background: '#f3f4f6', borderRight: '1px solid #d1d5db', height: '100%', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', userSelect: 'none' }}>🇨🇴 +57</span>
+                  <input
+                    id="phone" name="phone" type="tel"
+                    value={form.phone}
+                    onChange={handleChange}
+                    placeholder="300 123 4567"
+                    autoComplete="tel-national"
+                    maxLength={10}
+                    style={{ flex: 1, border: 'none', outline: 'none', padding: '10px 12px', fontSize: 14, color: '#111827', background: 'transparent', minWidth: 0 }}
+                  />
+                </div>
+                <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>📱 Opcional. Solo para alertas urgentes. Nunca con fines publicitarios.</p>
+              </div>
+              </div>
 
-          {error && (
-            <div style={{ marginBottom: 12 }}>
-              <p className="form-error">{error}</p>
-              {emailExists && (
-                <p style={{ fontSize: 13, color: '#6b7280', marginTop: 6, textAlign: 'center' }}>
-                  <Link to={`/forgot-password?email=${encodeURIComponent(form.email)}`} style={{ color: '#1a4731', fontWeight: 600 }}>Recuperar contraseña</Link>
-                  {' '}·{' '}
-                  <Link to="/login" style={{ color: '#1a4731', fontWeight: 600 }}>Iniciar sesión</Link>
-                </p>
+              {/* Contraseñas */}
+              <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label className="form-label" htmlFor="password">Contraseña</label>
+                <div style={{ position: 'relative' }}>
+                  <input id="password" name="password" className="form-input" type={showPassword ? 'text' : 'password'} value={form.password} onChange={handleChange} required minLength={8} placeholder="Mín. 8 caracteres" autoComplete="new-password" style={{ paddingRight: 44 }} />
+                  <button type="button" onClick={() => setShowPassword(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
+                    <EyeIcon open={showPassword} />
+                  </button>
+                </div>
+                <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>🔐 Almacenada cifrada. No la compartimos ni la conocemos.</p>
+              </div>
+              <div>
+                <label className="form-label" htmlFor="confirmPassword">Confirmar contraseña</label>
+                <div style={{ position: 'relative' }}>
+                  <input id="confirmPassword" name="confirmPassword" className="form-input" type={showConfirm ? 'text' : 'password'} value={form.confirmPassword} onChange={handleChange} required placeholder="Repite la contraseña" autoComplete="new-password" style={{ paddingRight: 44, borderColor: !passwordsMatch ? '#ef4444' : undefined }} />
+                  <button type="button" onClick={() => setShowConfirm(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
+                    <EyeIcon open={showConfirm} />
+                  </button>
+                </div>
+                {!passwordsMatch && <p style={{ fontSize: 11, color: '#ef4444', marginTop: 3 }}>⚠️ No coinciden</p>}
+                {passwordsMatch && form.confirmPassword.length > 0 && <p style={{ fontSize: 11, color: '#16a34a', marginTop: 3 }}>✓ Coinciden</p>}
+              </div>
+              </div>
+
+              {/* Tipo de usuario */}
+              <div style={{ marginBottom: 20 }}>
+                <label className="form-label" style={{ marginBottom: 8, display: 'block' }}>Tipo de usuario</label>
+                <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                  {ROLE_OPTIONS.map((opt, idx) => (
+                    <button key={idx} type="button" onClick={() => setForm(p => ({ ...p, roleIndex: idx }))}
+                      style={{ border: `2px solid ${form.roleIndex === idx ? '#1a4731' : '#e5e7eb'}`, borderRadius: 10, padding: '10px 8px', background: form.roleIndex === idx ? 'rgba(26,71,49,0.07)' : 'transparent', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>{opt.icon}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: form.roleIndex === idx ? '#1a4731' : '#374151', lineHeight: 1.3 }}>{opt.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {error && (
+                <div style={{ marginBottom: 12 }}>
+                  <p className="form-error">{error}</p>
+                  {emailExists && (
+                    <p style={{ fontSize: 13, color: '#6b7280', marginTop: 6, textAlign: 'center' }}>
+                      <Link to={`/forgot-password?email=${encodeURIComponent(form.email)}`} style={{ color: '#1a4731', fontWeight: 600 }}>Recuperar contraseña</Link>
+                      {' '}·{' '}
+                      <Link to="/login" style={{ color: '#1a4731', fontWeight: 600 }}>Iniciar sesión</Link>
+                    </p>
+                  )}
+                </div>
               )}
+
+              {/* ── Ley 1581/2012 — Consentimientos obligatorios (Art. 7, 9, 12) ── */}
+              <div style={{ background: 'rgba(26,71,49,0.04)', border: '1px solid rgba(26,71,49,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+                <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  🔒 Protección de datos — Ley 1581 de 2012
+                </p>
+                <p style={{ margin: '0 0 12px', fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>
+                  <strong>Responsable:</strong> Caspete.com · <strong>Finalidad:</strong> Gestión de loncheras escolares y seguridad alimentaria del menor.
+                  Usted tiene derecho a conocer, actualizar y suprimir sus datos escribiendo a{' '}
+                  <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a>.{' '}
+                  <Link to="/privacidad" target="_blank" style={{ color: '#1a4731', fontWeight: 600 }}>Ver política completa →</Link>
+                </p>
+
+                {/* Consentimiento 1 — General */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={consentGeneral}
+                    onChange={e => setConsentGeneral(e.target.checked)}
+                    style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+                    He leído y acepto la{' '}
+                    <Link to="/privacidad" target="_blank" style={{ color: '#1a4731', fontWeight: 600 }}>Política de Tratamiento de la Información</Link>{' '}
+                    de caspete.com para el manejo de mis datos personales (nombre, contacto, pagos).
+                  </span>
+                </label>
+
+                {/* Consentimiento 2 — Datos sensibles */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={consentSensitive}
+                    onChange={e => setConsentSensitive(e.target.checked)}
+                    style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+                    <strong>Autorizo expresamente</strong> el tratamiento de los datos de salud (alergias, restricciones médicas) de mi hijo/a,
+                    exclusivamente para garantizar su seguridad alimentaria. Comprendo que son datos sensibles y que puedo revocar esta autorización en cualquier momento.
+                  </span>
+                </label>
+
+                {/* Consentimiento 3 — Representación legal */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={consentLegalRep}
+                    onChange={e => setConsentLegalRep(e.target.checked)}
+                    style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+                    <strong>Declaro bajo gravedad de juramento</strong> que soy el padre, madre o representante legal del menor registrado
+                    y que estoy facultado/a para autorizar el tratamiento de sus datos conforme a la Ley 1581 de 2012.
+                  </span>
+                </label>
+              </div>
+
+              {/* ⚠️ Aviso menores de edad — Art. 7 Ley 1581/2012 */}
+              <div style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+                <p style={{ margin: 0, fontSize: 11, color: '#92400e', lineHeight: 1.6 }}>
+                  <strong>⚠️ Protección reforzada de menores (Art. 7):</strong> Al registrar datos de un menor de edad,
+                  usted como padre, madre o acudiente asume la responsabilidad legal de otorgar el consentimiento.
+                  Los datos del menor (nombre, alergias, grado) solo serán usados para la gestión de su alimentación escolar
+                  y no serán compartidos con terceros sin su autorización expresa.
+                </p>
+              </div>
+
+              <button type="submit" className="btn-primary" disabled={loading || !passwordsMatch || !allConsentsGiven} style={{ marginBottom: 8 }}>
+                {loading ? 'Creando cuenta...' : 'Crear cuenta gratis →'}
+              </button>
+
+            </form>
+
+            {/* Separador */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0' }}>
+              <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+              <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>o regístrate con</span>
+              <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
             </div>
-          )}
 
-          {/* ── Ley 1581/2012 — Consentimientos obligatorios (Art. 7, 9, 12) ── */}
-          <div style={{ background: 'rgba(26,71,49,0.04)', border: '1px solid rgba(26,71,49,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-            <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              🔒 Protección de datos — Ley 1581 de 2012
+            {/* Botón de Google */}
+            <a
+              href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api'}/auth/google`}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                width: '100%', padding: '10px 16px', border: '1px solid #e5e7eb',
+                borderRadius: 8, background: '#fff', cursor: 'pointer', textDecoration: 'none',
+                color: '#374151', fontSize: 14, fontWeight: 500, transition: 'border-color 0.2s, box-shadow 0.2s',
+                marginBottom: 16,
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = '#1a4731'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 0 2px rgba(26,71,49,0.1)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = '#e5e7eb'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'none'; }}
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                <path fill="#FF3D00" d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+                <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+                <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+              </svg>
+              Continuar con Google
+            </a>
+
+            <p style={{ textAlign: 'center', fontSize: 14, color: '#6b7280' }}>
+              ¿Ya tienes cuenta?{' '}
+              <Link to="/login" style={{ color: '#1a4731', fontWeight: 600 }}>Inicia sesión</Link>
             </p>
-            <p style={{ margin: '0 0 12px', fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>
-              <strong>Responsable:</strong> Caspete.com · <strong>Finalidad:</strong> Gestión de loncheras escolares y seguridad alimentaria del menor.
-              Usted tiene derecho a conocer, actualizar y suprimir sus datos escribiendo a{' '}
-              <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a>.{' '}
-              <Link to="/privacidad" target="_blank" style={{ color: '#1a4731', fontWeight: 600 }}>Ver política completa →</Link>
-            </p>
-
-            {/* Consentimiento 1 — General */}
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={consentGeneral}
-                onChange={e => setConsentGeneral(e.target.checked)}
-                style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
-              />
-              <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
-                He leído y acepto la{' '}
-                <Link to="/privacidad" target="_blank" style={{ color: '#1a4731', fontWeight: 600 }}>Política de Tratamiento de la Información</Link>{' '}
-                de caspete.com para el manejo de mis datos personales (nombre, contacto, pagos).
-              </span>
-            </label>
-
-            {/* Consentimiento 2 — Datos sensibles */}
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={consentSensitive}
-                onChange={e => setConsentSensitive(e.target.checked)}
-                style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
-              />
-              <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
-                <strong>Autorizo expresamente</strong> el tratamiento de los datos de salud (alergias, restricciones médicas) de mi hijo/a,
-                exclusivamente para garantizar su seguridad alimentaria. Comprendo que son datos sensibles y que puedo revocar esta autorización en cualquier momento.
-              </span>
-            </label>
-
-            {/* Consentimiento 3 — Representación legal */}
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={consentLegalRep}
-                onChange={e => setConsentLegalRep(e.target.checked)}
-                style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
-              />
-              <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
-                <strong>Declaro bajo gravedad de juramento</strong> que soy el padre, madre o representante legal del menor registrado
-                y que estoy facultado/a para autorizar el tratamiento de sus datos conforme a la Ley 1581 de 2012.
-              </span>
-            </label>
-          </div>
-
-          {/* ⚠️ Aviso menores de edad — Art. 7 Ley 1581/2012 */}
-          <div style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
-            <p style={{ margin: 0, fontSize: 11, color: '#92400e', lineHeight: 1.6 }}>
-              <strong>⚠ Protección reforzada de menores (Art. 7):</strong> Al registrar datos de un menor de edad,
-              usted como padre, madre o acudiente asume la responsabilidad legal de otorgar el consentimiento.
-              Los datos del menor (nombre, alergias, grado) solo serán usados para la gestión de su alimentación escolar
-              y no serán compartidos con terceros sin su autorización expresa.
-            </p>
-          </div>
-
-          <button type="submit" className="btn-primary" disabled={loading || !passwordsMatch || !allConsentsGiven} style={{ marginBottom: 8 }}>
-            {loading ? 'Creando cuenta...' : 'Crear cuenta gratis →'}
-          </button>
-
-        </form>
-
-        {/* Separador */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0' }}>
-          <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
-          <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>o regístrate con</span>
-          <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
-        </div>
-
-        {/* Botón de Google */}
-        <a
-          href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api'}/auth/google`}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            width: '100%', padding: '10px 16px', border: '1px solid #e5e7eb',
-            borderRadius: 8, background: '#fff', cursor: 'pointer', textDecoration: 'none',
-            color: '#374151', fontSize: 14, fontWeight: 500, transition: 'border-color 0.2s, box-shadow 0.2s',
-            marginBottom: 16,
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = '#1a4731'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 0 2px rgba(26,71,49,0.1)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = '#e5e7eb'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'none'; }}
-        >
-          <svg width="18" height="18" viewBox="0 0 48 48">
-            <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-            <path fill="#FF3D00" d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-            <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-            <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-          </svg>
-          Continuar con Google
-        </a>
-
-        <p style={{ textAlign: 'center', fontSize: 14, color: '#6b7280' }}>
-          ¿Ya tienes cuenta?{' '}
-          <Link to="/login" style={{ color: '#1a4731', fontWeight: 600 }}>Inicia sesión</Link>
-        </p>
+          </>
+        )}
       </div>
 
       {/* ── Panel derecho: Visual ─────────────────────────────────── */}

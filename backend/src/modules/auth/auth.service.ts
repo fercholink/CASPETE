@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../lib/prisma.js';
 import { env } from '../../config/env.js';
 import { AppError } from '../../middleware/error.middleware.js';
-import { sendPasswordResetEmail } from '../../lib/email.js';
+import { sendPasswordResetEmail, sendEmailVerificationEmail } from '../../lib/email.js';
 import type { RegisterInput, LoginInput } from './auth.schemas.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { UserRole } from '@prisma/client';
@@ -80,6 +80,7 @@ export async function loginOrCreateGoogleUser(input: {
         role: 'PARENT',
         password_hash: null,
         phone: input.phone ?? null,
+        email_verified: true, // AUTO-VERIFIED FOR OAUTH
         // ── Ley 1581/2012 — Consentimientos (Habeas Data) ──────────
         consent_general:   true,
         consent_sensitive: true,
@@ -114,6 +115,11 @@ export async function registerUser(input: RegisterInput) {
 
   const password_hash = await bcrypt.hash(input.password, SALT_ROUNDS);
 
+  const isParent = input.role === 'PARENT';
+  const verification_token = isParent ? randomBytes(40).toString('hex') : null;
+  const verification_token_expires = isParent ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null;
+  const tokenHash = verification_token ? createHash('sha256').update(verification_token).digest('hex') : null;
+
   const user = await prisma.user.create({
     data: {
       email: input.email,
@@ -123,6 +129,9 @@ export async function registerUser(input: RegisterInput) {
       country_code: input.country_code ?? null,
       role: input.role as UserRole,
       school_id: input.school_id ?? null,
+      email_verified: !isParent,
+      verification_token: tokenHash,
+      verification_token_expires,
       // ── Ley 1581/2012 — Consentimientos (Art. 7, 9, 12) ──────────
       consent_general:   input.consent_general   ?? false,
       consent_sensitive: input.consent_sensitive ?? false,
@@ -140,6 +149,13 @@ export async function registerUser(input: RegisterInput) {
     },
   });
 
+  if (isParent && verification_token) {
+    const baseUrl = (env.FRONTEND_URL.split(',')[0] ?? 'http://localhost:5173').trim();
+    const verificationUrl = `${baseUrl}/verify-email?token=${verification_token}`;
+    await sendEmailVerificationEmail(user.email, user.full_name, verificationUrl);
+    return { requiresVerification: true, email: user.email };
+  }
+
   const token = signToken(user);
   const refresh_token = await issueRefreshToken(user.id);
   return { user, token, refresh_token };
@@ -156,6 +172,7 @@ export async function loginUser(input: LoginInput) {
       school_id: true,
       password_hash: true,
       active: true,
+      email_verified: true,
       created_at: true,
     },
   });
@@ -169,7 +186,11 @@ export async function loginUser(input: LoginInput) {
     throw new AppError('Credenciales inválidas', 401);
   }
 
-  const { password_hash: _hash, ...userWithoutPassword } = user;
+  if (user.role === 'PARENT' && !user.email_verified) {
+    throw new AppError('Tu correo electrónico no ha sido verificado. Por favor revisa tu bandeja de entrada o solicita un nuevo enlace.', 401);
+  }
+
+  const { password_hash: _hash, email_verified: _ev, ...userWithoutPassword } = user;
   const token = signToken(userWithoutPassword);
   const refresh_token = await issueRefreshToken(user.id);
   return { user: userWithoutPassword, token, refresh_token };
@@ -336,4 +357,69 @@ export async function resetPassword(rawToken: string, newPassword: string) {
     where: { user_id: record.user.id, revoked_at: null },
     data: { revoked_at: new Date() },
   });
+}
+
+export async function verifyEmail(rawToken: string) {
+  const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+
+  const user = await prisma.user.findFirst({
+    where: {
+      verification_token: tokenHash,
+      verification_token_expires: { gt: new Date() },
+    },
+    select: { id: true, active: true },
+  });
+
+  if (!user) {
+    throw new AppError('El enlace de verificación es inválido o ya expiró.', 400);
+  }
+
+  if (!user.active) {
+    throw new AppError('Esta cuenta está inactiva. Por favor contacta al soporte.', 400);
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      email_verified: true,
+      verification_token: null,
+      verification_token_expires: null,
+    },
+  });
+}
+
+export async function resendVerificationLink(email: string) {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, email: true, full_name: true, role: true, email_verified: true, active: true },
+  });
+
+  if (!user) {
+    // Silencioso por seguridad contra enumeración
+    return;
+  }
+
+  if (user.email_verified) {
+    throw new AppError('Este correo electrónico ya ha sido verificado.', 400);
+  }
+
+  if (!user.active) {
+    throw new AppError('Esta cuenta está inactiva. Por favor contacta al soporte.', 400);
+  }
+
+  const verification_token = randomBytes(40).toString('hex');
+  const tokenHash = createHash('sha256').update(verification_token).digest('hex');
+  const verification_token_expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      verification_token: tokenHash,
+      verification_token_expires,
+    },
+  });
+
+  const baseUrl = (env.FRONTEND_URL.split(',')[0] ?? 'http://localhost:5173').trim();
+  const verificationUrl = `${baseUrl}/verify-email?token=${verification_token}`;
+  await sendEmailVerificationEmail(user.email, user.full_name, verificationUrl);
 }

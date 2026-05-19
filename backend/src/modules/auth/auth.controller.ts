@@ -61,3 +61,21 @@ export async function resetPassword(req: Request, res: Response) {
   await authService.resetPassword(token, password);
   sendSuccess(res, null, 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.');
 }
+
+export async function verifyEmail(req: Request, res: Response) {
+  const { token } = z.object({
+    token: z.string().min(1, 'El token es requerido'),
+  }).parse(req.body);
+
+  await authService.verifyEmail(token);
+  sendSuccess(res, null, 'Correo verificado exitosamente. Ya puedes iniciar sesión.');
+}
+
+export async function resendVerification(req: Request, res: Response) {
+  const { email } = z.object({
+    email: z.string().email('Ingresa un correo válido'),
+  }).parse(req.body);
+
+  await authService.resendVerificationLink(email);
+  sendSuccess(res, null, 'Si el correo está registrado y pendiente de verificar, recibirás un nuevo enlace en breve.');
+}

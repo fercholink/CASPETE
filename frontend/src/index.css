@@ -1,3 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;850;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-brand-green-50: #102619;
+  --color-brand-green-100: #1e3f28;
+  --color-brand-green-500: #98FF00;
+  --color-brand-green-600: #8ae600;
+  --color-brand-green-700: #73c000;
+  
+  --color-brand-yellow-400: #98FF00;
+  --color-brand-yellow-500: #e2f92e;
+  
+  --color-nequi: #3b1754;
+  --color-nequi-pink: #e5007e;
+  --color-nequi-light: #200d2e;
+  --color-brand-neon: #98FF00;
+}
+
+/* Custom styles for AI Studio Landing page */
+.bento-card {
+  background-color: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 2rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bento-card:hover {
+  border-color: rgba(152, 255, 0, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px rgba(152, 255, 0, 0.04);
+}
+
+.bento-card-active {
+  background-color: #1a1a1a;
+  border: 1px solid rgba(152, 255, 0, 0.3);
+  border-radius: 2rem;
+}
+
+.bento-card-green {
+  background-color: #98FF00;
+  color: #050505;
+  border-radius: 2rem;
+}
+
+.bento-button-neon {
+  background-color: #98FF00;
+  color: #050505;
+  font-family: var(--font-display);
+  font-weight: 800;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 2px solid #98FF00;
+}
+
+.bento-button-neon:hover {
+  background-color: transparent;
+  color: #98FF00;
+  box-shadow: 0 0 20px rgba(152, 255, 0, 0.4);
+}
+
+.bento-logo {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  color: #98FF00;
+}
+
+.nequi-gradient {
+  background: linear-gradient(135deg, #3b1754 0%, #1e092b 100%);
+  border: 1px solid rgba(229, 0, 126, 0.2);
+}
+
+.qr-glow {
+  box-shadow: 0 0 25px rgba(152, 255, 0, 0.15);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }

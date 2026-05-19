@@ -506,14 +506,28 @@ export default function LandingPage() {
             {[
               { title: 'Plataforma', links: [{ label: 'Iniciar sesión', to: '/login' }, { label: 'Registrarse', to: '/register' }] },
               { title: 'Legal', links: [{ label: 'Política de privacidad', to: '/privacy-policy' }, { label: 'Términos de uso', to: '#' }] },
-              { title: 'Contacto', links: [{ label: 'hola@caspete.co', to: 'mailto:hola@caspete.co' }, { label: 'privacidad@caspete.com', to: 'mailto:privacidad@caspete.com' }] },
+              { title: 'Contacto', links: [
+                { label: 'hola@caspete.co', to: 'mailto:hola@caspete.co' },
+                { label: 'comercial@bscomunicaciones.com', to: 'mailto:comercial@bscomunicaciones.com' },
+                { label: 'WhatsApp: +57 321 436 4223', to: 'https://wa.me/573214364223' },
+                { label: 'privacidad@caspete.com', to: 'mailto:privacidad@caspete.com' }
+              ] },
             ].map(col => (
               <div key={col.title}>
                 <h5 style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 20px' }}>{col.title}</h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {col.links.map(link => (
-                    <Link key={link.label} to={link.to} style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>{link.label}</Link>
-                  ))}
+                  {col.links.map(link => {
+                    const isExternal = link.to.startsWith('mailto:') || link.to.startsWith('tel:') || link.to.startsWith('http') || link.to === '#';
+                    return isExternal ? (
+                      <a key={link.label} href={link.to} target={link.to.startsWith('http') ? '_blank' : undefined} rel={link.to.startsWith('http') ? 'noopener noreferrer' : undefined} style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link key={link.label} to={link.to} style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>
+                        {link.label}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             ))}

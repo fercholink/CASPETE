@@ -46,6 +46,7 @@ export const router = createBrowserRouter([
   { path: '/auth/callback', element: <AuthCallbackPage /> },
   // ── Páginas legales públicas (accesibles sin login) ──────────────
   { path: '/privacidad', element: <PrivacyPolicyPage /> },
+  { path: '/privacy-policy', element: <PrivacyPolicyPage /> },
   { path: '/derechos-datos', element: <PrivacyPolicyPage /> },
   { path: '/cookies', element: <PrivacyPolicyPage /> },
 

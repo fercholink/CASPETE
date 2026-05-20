@@ -238,15 +238,15 @@ export default function LandingPage() {
               <div className="lg:col-span-7 space-y-8 text-left">
                 <div className="inline-flex items-center gap-x-2 rounded-full bg-[#98FF00]/10 border border-[#98FF00]/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#98FF00] font-mono">
                   <Sparkles className="h-3.5 w-3.5 text-[#98FF00]" />
-                  <span>El Caspete Digital Escolar N°1 de Colombia</span>
+                  <span>Cuidando los recreos de quienes más amas</span>
                 </div>
                 
                 <h1 className="font-display text-4xl sm:text-5xl lg:text-7xl font-black tracking-tighter text-white leading-[0.95]">
-                  EL CASPETE QUE <span className="block text-zinc-400">CUIDA LA <span className="text-[#98FF00] underline decoration-[#e2f92e] decoration-wavy decoration-3">SALUD</span></span> Y EL BOLSILLO.
+                  EL SABOR DE <span className="block text-zinc-400">VERLOS <span className="text-[#98FF00] underline decoration-[#e2f92e] decoration-wavy decoration-3">CRECER</span></span> SANOS Y FELICES.
                 </h1>
                 
                 <p className="text-base text-zinc-400 max-w-xl font-normal leading-relaxed">
-                  Programa las loncheras semanales, controla el saldo de tus hijos, evita las filas y fomenta hábitos nutritivos escolares responsables. Integración completa para pagos con <strong className="text-white hover:text-[#98FF00] font-bold">Nequi</strong> y entregas ultra-rápidas mediante <strong className="text-[#98FF00] font-bold">QR Seguro</strong>.
+                  Caspete transforma el descanso en un momento seguro y lleno de cariño. Creamos un puente digital para que planees sus loncheras con amor, los colegios ofrezcan espacios de alimentación modernos y sanos, y tus hijos disfruten su día escolar escaneando su QR favorito sin cargar monedas.
                 </p>
 
                 {/* Ley de comedores seguros / Ley 2120 & Ley 1581 tag */}

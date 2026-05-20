@@ -119,11 +119,11 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-[#050505] text-zinc-100 selection:bg-[#98FF00] selection:text-black">
+    <div className="min-h-screen flex flex-col justify-between bg-[#050505] text-zinc-100 selection:bg-[#10b981] selection:text-black">
       
       {/* Dynamic Floating Global Notification Bar */}
       <div className="bg-[#12071a] text-zinc-300 py-3 px-4 text-center text-xs font-semibold flex items-center justify-center gap-2 select-none border-b border-purple-500/10">
-        <span className="bg-[#98FF00] text-black text-[9px] px-2 py-0.5 rounded-md font-black">NUEVO</span>
+        <span className="bg-[#10b981] text-black text-[9px] px-2 py-0.5 rounded-md font-black">NUEVO</span>
         <span>Ahora compatible con la Ley de Comida de Colegios (Ley 2120). Programa loncheras saludables con sellos de advertencia.</span>
       </div>
 
@@ -133,12 +133,12 @@ export default function LandingPage() {
           
           {/* Logo Brand Accent */}
           <Link to="/" className="flex items-center gap-2.5 focus:outline-none cursor-pointer group text-decoration-none">
-            <div className="w-10 h-10 rounded-2xl bg-[#98FF00] text-black flex items-center justify-center shadow-lg shadow-[#98FF00]/10 group-hover:scale-105 transition-transform font-bold">
+            <div className="w-10 h-10 rounded-2xl bg-[#10b981] text-black flex items-center justify-center shadow-lg shadow-[#10b981]/10 group-hover:scale-105 transition-transform font-bold">
               <span className="text-xl font-display font-black">C</span>
             </div>
             <div>
-              <span className="font-display font-black text-2xl tracking-tight text-white group-hover:text-[#98FF00] transition-colors">
-                CASPETE<span className="text-[#98FF00]">.</span>
+              <span className="font-display font-black text-2xl tracking-tight text-white group-hover:text-[#10b981] transition-colors">
+                CASPETE<span className="text-[#10b981]">.</span>
               </span>
               <span className="text-[10px] text-zinc-500 font-extrabold block leading-none tracking-wider uppercase">Loncheras Digitales</span>
             </div>
@@ -173,7 +173,7 @@ export default function LandingPage() {
             <Link to="/login" className="text-zinc-400 hover:text-white text-xs font-bold transition-all px-4 py-2 text-decoration-none">
               Iniciar sesión
             </Link>
-            <Link to="/register" className="bg-[#98FF00] hover:bg-white text-black text-xs font-bold font-display uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all shadow-md shadow-[#98FF00]/10 border border-[#98FF00] text-decoration-none">
+            <Link to="/register" className="bg-[#10b981] hover:bg-white text-black text-xs font-bold font-display uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all shadow-md shadow-[#10b981]/10 border border-[#10b981] text-decoration-none">
               Registrarse
             </Link>
           </div>
@@ -218,7 +218,7 @@ export default function LandingPage() {
               <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="w-full text-center py-2.5 rounded-xl border border-white/10 text-xs text-white text-decoration-none font-bold">
                 Entrar
               </Link>
-              <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="w-full text-center py-2.5 rounded-xl bg-[#98FF00] text-black text-xs text-decoration-none font-bold">
+              <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="w-full text-center py-2.5 rounded-xl bg-[#10b981] text-black text-xs text-decoration-none font-bold">
                 Registrarme
               </Link>
             </div>
@@ -232,19 +232,19 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="relative overflow-hidden pt-12 pb-26 lg:pt-24 bg-[#050505]">
           <div className="absolute inset-x-0 top-0 -z-10 h-[500px] bg-gradient-to-b from-[#12071a]/50 to-transparent" />
-          <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#98FF00]/5 rounded-full blur-3xl" />
+          <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#10b981]/5 rounded-full blur-3xl" />
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="grid grid-cols-1 gap-y-16 gap-x-12 lg:grid-cols-12 lg:items-center">
               
               {/* Left Hero Text */}
               <div className="lg:col-span-7 space-y-8 text-left">
-                <div className="inline-flex items-center gap-x-2 rounded-full bg-[#98FF00]/10 border border-[#98FF00]/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#98FF00] font-mono">
-                  <Sparkles className="h-3.5 w-3.5 text-[#98FF00]" />
+                <div className="inline-flex items-center gap-x-2 rounded-full bg-[#10b981]/10 border border-[#10b981]/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#10b981] font-mono">
+                  <Sparkles className="h-3.5 w-3.5 text-[#10b981]" />
                   <span>Cuidando los recreos de quienes más amas</span>
                 </div>
                 
                 <h1 className="font-display text-4xl sm:text-5xl lg:text-7xl font-black tracking-tighter text-white leading-[0.95]">
-                  EL SABOR DE <span className="block text-zinc-400">VERLOS <span className="text-[#98FF00] underline decoration-[#e2f92e] decoration-wavy decoration-3">CRECER</span></span> SANOS Y FELICES.
+                  EL SABOR DE <span className="block text-zinc-400">VERLOS <span className="text-[#10b981] underline decoration-[#e2f92e] decoration-wavy decoration-3">CRECER</span></span> SANOS Y FELICES.
                 </h1>
                 
                 <p className="text-base text-zinc-400 max-w-xl font-normal leading-relaxed">
@@ -254,11 +254,11 @@ export default function LandingPage() {
                 {/* Ley de comedores seguros / Ley 2120 & Ley 1581 tag */}
                 <div className="flex flex-wrap items-center gap-4 py-3 border-y border-white/5">
                   <div className="flex items-center gap-x-2 text-xs font-semibold text-zinc-300 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
-                    <Scale className="h-4 w-4 text-[#98FF00]" />
+                    <Scale className="h-4 w-4 text-[#10b981]" />
                     <span>Ley 2120 (Alimentación Saludable)</span>
                   </div>
                   <div className="flex items-center gap-x-2 text-xs font-semibold text-zinc-300 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
-                    <ShieldCheck className="h-4 w-4 text-[#98FF00]" />
+                    <ShieldCheck className="h-4 w-4 text-[#10b981]" />
                     <span>Ley 1581 (Habeas Data Protegido)</span>
                   </div>
                 </div>
@@ -267,7 +267,7 @@ export default function LandingPage() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
                   <Link
                     to="/register"
-                    className="px-8 py-4 rounded-2xl text-black font-display font-black text-xs uppercase tracking-widest bg-[#98FF00] hover:bg-white hover:shadow-[#98FF00]/20 transition-all flex items-center justify-center gap-2 group cursor-pointer shadow-lg shadow-[#98FF00]/10 border-2 border-[#98FF00] text-decoration-none"
+                    className="px-8 py-4 rounded-2xl text-black font-display font-black text-xs uppercase tracking-widest bg-[#10b981] hover:bg-white hover:shadow-[#10b981]/20 transition-all flex items-center justify-center gap-2 group cursor-pointer shadow-lg shadow-[#10b981]/10 border-2 border-[#10b981] text-decoration-none"
                   >
                     <span>Crear Cuenta Gratis (Padres)</span>
                     <ArrowRight className="h-4 w-4 stroke-[3px] group-hover:translate-x-1 transition-transform" />
@@ -277,14 +277,14 @@ export default function LandingPage() {
                     className="px-8 py-4 rounded-2xl text-xs uppercase tracking-widest font-black transition-all border border-white/10 bg-[#111111] text-zinc-100 hover:bg-zinc-900 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                   >
                     <span>Registrar mi Colegio</span>
-                    <School className="h-4 w-4 text-[#98FF00]" />
+                    <School className="h-4 w-4 text-[#10b981]" />
                   </button>
                 </div>
 
                 {/* Colombian features check */}
                 <div className="grid grid-cols-3 gap-6 pt-6 text-center sm:text-left border-t border-white/5">
                   <div>
-                    <div className="font-display text-4xl font-black text-[#98FF00]">100%</div>
+                    <div className="font-display text-4xl font-black text-[#10b981]">100%</div>
                     <div className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Libre de Efectivo</div>
                   </div>
                   <div>
@@ -292,7 +292,7 @@ export default function LandingPage() {
                     <div className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Recargas Express</div>
                   </div>
                   <div>
-                    <div className="font-display text-4xl font-black text-[#98FF00]">&lt; 5s</div>
+                    <div className="font-display text-4xl font-black text-[#10b981]">&lt; 5s</div>
                     <div className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Retiro con QR</div>
                   </div>
                 </div>
@@ -300,7 +300,7 @@ export default function LandingPage() {
 
               {/* Right Hero Graphics - The interactive app mock-up */}
               <div className="lg:col-span-5 relative">
-                <div className="absolute inset-0 bg-radial-gradient from-[#98FF00]/10 via-transparent to-transparent blur-3xl -z-10" />
+                <div className="absolute inset-0 bg-radial-gradient from-[#10b981]/10 via-transparent to-transparent blur-3xl -z-10" />
                 
                 {/* iPhone style Mockup */}
                 <div className="mx-auto max-w-[340px] rounded-[38px] border-[8px] border-zinc-800 bg-slate-950 p-3 shadow-2xl relative overflow-hidden ring-12 ring-white/5">
@@ -324,16 +324,16 @@ export default function LandingPage() {
                     {/* App Header */}
                     <div className="mt-4 flex justify-between items-center bg-[#111111] p-3 rounded-2xl shadow-xs border border-white/5">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 border border-[#98FF00] flex items-center justify-center overflow-hidden">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 border border-[#10b981] flex items-center justify-center overflow-hidden">
                           <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200" alt="Mateo" className="object-cover w-full h-full" />
                         </div>
                         <div>
                           <div className="font-bold text-white text-[11px]">Mateo González</div>
-                          <div className="text-[9px] text-zinc-400">Saldo: <strong className="text-[#98FF00] font-bold font-mono">$45.000 COP</strong></div>
+                          <div className="text-[9px] text-zinc-400">Saldo: <strong className="text-[#10b981] font-bold font-mono">$45.000 COP</strong></div>
                         </div>
                       </div>
                       <div className="nequi-gradient text-[9px] text-white px-2 py-1 rounded-lg font-bold flex items-center gap-1 shadow-xs">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#98FF00] animate-pulse" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
                         <span>Con Nequi</span>
                       </div>
                     </div>
@@ -342,10 +342,10 @@ export default function LandingPage() {
                     <div className="my-3 flex-1 overflow-y-auto space-y-3 pr-1">
                       
                       {/* Active Lunchbox Card */}
-                      <div className="bg-[#121c14] border border-[#98FF00]/10 p-3 rounded-2xl">
+                      <div className="bg-[#121c14] border border-[#10b981]/10 p-3 rounded-2xl">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="font-bold text-[#98FF00] text-[10px] uppercase tracking-wider block font-mono">Menú Programado</span>
-                          <span className="bg-[#98FF00]/10 text-[#98FF00] px-2 py-0.5 rounded-full text-[9px] font-semibold">Lunes</span>
+                          <span className="font-bold text-[#10b981] text-[10px] uppercase tracking-wider block font-mono">Menú Programado</span>
+                          <span className="bg-[#10b981]/10 text-[#10b981] px-2 py-0.5 rounded-full text-[9px] font-semibold">Lunes</span>
                         </div>
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 bg-[#050505] p-2 rounded-xl border border-white/5 shadow-xs">
@@ -368,9 +368,9 @@ export default function LandingPage() {
                       {/* QR Code Container */}
                       <div className="bg-[#111111] border border-white/5 p-3 rounded-2xl flex flex-col items-center justify-center space-y-2 shadow-xs">
                         <span className="text-[10px] text-zinc-300 text-center font-bold">QR Único para Reclamos</span>
-                        <div className="h-28 w-28 bg-black border-2 border-dashed border-[#98FF00]/40 rounded-xl p-2 flex items-center justify-center relative qr-glow">
-                          <QrCode className="h-full w-full text-[#98FF00]" />
-                          <div className="absolute bg-[#98FF00] px-2 py-0.5 text-[8px] font-extrabold text-black rounded-full shadow-xs -bottom-1">
+                        <div className="h-28 w-28 bg-black border-2 border-dashed border-[#10b981]/40 rounded-xl p-2 flex items-center justify-center relative qr-glow">
+                          <QrCode className="h-full w-full text-[#10b981]" />
+                          <div className="absolute bg-[#10b981] px-2 py-0.5 text-[8px] font-extrabold text-black rounded-full shadow-xs -bottom-1">
                             Mateo #908
                           </div>
                         </div>
@@ -381,7 +381,7 @@ export default function LandingPage() {
 
                     {/* Mock Push Notification */}
                     <div className="bg-[#1e0a29] text-white p-2 rounded-xl shadow-lg border border-purple-500/15 flex items-start gap-2 animate-bounce">
-                      <div className="bg-[#98FF00] p-1 rounded-md text-black">
+                      <div className="bg-[#10b981] p-1 rounded-md text-black">
                         <Check className="h-3 w-3 stroke-[3px]" />
                       </div>
                       <div>
@@ -394,11 +394,11 @@ export default function LandingPage() {
                 </div>
 
                 {/* Float accents */}
-                <div className="absolute -top-4 -right-4 bg-[#98FF00] text-black px-4 py-2 rounded-xl font-display font-black text-sm rotate-6 shadow-md border border-white/10 animate-pulse hidden md:block">
+                <div className="absolute -top-4 -right-4 bg-[#10b981] text-black px-4 py-2 rounded-xl font-display font-black text-sm rotate-6 shadow-md border border-white/10 animate-pulse hidden md:block">
                   ¡Adiós Efectivo! 🪙
                 </div>
                 <div className="absolute -bottom-6 -left-4 bg-[#111111] text-zinc-300 px-4 py-3 rounded-xl font-sans text-xs font-semibold shadow-lg border border-white/5 flex items-center gap-2 hidden md:flex">
-                  <div className="w-3 h-3 rounded-full bg-[#98FF00]" />
+                  <div className="w-3 h-3 rounded-full bg-[#10b981]" />
                   <span>Saludable y Seguro</span>
                 </div>
               </div>
@@ -415,7 +415,7 @@ export default function LandingPage() {
                 Cumplimiento Real de la Ley de Alimentación Escolar (Ley 2120)
               </h2>
               <p className="text-zinc-400 text-sm">
-                Caspete evalúa al instante los ingredientes y etiqueta el menú escolar. <span className="text-[#98FF00] font-bold">Haz la prueba seleccionando un alimento de tienda escolar</span> para ver la advertencia de sellos y cómo ayudamos a que tus hijos elijan más sano:
+                Caspete evalúa al instante los ingredientes y etiqueta el menú escolar. <span className="text-[#10b981] font-bold">Haz la prueba seleccionando un alimento de tienda escolar</span> para ver la advertencia de sellos y cómo ayudamos a que tus hijos elijan más sano:
               </p>
             </div>
 
@@ -425,7 +425,7 @@ export default function LandingPage() {
               <div className="md:col-span-5 bg-[#111111] p-6 rounded-[2rem] border border-white/5 space-y-4 flex flex-col justify-between">
                 <div>
                   <h3 className="font-display text-base font-bold text-zinc-100 mb-4 flex items-center gap-2 border-b border-white/5 pb-3">
-                    <UtensilsCrossed className="h-4 w-4 text-[#98FF00]" />
+                    <UtensilsCrossed className="h-4 w-4 text-[#10b981]" />
                     <span>Productos Disponibles</span>
                   </h3>
                   <div className="space-y-2">
@@ -435,14 +435,14 @@ export default function LandingPage() {
                         onClick={() => selectTestFood(food)}
                         className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all text-left group cursor-pointer ${
                           testFood.id === food.id
-                            ? 'border-[#98FF00]/40 bg-[#121c14] ring-1 ring-[#98FF00]/25'
+                            ? 'border-[#10b981]/40 bg-[#121c14] ring-1 ring-[#10b981]/25'
                             : 'border-white/5 hover:border-white/10 bg-[#070709]/50 hover:bg-[#0d0d0f]'
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <span className="text-xl bg-[#111] p-2 rounded-xl border border-white/5 shadow-xs">{food.image}</span>
                           <div>
-                            <div className="font-bold text-white text-xs group-hover:text-[#98FF00] transition-colors">{food.name}</div>
+                            <div className="font-bold text-white text-xs group-hover:text-[#10b981] transition-colors">{food.name}</div>
                             <span className={`text-[9px] px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wide leading-none mt-1 inline-block ${
                               food.isHealthy ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/40' : 'bg-rose-950/50 text-rose-400 border border-rose-900/40'
                             }`}>
@@ -477,7 +477,7 @@ export default function LandingPage() {
                       <div className="flex flex-wrap gap-2.5">
                         {testFood.seals.map((seal, idx) => (
                           <div key={idx} className="flex items-center gap-2 bg-black text-white font-mono px-3 py-2 rounded-lg text-xs font-black select-none border border-zinc-700 shadow-md">
-                            <AlertTriangle className="h-3.5 w-3.5 text-[#98FF00]" />
+                            <AlertTriangle className="h-3.5 w-3.5 text-[#10b981]" />
                             <span>ALTO EN {seal.toUpperCase()}</span>
                           </div>
                         ))}
@@ -513,7 +513,7 @@ export default function LandingPage() {
                     : 'bg-amber-950/20 border-amber-900/30 text-amber-500'
                 }`}>
                   <div className="flex items-start gap-3">
-                    <div className={`p-1.5 rounded-lg ${testFood.isHealthy ? 'bg-emerald-900 text-white' : 'bg-[#98FF00] text-black'}`}>
+                    <div className={`p-1.5 rounded-lg ${testFood.isHealthy ? 'bg-emerald-900 text-white' : 'bg-[#10b981] text-black'}`}>
                       <Flame className="h-4 w-4" />
                     </div>
                     <div className="text-left">
@@ -552,28 +552,28 @@ export default function LandingPage() {
             <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
               
               {/* Bento Card 1: Parents */}
-              <div className="bg-[#111111] p-8 rounded-[2rem] border border-white/5 flex flex-col justify-between space-y-8 relative overflow-hidden group hover:border-[#98FF00]/25 transition-all">
-                <div className="absolute top-0 right-0 h-24 w-24 bg-[#98FF00]/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform" />
+              <div className="bg-[#111111] p-8 rounded-[2rem] border border-white/5 flex flex-col justify-between space-y-8 relative overflow-hidden group hover:border-[#10b981]/25 transition-all">
+                <div className="absolute top-0 right-0 h-24 w-24 bg-[#10b981]/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform" />
                 <div className="space-y-4 text-left">
-                  <div className="w-12 h-12 rounded-2xl bg-[#98FF00] text-black flex items-center justify-center shadow-md font-bold">
+                  <div className="w-12 h-12 rounded-2xl bg-[#10b981] text-black flex items-center justify-center shadow-md font-bold">
                     <Heart className="h-6 w-6" />
                   </div>
                   <h3 className="font-display text-2xl font-extrabold text-white">Para Padres</h3>
                   <ul className="space-y-2.5 text-sm text-zinc-400">
                     <li className="flex items-center gap-x-2">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Programa loncheras saludables semanales</span>
                     </li>
                     <li className="flex items-center gap-x-2">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Controla el saldo digital desde Nequi</span>
                     </li>
                     <li className="flex items-center gap-x-2">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Restringe alérgenos y comida chatarra</span>
                     </li>
                     <li className="flex items-center gap-x-2">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Recibe alertas de retiro por QR</span>
                     </li>
                   </ul>
@@ -583,33 +583,33 @@ export default function LandingPage() {
                   className="w-full py-3 rounded-xl border border-white/5 bg-[#1a1a1e] hover:bg-[#222226] text-zinc-100 font-bold transition-all flex items-center justify-center gap-2 cursor-pointer text-decoration-none"
                 >
                   <span>Saber más / Registrarme</span>
-                  <ChevronRight className="h-4 w-4 text-[#98FF00]" />
+                  <ChevronRight className="h-4 w-4 text-[#10b981]" />
                 </Link>
               </div>
 
               {/* Bento Card 2: Operators / Cashier */}
-              <div className="bg-[#111111] p-8 rounded-[2rem] border border-white/5 flex flex-col justify-between space-y-8 relative overflow-hidden group hover:border-[#98FF00]/25 transition-all">
-                <div className="absolute top-0 right-0 h-24 w-24 bg-[#98FF00]/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform" />
+              <div className="bg-[#111111] p-8 rounded-[2rem] border border-white/5 flex flex-col justify-between space-y-8 relative overflow-hidden group hover:border-[#10b981]/25 transition-all">
+                <div className="absolute top-0 right-0 h-24 w-24 bg-[#10b981]/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform" />
                 <div className="space-y-4 text-left">
-                  <div className="w-12 h-12 rounded-2xl bg-[#98FF00] text-black flex items-center justify-center shadow-md font-bold">
+                  <div className="w-12 h-12 rounded-2xl bg-[#10b981] text-black flex items-center justify-center shadow-md font-bold">
                     <QrCode className="h-6 w-6" />
                   </div>
                   <h3 className="font-display text-2xl font-extrabold text-white">Para Cafeterías</h3>
                   <ul className="space-y-2.5 text-sm text-zinc-400">
                     <li className="flex items-center gap-x-2">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Lectura QR ultra veloz (&lt; 5 segundos)</span>
                     </li>
                     <li className="flex items-center gap-x-2">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Pre-orders reducen desperdicios de comida</span>
                     </li>
                     <li className="flex items-center gap-x-2">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Alertas visibles de alergias en escaneo</span>
                     </li>
                     <li className="flex items-center gap-x-2">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Cuentas claras sin portar efectivo escolar</span>
                     </li>
                   </ul>
@@ -619,7 +619,7 @@ export default function LandingPage() {
                   className="w-full py-3 rounded-xl border border-white/5 bg-[#1a1a1e] hover:bg-[#222226] text-zinc-100 font-bold transition-all flex items-center justify-center gap-2 cursor-pointer text-decoration-none"
                 >
                   <span>Entrar a Cafetería POS</span>
-                  <ChevronRight className="h-4 w-4 text-[#98FF00]" />
+                  <ChevronRight className="h-4 w-4 text-[#10b981]" />
                 </Link>
               </div>
 
@@ -679,7 +679,7 @@ export default function LandingPage() {
               
               {/* Step 1 */}
               <div className="flex flex-col items-start space-y-4">
-                <div className="w-14 h-14 rounded-full bg-zinc-900 border border-white/10 text-[#98FF00] flex items-center justify-center font-display font-black text-xl shadow-md font-mono">
+                <div className="w-14 h-14 rounded-full bg-zinc-900 border border-white/10 text-[#10b981] flex items-center justify-center font-display font-black text-xl shadow-md font-mono">
                   <span>1</span>
                 </div>
                 <h3 className="font-display text-xl font-bold text-white">Recarga y Limita</h3>
@@ -690,7 +690,7 @@ export default function LandingPage() {
 
               {/* Step 2 */}
               <div className="flex flex-col items-start space-y-4">
-                <div className="w-14 h-14 rounded-full bg-zinc-900 border border-white/10 text-[#98FF00] flex items-center justify-center font-display font-black text-xl shadow-md font-mono">
+                <div className="w-14 h-14 rounded-full bg-zinc-900 border border-white/10 text-[#10b981] flex items-center justify-center font-display font-black text-xl shadow-md font-mono">
                   <span>2</span>
                 </div>
                 <h3 className="font-display text-xl font-bold text-white">Programa Loncheras</h3>
@@ -718,7 +718,7 @@ export default function LandingPage() {
         <section className="py-24 bg-[#050505] border-t border-white/5">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center space-y-4 mb-16">
-              <span className="text-[#98FF00] text-xs font-extrabold tracking-widest uppercase block font-mono">Planes para Colegios</span>
+              <span className="text-[#10b981] text-xs font-extrabold tracking-widest uppercase block font-mono">Planes para Colegios</span>
               <h2 className="font-display text-4xl font-extrabold text-white leading-tight tracking-tight">
                 Elige la modalidad ideal de tu institución
               </h2>
@@ -730,11 +730,11 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
               
               {/* Commission Plan */}
-              <div className="bg-[#111111] p-10 rounded-[2.5rem] border border-white/5 flex flex-col justify-between space-y-8 relative overflow-hidden group hover:border-[#98FF00]/20 transition-all">
+              <div className="bg-[#111111] p-10 rounded-[2.5rem] border border-white/5 flex flex-col justify-between space-y-8 relative overflow-hidden group hover:border-[#10b981]/20 transition-all">
                 <div>
                   <div className="flex justify-between items-center mb-6">
                     <span className="text-4xl">📊</span>
-                    <span className="bg-[#98FF00]/10 text-[#98FF00] border border-[#98FF00]/20 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Sin Costo Fijo</span>
+                    <span className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Sin Costo Fijo</span>
                   </div>
                   <h3 className="font-display text-2xl font-black text-white mb-3">Modalidad por Comisión</h3>
                   <p className="text-zinc-400 text-xs leading-relaxed mb-6">
@@ -742,26 +742,26 @@ export default function LandingPage() {
                   </p>
                   <ul className="space-y-3.5 text-xs text-zinc-300">
                     <li className="flex items-center gap-x-2.5">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Sin costo mensual fijo</span>
                     </li>
                     <li className="flex items-center gap-x-2.5">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Paga solo sobre lo que se vende</span>
                     </li>
                     <li className="flex items-center gap-x-2.5">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Activación inmediata del servicio</span>
                     </li>
                     <li className="flex items-center gap-x-2.5">
-                      <Check className="h-4 w-4 text-[#98FF00] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-[#10b981] flex-shrink-0" />
                       <span>Todas las funciones transaccionales y legales</span>
                     </li>
                   </ul>
                 </div>
                 <button 
                   onClick={() => openModal('COMMISSION')}
-                  className="w-full py-4 rounded-2xl text-black font-display font-black text-xs uppercase tracking-widest bg-[#98FF00] hover:bg-white hover:shadow-[#98FF00]/10 border-2 border-[#98FF00] transition-all cursor-pointer text-center"
+                  className="w-full py-4 rounded-2xl text-black font-display font-black text-xs uppercase tracking-widest bg-[#10b981] hover:bg-white hover:shadow-[#10b981]/10 border-2 border-[#10b981] transition-all cursor-pointer text-center"
                 >
                   Solicitar Información
                 </button>
@@ -826,10 +826,10 @@ export default function LandingPage() {
                 <div key={index} className="border-b border-white/5 pb-4">
                   <button
                     onClick={() => toggleFaq(index)}
-                    className="w-full flex justify-between items-center py-4 text-left font-display font-bold text-zinc-200 hover:text-[#98FF00] transition-colors text-base sm:text-lg focus:outline-none cursor-pointer"
+                    className="w-full flex justify-between items-center py-4 text-left font-display font-bold text-zinc-200 hover:text-[#10b981] transition-colors text-base sm:text-lg focus:outline-none cursor-pointer"
                   >
                     <span>{faq.q}</span>
-                    <span className="text-[#98FF00] font-bold text-xl ml-4 font-mono">
+                    <span className="text-[#10b981] font-bold text-xl ml-4 font-mono">
                       {openFaq === index ? '−' : '+'}
                     </span>
                   </button>
@@ -846,7 +846,7 @@ export default function LandingPage() {
 
         {/* Final Action Banner CTA */}
         <section className="py-24 bg-gradient-to-b from-[#0e0e11] to-[#070709] border-t border-white/5 relative overflow-hidden">
-          <div className="absolute inset-0 bg-radial-gradient from-[#98FF00]/5 via-transparent to-transparent blur-3xl -z-10" />
+          <div className="absolute inset-0 bg-radial-gradient from-[#10b981]/5 via-transparent to-transparent blur-3xl -z-10" />
           <div className="mx-auto max-w-5xl px-6 text-center space-y-8 relative z-10">
             <h2 className="font-display text-4xl font-black text-white max-w-2xl mx-auto tracking-tight leading-tight">
               Únete a la revolución escolar y dile adiós al efectivo
@@ -857,7 +857,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-4 max-w-md mx-auto">
               <Link
                 to="/register"
-                className="px-8 py-4 rounded-xl text-black font-display font-bold bg-[#98FF00] hover:bg-[#a9ff2e] transition-all flex items-center justify-center gap-2 shadow-xl shadow-[#98FF00]/10 hover:shadow-[#98FF00]/25 cursor-pointer text-decoration-none"
+                className="px-8 py-4 rounded-xl text-black font-display font-bold bg-[#10b981] hover:bg-[#a9ff2e] transition-all flex items-center justify-center gap-2 shadow-xl shadow-[#10b981]/10 hover:shadow-[#10b981]/25 cursor-pointer text-decoration-none"
               >
                 <span>Crear Cuenta Gratis</span>
                 <Sparkles className="h-5 w-5" />
@@ -877,7 +877,7 @@ export default function LandingPage() {
               {sent ? (
                 <div className="text-center py-10 space-y-4">
                   <div className="text-6xl">🎉</div>
-                  <h3 className="font-display text-2xl font-black text-[#98FF00]">¡Datos Recibidos!</h3>
+                  <h3 className="font-display text-2xl font-black text-[#10b981]">¡Datos Recibidos!</h3>
                   <p className="text-sm text-zinc-400 leading-relaxed mb-6">
                     Muchas gracias por tu interés. Nuestro equipo se comunicará contigo en menos de 24 horas hábiles para coordinar la demostración o afiliar a tu colegio.
                   </p>
@@ -894,7 +894,7 @@ export default function LandingPage() {
                     <div>
                       <h3 className="font-display text-2xl font-black text-white">Solicitar Información</h3>
                       <p className="text-xs text-zinc-500 mt-1 font-mono">
-                        Modalidad de Interés: <span className="text-[#98FF00] font-bold">{leadModal === 'COMMISSION' ? 'Comisión transaccional' : 'Suscripción mensual'}</span>
+                        Modalidad de Interés: <span className="text-[#10b981] font-bold">{leadModal === 'COMMISSION' ? 'Comisión transaccional' : 'Suscripción mensual'}</span>
                       </p>
                     </div>
                     <button 
@@ -915,7 +915,7 @@ export default function LandingPage() {
                           value={form.school_name} 
                           onChange={e => setForm(f => ({ ...f, school_name: e.target.value.replace(/[^A-Za-z0-9À-ÿ\s.,#&'-]/g, '') }))} 
                           placeholder="Colegio San José"
-                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
+                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#10b981] transition-colors"
                         />
                       </div>
                       <div className="space-y-1">
@@ -925,7 +925,7 @@ export default function LandingPage() {
                           value={form.nit} 
                           onChange={e => setForm(f => ({ ...f, nit: e.target.value.replace(/[^0-9.-]/g, '') }))} 
                           placeholder="900.123.456-1"
-                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
+                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#10b981] transition-colors"
                         />
                       </div>
                     </div>
@@ -939,7 +939,7 @@ export default function LandingPage() {
                           value={form.city} 
                           onChange={e => setForm(f => ({ ...f, city: e.target.value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, '') }))} 
                           placeholder="Bogotá"
-                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
+                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#10b981] transition-colors"
                         />
                       </div>
                       <div className="space-y-1">
@@ -949,7 +949,7 @@ export default function LandingPage() {
                           value={form.students_count} 
                           onChange={e => setForm(f => ({ ...f, students_count: e.target.value.replace(/\D/g, '') }))} 
                           placeholder="350"
-                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
+                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#10b981] transition-colors"
                         />
                       </div>
                     </div>
@@ -962,7 +962,7 @@ export default function LandingPage() {
                         value={form.contact_name} 
                         onChange={e => setForm(f => ({ ...f, contact_name: e.target.value.replace(/[^A-Za-zÀ-ÿ\s'.]/g, '') }))} 
                         placeholder="Dr. Carlos Rodríguez"
-                        className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
+                        className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#10b981] transition-colors"
                       />
                     </div>
 
@@ -975,7 +975,7 @@ export default function LandingPage() {
                           value={form.contact_email} 
                           onChange={e => setForm(f => ({ ...f, contact_email: e.target.value }))} 
                           placeholder="rector@colegio.edu.co"
-                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
+                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#10b981] transition-colors"
                         />
                       </div>
                       <div className="space-y-1">
@@ -985,7 +985,7 @@ export default function LandingPage() {
                           value={form.contact_phone} 
                           onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value.replace(/[^0-9+\s()-]/g, '') }))} 
                           placeholder="3001234567"
-                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
+                          className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#10b981] transition-colors"
                         />
                       </div>
                     </div>
@@ -1001,7 +1001,7 @@ export default function LandingPage() {
                         value={form.message} 
                         onChange={e => setForm(f => ({ ...f, message: e.target.value }))} 
                         placeholder="Cuéntanos brevemente cuáles son las necesidades de alimentación o recaudo en tu colegio..."
-                        className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors resize-none"
+                        className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#10b981] transition-colors resize-none"
                       />
                     </div>
 
@@ -1010,7 +1010,7 @@ export default function LandingPage() {
                     <button 
                       type="submit" 
                       disabled={sending} 
-                      className="w-full py-4 rounded-xl text-black font-display font-black text-xs uppercase tracking-widest bg-[#98FF00] hover:bg-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none shadow-lg shadow-[#98FF00]/10"
+                      className="w-full py-4 rounded-xl text-black font-display font-black text-xs uppercase tracking-widest bg-[#10b981] hover:bg-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none shadow-lg shadow-[#10b981]/10"
                     >
                       {sending ? 'Enviando Datos...' : '📨 Enviar Solicitud de Demo'}
                     </button>
@@ -1030,11 +1030,11 @@ export default function LandingPage() {
           {/* Brand Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#98FF00] text-black flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-lg bg-[#10b981] text-black flex items-center justify-center font-bold">
                 <span className="font-display font-black text-xs">C</span>
               </div>
               <span className="font-display font-black text-xl text-white tracking-tight">
-                CASPETE<span className="text-[#98FF00]">.</span>com
+                CASPETE<span className="text-[#10b981]">.</span>com
               </span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
@@ -1046,13 +1046,13 @@ export default function LandingPage() {
           <div>
             <h5 className="text-xs font-bold text-white uppercase tracking-widest mb-4">Plataforma</h5>
             <div className="flex flex-col gap-3 text-xs">
-              <Link to="/login" className="text-zinc-500 hover:text-[#98FF00] transition-colors text-decoration-none">
+              <Link to="/login" className="text-zinc-500 hover:text-[#10b981] transition-colors text-decoration-none">
                 Iniciar sesión (Padres)
               </Link>
-              <Link to="/register" className="text-zinc-500 hover:text-[#98FF00] transition-colors text-decoration-none">
+              <Link to="/register" className="text-zinc-500 hover:text-[#10b981] transition-colors text-decoration-none">
                 Registrarse (Padres)
               </Link>
-              <Link to="/login" className="text-zinc-500 hover:text-[#98FF00] transition-colors text-decoration-none">
+              <Link to="/login" className="text-zinc-500 hover:text-[#10b981] transition-colors text-decoration-none">
                 Punto de Venta Cafetería (POS)
               </Link>
             </div>
@@ -1063,15 +1063,15 @@ export default function LandingPage() {
             <h5 className="text-xs font-bold text-white uppercase tracking-widest mb-4">Seguridad y Normativa</h5>
             <div className="flex flex-col gap-3 text-xs text-zinc-400">
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-[#98FF00]" />
+                <ShieldCheck className="h-3.5 w-3.5 text-[#10b981]" />
                 <span>Ley 1581 (Habeas Data Menores)</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Scale className="h-3.5 w-3.5 text-[#98FF00]" />
+                <Scale className="h-3.5 w-3.5 text-[#10b981]" />
                 <span>Ley 2120 (Alimentos Escolares)</span>
               </div>
               <div className="flex items-center gap-1.5 text-[10px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#98FF00]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
                 <span>Aprobación de menús por Nutricionistas</span>
               </div>
             </div>
@@ -1084,9 +1084,9 @@ export default function LandingPage() {
               ¿Tienes alguna duda o quieres soporte directo en Colombia? Escríbenos a:
             </p>
             <div className="flex flex-col gap-1 text-[11px]">
-              <a href="mailto:hola@caspete.co" className="text-zinc-400 hover:text-[#98FF00] text-decoration-none">hola@caspete.co</a>
-              <a href="mailto:privacidad@caspete.com" className="text-zinc-400 hover:text-[#98FF00] text-decoration-none">privacidad@caspete.com</a>
-              <a href="https://wa.me/573214364223" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#98FF00] text-decoration-none mt-1 font-bold">💬 WhatsApp: +57 321 436 4223</a>
+              <a href="mailto:hola@caspete.co" className="text-zinc-400 hover:text-[#10b981] text-decoration-none">hola@caspete.co</a>
+              <a href="mailto:privacidad@caspete.com" className="text-zinc-400 hover:text-[#10b981] text-decoration-none">privacidad@caspete.com</a>
+              <a href="https://wa.me/573214364223" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#10b981] text-decoration-none mt-1 font-bold">💬 WhatsApp: +57 321 436 4223</a>
             </div>
           </div>
 
@@ -1096,7 +1096,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-zinc-500">
           <span>&copy; {new Date().getFullYear()} Caspete S.A.S. Todos los derechos reservados. Colombia.</span>
           <div className="flex gap-4">
-            <Link to="/privacy-policy" className="text-zinc-500 hover:text-[#98FF00] text-decoration-none">Política de Privacidad (Habeas Data)</Link>
+            <Link to="/privacy-policy" className="text-zinc-500 hover:text-[#10b981] text-decoration-none">Política de Privacidad (Habeas Data)</Link>
           </div>
         </div>
       </footer>

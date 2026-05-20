@@ -71,6 +71,10 @@ enum ProductType {
   SUPPLEMENT
   COMBO
 }
+enum AcquisitionModel {
+  COMMISSION
+  MONTHLY_FEE
+}
 
 model School {
   id         String   @id @default(uuid()) @db.Uuid
@@ -84,6 +88,11 @@ model School {
   email        String?  @db.VarChar(255)
   logo_url   String?  @db.Text
   plan       PlanType @default(BASIC)
+  
+  acquisition_model AcquisitionModel @default(COMMISSION)
+  commission_rate   Decimal?         @db.Decimal(5, 2) // e.g. 5.00 for 5%
+  monthly_fee       Decimal?         @db.Decimal(10, 2) // e.g. 200000
+
   active     Boolean  @default(true)
   created_at DateTime @default(now())
 

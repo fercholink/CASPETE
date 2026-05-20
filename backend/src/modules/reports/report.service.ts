@@ -70,7 +70,7 @@ export async function getSchoolSummary(actor: JwtPayload) {
 
   const [
     ordersToday, ordersPending, ordersConfirmed, ordersDelivered,
-    revenueToday, revenueMonth, activeStudents, topProductsRaw, stores
+    revenueToday, revenueMonth, activeStudents, topProductsRaw, stores, schoolInfo
   ] = await Promise.all([
     prisma.lunchOrder.count({ where: { school_id: schoolId, created_at: { gte: start, lte: end } } }),
     prisma.lunchOrder.count({ where: { school_id: schoolId, status: 'PENDING' } }),
@@ -86,7 +86,8 @@ export async function getSchoolSummary(actor: JwtPayload) {
       orderBy: { _sum: { quantity: 'desc' } },
       take: 5,
     }),
-    prisma.store.findMany({ where: { school_id: schoolId } })
+    prisma.store.findMany({ where: { school_id: schoolId } }),
+    prisma.school.findUnique({ where: { id: schoolId }, select: { acquisition_model: true, commission_rate: true, monthly_fee: true } })
   ]);
 
   const spIds = topProductsRaw.map(r => r.store_product_id);
@@ -123,7 +124,10 @@ export async function getSchoolSummary(actor: JwtPayload) {
     revenue_today: revenueToday._sum.amount?.toNumber() ?? 0,
     revenue_month: revenueMonth._sum.amount?.toNumber() ?? 0,
     active_students: activeStudents, top_products: topProducts,
-    stores_performance: storesPerformance
+    stores_performance: storesPerformance,
+    acquisition_model: schoolInfo?.acquisition_model ?? 'COMMISSION',
+    commission_rate: schoolInfo?.commission_rate?.toNumber() ?? 5,
+    monthly_fee: schoolInfo?.monthly_fee?.toNumber() ?? 200000,
   };
 }
 

@@ -63,8 +63,10 @@ export default function StudentsPage() {
   const isParent = user?.role === 'PARENT';
   const isAdmin = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isSchoolAdmin = user?.role === 'SCHOOL_ADMIN';
 
   const fetchStudents = useCallback((pg = 1) => {
+    if (isSchoolAdmin) { setLoading(false); return; }
     setLoading(true);
     const p = new URLSearchParams();
     p.set('page', String(pg)); p.set('limit', '20');
@@ -74,7 +76,7 @@ export default function StudentsPage() {
       .then(r => { setStudents(r.data.data.students); setTotalPages(r.data.data.pages); setError(''); })
       .catch(e => setError((e as any).response?.data?.error ?? 'Error al cargar estudiantes'))
       .finally(() => setLoading(false));
-  }, [search, filterActive]);
+  }, [search, filterActive, isSchoolAdmin]);
 
   useEffect(() => { fetchStudents(page); }, [fetchStudents, page]);
   useEffect(() => { const t = setTimeout(() => { setPage(1); fetchStudents(1); }, 350); return () => clearTimeout(t); }, [search]);
@@ -249,7 +251,7 @@ export default function StudentsPage() {
         )}
 
         {/* Search + filter bar */}
-        {(isAdmin || students.length > 5) && (
+        {!isSchoolAdmin && (isAdmin || students.length > 5) && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20, alignItems: 'center' }}>
             <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -271,7 +273,7 @@ export default function StudentsPage() {
         {loading && <div className="roadmap-note">Cargando estudiantes...</div>}
         {error && <p className="form-error">{error}</p>}
 
-        {!loading && !error && students.length === 0 && (
+        {!isSchoolAdmin && !loading && !error && students.length === 0 && (
           <div className="roadmap-note">
             {isParent ? (
               <>Aún no has registrado hijos.{' '}
@@ -281,7 +283,7 @@ export default function StudentsPage() {
           </div>
         )}
 
-        {!loading && students.length > 0 && (
+        {!isSchoolAdmin && !loading && students.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {students.map((student) => (
               <div key={student.id} className="user-card" style={{ padding: '20px 24px', marginBottom: 0 }}>
@@ -379,7 +381,7 @@ export default function StudentsPage() {
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {!isSchoolAdmin && totalPages > 1 && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 24 }}>
             <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ fontSize: 13, padding: '6px 14px' }}>← Anterior</button>
             <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>{page} / {totalPages}</span>

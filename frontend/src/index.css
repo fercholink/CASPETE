@@ -8,17 +8,17 @@
   
   --color-brand-green-50: #102619;
   --color-brand-green-100: #1e3f28;
-  --color-brand-green-500: #98FF00;
+  --color-brand-green-500: #10b981;
   --color-brand-green-600: #8ae600;
   --color-brand-green-700: #73c000;
   
-  --color-brand-yellow-400: #98FF00;
+  --color-brand-yellow-400: #10b981;
   --color-brand-yellow-500: #e2f92e;
   
   --color-nequi: #3b1754;
   --color-nequi-pink: #e5007e;
   --color-nequi-light: #200d2e;
-  --color-brand-neon: #98FF00;
+  --color-brand-neon: #10b981;
 }
 
 /* Custom styles for AI Studio Landing page */
@@ -43,23 +43,23 @@
 }
 
 .bento-card-green {
-  background-color: #98FF00;
+  background-color: #10b981;
   color: #050505;
   border-radius: 2rem;
 }
 
 .bento-button-neon {
-  background-color: #98FF00;
+  background-color: #10b981;
   color: #050505;
   font-family: var(--font-display);
   font-weight: 800;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 2px solid #98FF00;
+  border: 2px solid #10b981;
 }
 
 .bento-button-neon:hover {
   background-color: transparent;
-  color: #98FF00;
+  color: #10b981;
   box-shadow: 0 0 20px rgba(152, 255, 0, 0.4);
 }
 
@@ -67,7 +67,7 @@
   font-family: var(--font-display);
   font-weight: 900;
   letter-spacing: -0.05em;
-  color: #98FF00;
+  color: #10b981;
 }
 
 .nequi-gradient {

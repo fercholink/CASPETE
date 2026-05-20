@@ -60,12 +60,43 @@ export async function listUsers(
   const limit = Math.min(100, Math.max(1, filters?.limit ?? 50));
   const skip = (page - 1) * limit;
 
-  const where: Record<string, unknown> = {};
+  const where: any = {};
+  let stats: any = null;
 
   // Scope by school for non-super admins
   if (actor.role !== 'SUPER_ADMIN') {
     if (!actor.schoolId) throw new AppError('Tu cuenta no tiene colegio asignado', 403);
     where.school_id = actor.schoolId;
+    
+    // Calculate stats for the school (all users)
+    const schoolUsers = await prisma.user.groupBy({
+      by: ['role'],
+      where: { school_id: actor.schoolId },
+      _count: true,
+    });
+    
+    let total = 0;
+    let parents = 0;
+    let vendors = 0;
+    let admins = 0;
+    
+    schoolUsers.forEach(g => {
+      total += g._count;
+      if (g.role === 'PARENT') parents += g._count;
+      if (g.role === 'VENDOR') vendors += g._count;
+      if (g.role === 'SCHOOL_ADMIN') admins += g._count;
+    });
+    
+    stats = { total, parents, vendors, admins };
+
+    // Restrict SCHOOL_ADMIN to only see VENDOR and SCHOOL_ADMIN
+    if (actor.role === 'SCHOOL_ADMIN') {
+       if (filters?.role && ['VENDOR', 'SCHOOL_ADMIN'].includes(filters.role)) {
+         where.role = filters.role;
+       } else {
+         where.role = { in: ['VENDOR', 'SCHOOL_ADMIN'] };
+       }
+    }
   } else if (filters?.school_id) {
     where.school_id = filters.school_id;
   }
@@ -77,7 +108,11 @@ export async function listUsers(
       { phone: { contains: filters.search, mode: 'insensitive' } },
     ];
   }
-  if (filters?.role) where.role = filters.role;
+  
+  if (actor.role === 'SUPER_ADMIN' && filters?.role) {
+    where.role = filters.role;
+  }
+
   if (filters?.active !== undefined) where.active = filters.active === 'true';
 
   const [users, total] = await prisma.$transaction([
@@ -91,7 +126,7 @@ export async function listUsers(
     prisma.user.count({ where }),
   ]);
 
-  return { users, total, page, limit, pages: Math.ceil(total / limit) };
+  return { users, total, page, limit, pages: Math.ceil(total / limit), stats };
 }
 
 export async function getUser(id: string, actor: JwtPayload) {

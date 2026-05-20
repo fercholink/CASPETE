@@ -104,7 +104,7 @@ export default function Ley2120DashboardPage() {
             <span className="desktop-only">Inicio</span>
           </button>
           {isAdmin && <Link to="/products" className="btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>Productos</Link>}
-          {isAdmin && <Link to="/suppliers" className="btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>Proveedores</Link>}
+          {user?.role === 'SUPER_ADMIN' && <Link to="/suppliers" className="btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>Proveedores</Link>}
           <button className="btn-ghost" onClick={logout}>Salir</button>
         </div>
       </nav>
@@ -184,24 +184,26 @@ export default function Ley2120DashboardPage() {
             </section>
 
             {/* ── Proveedores ── */}
-            <section style={{ marginBottom: 28 }}>
-              <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-muted)' }}>Trazabilidad de Proveedores (Art. 32 Res. 2492)</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
-                <KpiCard icon="🏭" label="Proveedores activos" value={data.suppliers.total} color="var(--color-text)" bg="var(--color-gray-100)" />
-                <KpiCard icon="✅" label="Verificados" value={data.suppliers.verified}
-                  sub={`${data.suppliers.pct_verified}% del total`} color="#15803d" bg="rgba(22,163,74,0.08)" />
-                <KpiCard icon="⚠️" label="Fichas vencidas / sin ficha" value={data.suppliers.expired_tech_sheets}
-                  sub="Requieren actualización urgente" color={data.suppliers.expired_tech_sheets > 0 ? '#dc2626' : '#15803d'} bg={data.suppliers.expired_tech_sheets > 0 ? 'rgba(220,38,38,0.08)' : 'rgba(22,163,74,0.08)'} />
-                {data.suppliers.expired_tech_sheets > 0 && (
-                  <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 14, padding: '16px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 8 }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#dc2626' }}>Acción requerida</p>
-                    <Link to="/suppliers?expired_only=true" style={{ fontSize: 12, color: '#dc2626', textDecoration: 'underline' }}>
-                      Ver proveedores con fichas vencidas →
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </section>
+            {user?.role === 'SUPER_ADMIN' && (
+              <section style={{ marginBottom: 28 }}>
+                <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-muted)' }}>Trazabilidad de Proveedores (Art. 32 Res. 2492)</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
+                  <KpiCard icon="🏭" label="Proveedores activos" value={data.suppliers.total} color="var(--color-text)" bg="var(--color-gray-100)" />
+                  <KpiCard icon="✅" label="Verificados" value={data.suppliers.verified}
+                    sub={`${data.suppliers.pct_verified}% del total`} color="#15803d" bg="rgba(22,163,74,0.08)" />
+                  <KpiCard icon="⚠️" label="Fichas vencidas / sin ficha" value={data.suppliers.expired_tech_sheets}
+                    sub="Requieren actualización urgente" color={data.suppliers.expired_tech_sheets > 0 ? '#dc2626' : '#15803d'} bg={data.suppliers.expired_tech_sheets > 0 ? 'rgba(220,38,38,0.08)' : 'rgba(22,163,74,0.08)'} />
+                  {data.suppliers.expired_tech_sheets > 0 && (
+                    <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 14, padding: '16px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 8 }}>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#dc2626' }}>Acción requerida</p>
+                      <Link to="/suppliers?expired_only=true" style={{ fontSize: 12, color: '#dc2626', textDecoration: 'underline' }}>
+                        Ver proveedores con fichas vencidas →
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
 
             {/* ── Acciones rápidas ── */}
             <section>
@@ -209,7 +211,7 @@ export default function Ley2120DashboardPage() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 <Link to="/products?seal_free=true" className="btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>✅ Ver productos Nivel 1</Link>
                 <Link to="/products?level=LEVEL_2" className="btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>⚠️ Ver productos Nivel 2</Link>
-                <Link to="/suppliers" className="btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>🏭 Gestionar proveedores</Link>
+                {user?.role === 'SUPER_ADMIN' && <Link to="/suppliers" className="btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>🏭 Gestionar proveedores</Link>}
                 <Link to="/products" className="btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>📋 Auditar catálogo</Link>
               </div>
             </section>

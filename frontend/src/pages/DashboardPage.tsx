@@ -22,6 +22,9 @@ interface SchoolAdminSummary {
   active_students: number;
   top_products: { product_id: string; name: string; price: string; total_qty: number }[];
   stores_performance: { store_id: string; name: string; revenue_today: number; revenue_month: number; revenue_year: number }[];
+  acquisition_model?: string;
+  commission_rate?: number;
+  monthly_fee?: number;
 }
 interface GlobalStats {
   schools: { total: number; active: number };
@@ -130,8 +133,6 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/students',       label: '5. Estudiantes',   icon: '🎒', isSetup: true },
     // --- Operación Diaria ---
     { to: '/orders',         label: 'Pedidos',          icon: '📋' },
-    { to: '/topup-requests', label: 'Recargas',         icon: '💰' },
-    { to: '/transactions',   label: 'Transacciones',    icon: '📊' },
   ],
   VENDOR: [
     { to: '/stores',   label: 'Mi Tienda',       icon: '🏪' },
@@ -273,9 +274,53 @@ function SchoolAdminDashboard() {
         <StatCard label="Pendientes"         value={data.orders_pending}         icon="⏳" color="#c37d0d"  to="/orders?status=PENDING" />
         <StatCard label="Confirmados"        value={data.orders_confirmed}       icon="✅" color="#6366f1"  to="/orders?status=CONFIRMED" />
         <StatCard label="Entregados hoy"     value={data.orders_delivered_today} icon="🚀" color="#059669" to="/orders?status=DELIVERED" />
-        <StatCard label="Ingresos hoy"       value={fmt(data.revenue_today)}     icon="💵" color="#059669" to="/transactions" />
-        <StatCard label="Ingresos del mes"   value={fmt(data.revenue_month)}     icon="📈" color="#6366f1" to="/transactions" />
+        <StatCard label="Ingresos hoy"       value={fmt(data.revenue_today)}     icon="💵" color="#059669" />
+        <StatCard label="Ingresos del mes"   value={fmt(data.revenue_month)}     icon="📈" color="#6366f1" />
         <StatCard label="Estudiantes activos"value={data.active_students}        icon="🎒"              to="/students" />
+      </div>
+
+      {/* Facturación y Comisiones */}
+      <div className="user-card" style={{ marginBottom: 20, padding: '20px 24px', background: 'var(--color-surface)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <span style={{ fontSize: 20 }}>💰</span>
+          <p className="dashboard-label" style={{ margin: 0, fontSize: 16 }}>Facturación de Caspete</p>
+        </div>
+        
+        {data.acquisition_model === 'COMMISSION' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+            <div style={{ background: 'var(--color-gray-100)', padding: 16, borderRadius: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Comisión Acordada</p>
+              <p style={{ margin: '4px 0 0', fontSize: 24, fontWeight: 700, color: 'var(--color-brand-deep)' }}>
+                {data.commission_rate ?? 0}%
+              </p>
+            </div>
+            <div style={{ background: 'rgba(212,86,86,0.08)', padding: 16, borderRadius: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Descuento Caspete (Hoy)</p>
+              <p style={{ margin: '4px 0 0', fontSize: 24, fontWeight: 700, color: '#dc2626' }}>
+                {fmt(data.revenue_today * ((data.commission_rate ?? 0) / 100))}
+              </p>
+            </div>
+            <div style={{ background: 'rgba(5,150,105,0.08)', padding: 16, borderRadius: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Saldo a Consignar por Caspete (Hoy)</p>
+              <p style={{ margin: '4px 0 0', fontSize: 24, fontWeight: 700, color: '#059669' }}>
+                {fmt(data.revenue_today - (data.revenue_today * ((data.commission_rate ?? 0) / 100)))}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+            <div style={{ background: 'var(--color-gray-100)', padding: 16, borderRadius: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Modelo de Facturación</p>
+              <p style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 700, color: 'var(--color-text)' }}>Pago Mensual</p>
+            </div>
+            <div style={{ background: 'rgba(212,86,86,0.08)', padding: 16, borderRadius: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Valor Pendiente de Pago</p>
+              <p style={{ margin: '4px 0 0', fontSize: 24, fontWeight: 700, color: '#dc2626' }}>
+                {fmt(data.monthly_fee ?? 0)}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tarjeta Ley 2120 */}
@@ -680,7 +725,7 @@ export default function DashboardPage() {
                       <div className="user-card" style={{ padding: '16px 14px', marginBottom: 0, cursor: 'pointer', textAlign: 'center', transition: 'border-color 0.15s, transform 0.15s', border: '1px solid rgba(152, 255, 0, 0.15)' }}
                         onMouseEnter={e => { 
                           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; 
-                          (e.currentTarget as HTMLDivElement).style.borderColor = '#98FF00';
+                          (e.currentTarget as HTMLDivElement).style.borderColor = '#10b981';
                           (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 15px rgba(152, 255, 0, 0.1)';
                         }}
                         onMouseLeave={e => { 

@@ -17,7 +17,7 @@ interface User {
   school: { id: string; name: string; city: string } | null;
   _count: { students: number; deliveries: number };
 }
-interface UsersResp { users: User[]; total: number; page: number; pages: number }
+interface UsersResp { users: User[]; total: number; page: number; pages: number; stats?: { total: number; parents: number; vendors: number; admins: number } }
 interface School { id: string; name: string; city: string }
 
 const RL: Record<string, string> = { PARENT: 'Padre/Madre', VENDOR: 'Tendero', SCHOOL_ADMIN: 'Admin Colegio', SUPER_ADMIN: 'Super Admin' };
@@ -88,6 +88,7 @@ export default function UsersPage() {
 
   const stats = useMemo(() => {
     if (!data) return null;
+    if (data.stats) return data.stats;
     const u = data.users;
     return {
       total: data.total,
@@ -272,6 +273,9 @@ export default function UsersPage() {
                     </div>
                     {u.id !== user?.id && (
                       <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
+                        {user?.role === 'SCHOOL_ADMIN' && u.role === 'VENDOR' && (
+                          <button className="btn-ghost" style={{ fontSize: 13, padding: '5px 12px', color: '#16a34a' }} onClick={() => navigate('/chat')}>💬 Chat</button>
+                        )}
                         <button className="btn-ghost" style={{ fontSize: 13, padding: '5px 12px' }} onClick={() => openEdit(u)}>✏️ Editar</button>
                         <button className="btn-ghost" style={{ fontSize: 13, padding: '5px 12px', color: u.active ? '#c37d0d' : 'var(--color-brand-deep)', borderColor: u.active ? 'rgba(195,125,13,0.2)' : 'rgba(0,128,0,0.2)' }} onClick={() => handleToggle(u)}>{u.active ? '⏸' : '▶'}</button>
                         {isSA && u.role !== 'SUPER_ADMIN' && (

@@ -913,7 +913,7 @@ export default function LandingPage() {
                           required 
                           type="text"
                           value={form.school_name} 
-                          onChange={e => setForm(f => ({ ...f, school_name: e.target.value }))} 
+                          onChange={e => setForm(f => ({ ...f, school_name: e.target.value.replace(/[^A-Za-z0-9À-ÿ\s.,#&'-]/g, '') }))} 
                           placeholder="Colegio San José"
                           className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
                         />
@@ -923,7 +923,7 @@ export default function LandingPage() {
                         <input 
                           type="text"
                           value={form.nit} 
-                          onChange={e => setForm(f => ({ ...f, nit: e.target.value }))} 
+                          onChange={e => setForm(f => ({ ...f, nit: e.target.value.replace(/[^0-9.-]/g, '') }))} 
                           placeholder="900.123.456-1"
                           className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
                         />
@@ -937,7 +937,7 @@ export default function LandingPage() {
                           required 
                           type="text"
                           value={form.city} 
-                          onChange={e => setForm(f => ({ ...f, city: e.target.value }))} 
+                          onChange={e => setForm(f => ({ ...f, city: e.target.value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, '') }))} 
                           placeholder="Bogotá"
                           className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
                         />
@@ -945,10 +945,9 @@ export default function LandingPage() {
                       <div className="space-y-1">
                         <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wide">N° de Estudiantes Aprox.</label>
                         <input 
-                          type="number" 
-                          min="1"
+                          type="text" 
                           value={form.students_count} 
-                          onChange={e => setForm(f => ({ ...f, students_count: e.target.value }))} 
+                          onChange={e => setForm(f => ({ ...f, students_count: e.target.value.replace(/\D/g, '') }))} 
                           placeholder="350"
                           className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
                         />
@@ -961,7 +960,7 @@ export default function LandingPage() {
                         required 
                         type="text"
                         value={form.contact_name} 
-                        onChange={e => setForm(f => ({ ...f, contact_name: e.target.value }))} 
+                        onChange={e => setForm(f => ({ ...f, contact_name: e.target.value.replace(/[^A-Za-zÀ-ÿ\s'.]/g, '') }))} 
                         placeholder="Dr. Carlos Rodríguez"
                         className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
                       />
@@ -984,7 +983,7 @@ export default function LandingPage() {
                         <input 
                           type="text"
                           value={form.contact_phone} 
-                          onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value }))} 
+                          onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value.replace(/[^0-9+\s()-]/g, '') }))} 
                           placeholder="3001234567"
                           className="w-full bg-[#1b1b1e] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#98FF00] transition-colors"
                         />
@@ -992,9 +991,13 @@ export default function LandingPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wide">Mensaje Adicional</label>
+                      <div className="flex justify-between items-center">
+                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wide">Mensaje Adicional</label>
+                        <span className="text-[10px] text-zinc-500 font-mono">{(form.message ?? '').length} / 200</span>
+                      </div>
                       <textarea 
                         rows={3} 
+                        maxLength={200}
                         value={form.message} 
                         onChange={e => setForm(f => ({ ...f, message: e.target.value }))} 
                         placeholder="Cuéntanos brevemente cuáles son las necesidades de alimentación o recaudo en tu colegio..."

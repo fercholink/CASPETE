@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/auth.middleware.js';
+import { leadsLimiter } from '../../middleware/rate-limit.middleware.js';
 import * as leads from './leads.service.js';
 import { CreateLeadSchema, UpdateLeadSchema } from './leads.schemas.js';
 
 const router = Router();
 
 // ── POST /api/leads — Público: colegio interesado desde la landing ────────────
-router.post('/', async (req, res, next) => {
+router.post('/', leadsLimiter, async (req, res, next) => {
   try {
     const body = CreateLeadSchema.parse(req.body);
     const data = await leads.createLead(body);

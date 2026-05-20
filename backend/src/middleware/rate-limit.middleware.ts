@@ -23,3 +23,11 @@ export const deliveryLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export const leadsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour window
+  max: 3, // limit each IP to 3 requests per hour
+  message: { success: false, error: 'Demasiadas solicitudes de demostración desde esta IP. Por favor, intenta de nuevo en 1 hora.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

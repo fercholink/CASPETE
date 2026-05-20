@@ -634,7 +634,7 @@ export default function DashboardPage() {
           <>
             {setupLinks.length > 0 ? (
               <>
-                <p className="dashboard-label" style={{ marginBottom: 10, color: '#98FF00', fontWeight: 700, letterSpacing: '0.5px' }}>
+                <p className="dashboard-label" style={{ marginBottom: 10, fontWeight: 700, letterSpacing: '0.5px', color: 'var(--color-text)' }}>
                   ⚙️ Configuración y Puesta en Marcha (Paso a Paso)
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginBottom: 24 }}>

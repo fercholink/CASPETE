@@ -58,7 +58,9 @@ export default function LandingPage() {
     setSending(true); 
     setFormError('');
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/leads`, {
+      const baseUrl = import.meta.env.VITE_API_URL || '';
+      const url = baseUrl.endsWith('/api') ? `${baseUrl}/leads` : `${baseUrl}/api/leads`;
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

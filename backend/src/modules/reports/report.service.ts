@@ -56,6 +56,77 @@ export async function getSummary(actor: JwtPayload) {
   };
 }
 
+// ─── Resumen para Administrador de Colegio (SCHOOL_ADMIN) ──────────────
+export async function getSchoolSummary(actor: JwtPayload) {
+  if (actor.role !== 'SCHOOL_ADMIN') {
+    throw new AppError('Solo para administradores de colegio', 403);
+  }
+  const schoolId = actor.schoolId!;
+  const { start, end } = todayRange();
+  
+  // Date ranges
+  const monthStart = new Date(start.getFullYear(), start.getMonth(), 1);
+  const yearStart = new Date(start.getFullYear(), 0, 1);
+
+  const [
+    ordersToday, ordersPending, ordersConfirmed, ordersDelivered,
+    revenueToday, revenueMonth, activeStudents, topProductsRaw, stores
+  ] = await Promise.all([
+    prisma.lunchOrder.count({ where: { school_id: schoolId, created_at: { gte: start, lte: end } } }),
+    prisma.lunchOrder.count({ where: { school_id: schoolId, status: 'PENDING' } }),
+    prisma.lunchOrder.count({ where: { school_id: schoolId, status: 'CONFIRMED' } }),
+    prisma.lunchOrder.count({ where: { school_id: schoolId, status: 'DELIVERED', delivered_at: { gte: start, lte: end } } }),
+    prisma.transaction.aggregate({ where: { school_id: schoolId, type: 'CHARGE', created_at: { gte: start, lte: end } }, _sum: { amount: true } }),
+    prisma.transaction.aggregate({ where: { school_id: schoolId, type: 'CHARGE', created_at: { gte: monthStart } }, _sum: { amount: true } }),
+    prisma.student.count({ where: { school_id: schoolId, active: true } }),
+    prisma.orderItem.groupBy({
+      by: ['store_product_id'],
+      where: { order: { school_id: schoolId, created_at: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, status: { not: 'CANCELLED' } } },
+      _sum: { quantity: true },
+      orderBy: { _sum: { quantity: 'desc' } },
+      take: 5,
+    }),
+    prisma.store.findMany({ where: { school_id: schoolId } })
+  ]);
+
+  const spIds = topProductsRaw.map(r => r.store_product_id);
+  const storeProducts = await prisma.storeProduct.findMany({
+    where: { id: { in: spIds } },
+    select: { id: true, product: { select: { id: true, name: true, base_price: true } } },
+  });
+  const spMap = new Map(storeProducts.map(sp => [sp.id, sp]));
+  const topProducts = topProductsRaw.map(r => ({
+    product_id: spMap.get(r.store_product_id)?.product.id ?? r.store_product_id,
+    name: spMap.get(r.store_product_id)?.product.name ?? 'Desconocido',
+    price: spMap.get(r.store_product_id)?.product.base_price ?? '0',
+    total_qty: r._sum?.quantity ?? 0,
+  }));
+
+  const storesPerformance = await Promise.all(stores.map(async (store) => {
+    const [revToday, revMonth, revYear] = await Promise.all([
+      prisma.transaction.aggregate({ where: { school_id: schoolId, type: 'CHARGE', order: { store_id: store.id }, created_at: { gte: start, lte: end } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { school_id: schoolId, type: 'CHARGE', order: { store_id: store.id }, created_at: { gte: monthStart } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { school_id: schoolId, type: 'CHARGE', order: { store_id: store.id }, created_at: { gte: yearStart } }, _sum: { amount: true } })
+    ]);
+    return {
+      store_id: store.id,
+      name: store.name,
+      revenue_today: revToday._sum.amount?.toNumber() ?? 0,
+      revenue_month: revMonth._sum.amount?.toNumber() ?? 0,
+      revenue_year: revYear._sum.amount?.toNumber() ?? 0,
+    };
+  }));
+
+  return {
+    orders_today: ordersToday, orders_pending: ordersPending,
+    orders_confirmed: ordersConfirmed, orders_delivered_today: ordersDelivered,
+    revenue_today: revenueToday._sum.amount?.toNumber() ?? 0,
+    revenue_month: revenueMonth._sum.amount?.toNumber() ?? 0,
+    active_students: activeStudents, top_products: topProducts,
+    stores_performance: storesPerformance
+  };
+}
+
 // ─── Métricas globales (SUPER_ADMIN) ──────────────────────────
 export async function getGlobalStats(actor: JwtPayload) {
   if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo para Super Admin', 403);

@@ -16,6 +16,13 @@ interface AdminSummary {
   orders_delivered_today: number; revenue_today: number; active_students: number;
   top_products: { product_id: string; name: string; total_qty: number }[];
 }
+interface SchoolAdminSummary {
+  orders_today: number; orders_pending: number; orders_confirmed: number;
+  orders_delivered_today: number; revenue_today: number; revenue_month: number;
+  active_students: number;
+  top_products: { product_id: string; name: string; price: string; total_qty: number }[];
+  stores_performance: { store_id: string; name: string; revenue_today: number; revenue_month: number; revenue_year: number }[];
+}
 interface GlobalStats {
   schools: { total: number; active: number };
   students: { total: number; active: number };
@@ -248,10 +255,10 @@ function SuperAdminDashboard() {
 
 // ─── Vista SCHOOL ADMIN ───────────────────────────────────────
 function SchoolAdminDashboard() {
-  const [data, setData] = useState<AdminSummary | null>(null);
+  const [data, setData] = useState<SchoolAdminSummary | null>(null);
 
   const fetch = useCallback(() => {
-    apiClient.get<{ data: AdminSummary }>('/reports/summary').then(r => setData(r.data.data)).catch(() => {});
+    apiClient.get<{ data: SchoolAdminSummary }>('/reports/school-summary').then(r => setData(r.data.data)).catch(() => {});
   }, []);
 
   useEffect(() => { fetch(); const i = setInterval(fetch, 15_000); return () => clearInterval(i); }, [fetch]);
@@ -267,6 +274,7 @@ function SchoolAdminDashboard() {
         <StatCard label="Confirmados"        value={data.orders_confirmed}       icon="✅" color="#6366f1"  to="/orders?status=CONFIRMED" />
         <StatCard label="Entregados hoy"     value={data.orders_delivered_today} icon="🚀" color="#059669" to="/orders?status=DELIVERED" />
         <StatCard label="Ingresos hoy"       value={fmt(data.revenue_today)}     icon="💵" color="#059669" to="/transactions" />
+        <StatCard label="Ingresos del mes"   value={fmt(data.revenue_month)}     icon="📈" color="#6366f1" to="/transactions" />
         <StatCard label="Estudiantes activos"value={data.active_students}        icon="🎒"              to="/students" />
       </div>
 
@@ -286,7 +294,36 @@ function SchoolAdminDashboard() {
         </div>
       </Link>
 
-      {data.top_products.length > 0 && (
+      {/* Rendimiento de Tiendas */}
+      {data.stores_performance && data.stores_performance.length > 0 && (
+        <div className="user-card" style={{ marginBottom: 20 }}>
+          <p className="dashboard-label" style={{ marginBottom: 12 }}>Rendimiento de Tiendas / Cafeterías</p>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', color: 'var(--color-text-muted)' }}>
+                  <th style={{ padding: '8px 0', fontWeight: 600 }}>Tienda</th>
+                  <th style={{ padding: '8px 0', fontWeight: 600, textAlign: 'right' }}>Hoy</th>
+                  <th style={{ padding: '8px 0', fontWeight: 600, textAlign: 'right' }}>Este Mes</th>
+                  <th style={{ padding: '8px 0', fontWeight: 600, textAlign: 'right' }}>Este Año</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.stores_performance.map((store) => (
+                  <tr key={store.store_id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <td style={{ padding: '10px 0', fontWeight: 500 }}>{store.name}</td>
+                    <td style={{ padding: '10px 0', textAlign: 'right', color: '#059669', fontWeight: 600 }}>{fmt(store.revenue_today)}</td>
+                    <td style={{ padding: '10px 0', textAlign: 'right', color: '#6366f1', fontWeight: 600 }}>{fmt(store.revenue_month)}</td>
+                    <td style={{ padding: '10px 0', textAlign: 'right', fontWeight: 600 }}>{fmt(store.revenue_year)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {data.top_products && data.top_products.length > 0 && (
         <div className="user-card" style={{ marginBottom: 20 }}>
           <p className="dashboard-label" style={{ marginBottom: 12 }}>Top productos (últimos 30 días)</p>
           {data.top_products.map((p, i) => (

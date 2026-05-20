@@ -7,6 +7,11 @@ export async function summary(req: Request, res: Response) {
   sendSuccess(res, data);
 }
 
+export async function schoolSummary(req: Request, res: Response) {
+  const data = await reportService.getSchoolSummary(req.user!);
+  sendSuccess(res, data);
+}
+
 export async function globalStats(req: Request, res: Response) {
   const data = await reportService.getGlobalStats(req.user!);
   sendSuccess(res, data);

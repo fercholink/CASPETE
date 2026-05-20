@@ -9,6 +9,9 @@ router.use(authenticate);
 // GET /api/reports/summary — métricas del colegio (SCHOOL_ADMIN) o global (SUPER_ADMIN)
 router.get('/summary', requireRole('SCHOOL_ADMIN', 'SUPER_ADMIN'), reportController.summary);
 
+// GET /api/reports/school-summary — métricas específicas detalladas del colegio (SCHOOL_ADMIN)
+router.get('/school-summary', requireRole('SCHOOL_ADMIN'), reportController.schoolSummary);
+
 // GET /api/reports/global — métricas globales del sistema (SUPER_ADMIN only)
 router.get('/global', requireRole('SUPER_ADMIN'), reportController.globalStats);
 

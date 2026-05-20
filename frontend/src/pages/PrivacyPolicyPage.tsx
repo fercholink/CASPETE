@@ -10,6 +10,8 @@ export default function PrivacyPolicyPage() {
         </Link>
         <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
           <Link to="/privacidad" style={{ color: '#1a4731', fontWeight: 600 }}>Política de Privacidad</Link>
+          <Link to="/condiciones" style={{ color: '#6b7280' }}>Condiciones del Servicio</Link>
+          <Link to="/eliminacion-datos" style={{ color: '#6b7280' }}>Eliminación de Datos</Link>
           <Link to="/cookies" style={{ color: '#6b7280' }}>Cookies</Link>
           <Link to="/derechos-datos" style={{ color: '#6b7280' }}>Derechos ARCO</Link>
         </div>
@@ -167,6 +169,8 @@ export default function PrivacyPolicyPage() {
           </p>
           <div style={{ marginTop: 10, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/mis-datos" style={{ color: '#1a4731', fontWeight: 600, fontSize: 13 }}>🔒 Mis Datos (ARCO)</Link>
+            <Link to="/condiciones" style={{ color: '#6b7280', fontSize: 13 }}>Condiciones del Servicio</Link>
+            <Link to="/eliminacion-datos" style={{ color: '#6b7280', fontSize: 13 }}>Eliminación de Datos</Link>
             <Link to="/cookies" style={{ color: '#6b7280', fontSize: 13 }}>Política de Cookies</Link>
             <Link to="/register" style={{ color: '#6b7280', fontSize: 13 }}>Crear cuenta</Link>
           </div>

@@ -31,6 +31,8 @@ import SupplierFormPage from '../pages/SupplierFormPage';
 import MisDatosPage from '../pages/MisDatosPage';
 import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
 import PrivacyCompliancePage from '../pages/PrivacyCompliancePage';
+import TermsOfServicePage from '../pages/TermsOfServicePage';
+import DataDeletionPage from '../pages/DataDeletionPage';
 import ChatPage from '../pages/ChatPage';
 import SchoolLeadsPage from '../pages/SchoolLeadsPage';
 import RootLayout from '../components/RootLayout';
@@ -51,6 +53,11 @@ export const router = createBrowserRouter([
   { path: '/privacy-policy', element: <PrivacyPolicyPage /> },
   { path: '/derechos-datos', element: <PrivacyPolicyPage /> },
   { path: '/cookies', element: <PrivacyPolicyPage /> },
+  { path: '/condiciones', element: <TermsOfServicePage /> },
+  { path: '/terminos', element: <TermsOfServicePage /> },
+  { path: '/terms-of-service', element: <TermsOfServicePage /> },
+  { path: '/eliminacion-datos', element: <DataDeletionPage /> },
+  { path: '/data-deletion', element: <DataDeletionPage /> },
 
   {
     path: '/dashboard',

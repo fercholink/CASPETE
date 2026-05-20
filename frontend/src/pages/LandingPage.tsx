@@ -1096,7 +1096,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-zinc-500">
           <span>&copy; {new Date().getFullYear()} Caspete S.A.S. Todos los derechos reservados. Colombia.</span>
           <div className="flex gap-4">
-            <Link to="/privacy-policy" className="text-zinc-500 hover:text-[#10b981] text-decoration-none">Política de Privacidad (Habeas Data)</Link>
+            <Link to="/privacy-policy" className="text-zinc-500 hover:text-[#10b981] text-decoration-none">Política de Privacidad</Link>
+            <Link to="/condiciones" className="text-zinc-500 hover:text-[#10b981] text-decoration-none">Condiciones del Servicio</Link>
+            <Link to="/eliminacion-datos" className="text-zinc-500 hover:text-[#10b981] text-decoration-none">Eliminación de Datos</Link>
           </div>
         </div>
       </footer>

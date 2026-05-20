@@ -116,6 +116,45 @@ export async function requestDeletion(userId: string, reason: string, req: Reque
 }
 
 /**
+ * Inicia el periodo de gracia de 30 días para eliminación de datos de manera pública (sin autenticación).
+ * Se utiliza para cumplir con la auditoría de Meta Developers / Tech Provide.
+ */
+export async function publicRequestDeletion(email: string, reason: string, req: Request) {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, deletion_requested: true, role: true },
+  });
+  if (!user) throw new AppError('Usuario no encontrado', 404);
+  if (user.deletion_requested) throw new AppError('Ya existe una solicitud de eliminación activa', 409);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { deletion_requested: true, deletion_requested_at: new Date() },
+  });
+
+  // Registrar como solicitud ARCO formal
+  await prisma.arcoRequest.create({
+    data: { user_id: user.id, type: 'DELETE', description: `[PÚBLICO] ${reason}` },
+  });
+
+  await logAudit({
+    req,
+    userId: user.id,
+    role: user.role,
+    action: 'DELETE',
+    entity: 'User',
+    recordId: user.id,
+    fields: ['deletion_requested'],
+    justification: `Ejercicio Público Derecho al Olvido — Art. 15 Ley 1581/2012. Razón: ${reason}`,
+  });
+
+  return {
+    message: 'Solicitud de eliminación registrada. Sus datos serán anonimizados en 30 días.',
+    scheduled_for: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  };
+}
+
+/**
  * Cancela una solicitud de eliminación pendiente (dentro del periodo de gracia).
  */
 export async function cancelDeletionRequest(userId: string, req: Request) {

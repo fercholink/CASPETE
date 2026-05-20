@@ -118,6 +118,23 @@ router.post('/request-deletion', authenticate, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ── POST /api/arco/public-deletion-request — Solicitud pública de eliminación (Meta compliance) ─
+router.post('/public-deletion-request', async (req, res, next) => {
+  try {
+    const { email, reason } = req.body as { email: string; reason?: string };
+    if (!email) {
+      res.status(400).json({ success: false, error: 'El correo electrónico es obligatorio.' });
+      return;
+    }
+    const result = await arco.publicRequestDeletion(
+      email.trim().toLowerCase(),
+      reason ?? 'Solicitud pública desde el portal de eliminación de datos',
+      req
+    );
+    res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
 // ── DELETE /api/arco/cancel-deletion — Cancelar dentro del periodo de gracia ─
 router.delete('/cancel-deletion', authenticate, async (req, res, next) => {
   try {

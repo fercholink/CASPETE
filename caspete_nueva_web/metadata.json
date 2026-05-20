@@ -1,0 +1,6 @@
+{
+  "name": "Caspete",
+  "description": "Plataforma digital para la gestión y programación de loncheras escolares saludables, saldos digitales y control por QR seguro en colegios colombianos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -110,6 +110,7 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/payment-methods', label: 'Métodos de pago',   icon: '🏦' },
     { to: '/ley2120',         label: 'Ley 2120',           icon: '⬛' },
     { to: '/suppliers',       label: 'Proveedores',        icon: '🏭' },
+    { to: '/school-leads',    label: 'Solicitudes',        icon: '📥' },
   ],
   SCHOOL_ADMIN: [
     { to: '/students',       label: 'Estudiantes',   icon: '🎒' },

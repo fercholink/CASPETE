@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
@@ -107,17 +107,26 @@ export default function OrderDetailPage() {
   const [chatInitSending, setChatInitSending] = useState(false);
   const [chatInitError, setChatInitError] = useState('');
 
-  useEffect(() => {
+  const fetchOrder = useCallback((isBackground = false) => {
     if (!id) return;
+    if (!isBackground) setLoading(true);
     apiClient
       .get<{ data: Order }>(`/orders/${id}`)
-      .then((r) => setOrder(r.data.data))
-      .catch((e) => setError((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error'))
-      .finally(() => setLoading(false));
+      .then((r) => {
+        setOrder(r.data.data);
+        setError('');
+      })
+      .catch((e) => {
+        if (!isBackground) {
+          setError((e as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error');
+        }
+      })
+      .finally(() => {
+        if (!isBackground) setLoading(false);
+      });
   }, [id]);
 
-  // Buscar hilo de chat vinculado a este pedido (solo para PARENT)
-  useEffect(() => {
+  const fetchThreads = useCallback(() => {
     if (!id || user?.role !== 'PARENT') return;
     apiClient
       .get<{ success: boolean; data: Array<{ id: string; subject: string; unread_count: number; order_id: string | null }> }>('/chat/threads')
@@ -129,6 +138,22 @@ export default function OrderDetailPage() {
       })
       .catch(() => {});
   }, [id, user?.role]);
+
+  useEffect(() => {
+    fetchOrder(false);
+    const interval = setInterval(() => {
+      fetchOrder(true);
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [fetchOrder]);
+
+  useEffect(() => {
+    fetchThreads();
+    const interval = setInterval(() => {
+      fetchThreads();
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [fetchThreads]);
 
   // Cargar hermanos del padre para la opción de regalo
   useEffect(() => {
@@ -163,6 +188,8 @@ export default function OrderDetailPage() {
       await apiClient.patch(`/orders/${id}/pickup`);
       setPickupDone(true);
       setOrder((prev) => prev ? { ...prev, notes: (prev.notes ? prev.notes + '\n' : '') + '🛍️ RETIRO SOLICITADO: El padre retira el pedido a la salida del colegio.' } : prev);
+      fetchOrder(true);
+      fetchThreads();
     } catch (err: unknown) {
       alert((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al solicitar retiro');
     } finally { setPickupSending(false); }
@@ -175,6 +202,8 @@ export default function OrderDetailPage() {
       setDonateDone(true);
       setDonateModalOpen(false);
       setOrder((prev) => prev ? { ...prev, notes: (prev.notes ? prev.notes + '\n' : '') + '❤️ DONADO: El padre autorizó al tendero para entregar este pedido a quien lo necesite.' } : prev);
+      fetchOrder(true);
+      fetchThreads();
     } catch (err: unknown) {
       alert((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al donar el pedido');
     } finally { setDonateSending(false); }

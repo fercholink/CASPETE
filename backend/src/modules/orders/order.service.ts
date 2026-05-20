@@ -406,20 +406,63 @@ export async function donateOrder(id: string, actor: JwtPayload) {
     select: orderSelect,
   });
 
-  // Obtener el delivery_code del estudiante para enviarlo al tendero
-  const student = await prisma.student.findUnique({
-    where: { id: order.student.id },
-    select: { delivery_code: true },
+  // Si el estudiante no tiene delivery_code, generarlo ahora
+  let deliveryCode = order.student.delivery_code;
+  if (!deliveryCode) {
+    deliveryCode = String(Math.floor(100000 + Math.random() * 900000)).substring(0, 6);
+    await prisma.student.update({ where: { id: order.student.id }, data: { delivery_code: deliveryCode } });
+  }
+
+  const formattedDate = new Date(order.scheduled_date).toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
   });
 
-  const deliveryCode = student?.delivery_code ?? '(ver pedido)';
+  const chatMessageContent = `❤️ DONADO: El padre autorizó al tendero para entregar este pedido a quien lo necesite. Entrega: ${formattedDate}. Código de entrega: ${deliveryCode}`;
 
-  // Notificar al tendero del colegio con el código
+  // Notificar al tendero del colegio con el código y chat
   const vendor = await prisma.user.findFirst({
     where: { role: 'VENDOR', school_id: order.school_id },
     select: { id: true },
   });
+
   if (vendor) {
+    // Buscar o crear hilo de chat OPEN para este pedido
+    let thread = await prisma.chatThread.findFirst({
+      where: { order_id: order.id, status: 'OPEN' },
+      select: { id: true },
+    });
+
+    if (!thread) {
+      thread = await prisma.chatThread.create({
+        data: {
+          school_id: order.school_id,
+          order_id: order.id,
+          vendor_id: vendor.id,
+          parent_id: order.student.parent_id,
+          subject: `Pedido de ${order.student.full_name}`,
+        },
+        select: { id: true },
+      });
+    }
+
+    // Crear el mensaje en el hilo
+    await prisma.chatMessage.create({
+      data: {
+        thread_id: thread.id,
+        sender_id: order.student.parent_id,
+        content: chatMessageContent,
+      },
+    });
+
+    // Actualizar updated_at del hilo
+    await prisma.chatThread.update({
+      where: { id: thread.id },
+      data: { updated_at: new Date() },
+    });
+
+    // Enviar notificación push
     sendPushToUser(vendor.id, {
       title: '❤️ Pedido donado',
       body: `El padre de ${order.student.full_name} donó su pedido. Código de entrega: ${deliveryCode}. Puedes entregarlo a quien lo necesite.`,
@@ -480,12 +523,63 @@ export async function requestPickup(id: string, actor: JwtPayload) {
     select: orderSelect,
   });
 
+  // Si el estudiante no tiene delivery_code, generarlo ahora
+  let deliveryCode = order.student.delivery_code;
+  if (!deliveryCode) {
+    deliveryCode = String(Math.floor(100000 + Math.random() * 900000)).substring(0, 6);
+    await prisma.student.update({ where: { id: order.student.id }, data: { delivery_code: deliveryCode } });
+  }
+
+  const formattedDate = new Date(order.scheduled_date).toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const chatMessageContent = `🛍️ RETIRO SOLICITADO: El padre retira el pedido a la salida del colegio. Entrega: ${formattedDate}. Código de retiro: ${deliveryCode}`;
+
   // Notificar al tendero del colegio
   const vendor = await prisma.user.findFirst({
     where: { role: 'VENDOR', school_id: order.school_id },
     select: { id: true },
   });
+
   if (vendor) {
+    // Buscar o crear hilo de chat OPEN para este pedido
+    let thread = await prisma.chatThread.findFirst({
+      where: { order_id: order.id, status: 'OPEN' },
+      select: { id: true },
+    });
+
+    if (!thread) {
+      thread = await prisma.chatThread.create({
+        data: {
+          school_id: order.school_id,
+          order_id: order.id,
+          vendor_id: vendor.id,
+          parent_id: order.student.parent_id,
+          subject: `Pedido de ${order.student.full_name}`,
+        },
+        select: { id: true },
+      });
+    }
+
+    // Crear el mensaje en el hilo
+    await prisma.chatMessage.create({
+      data: {
+        thread_id: thread.id,
+        sender_id: order.student.parent_id,
+        content: chatMessageContent,
+      },
+    });
+
+    // Actualizar updated_at del hilo
+    await prisma.chatThread.update({
+      where: { id: thread.id },
+      data: { updated_at: new Date() },
+    });
+
+    // Enviar notificación push
     sendPushToUser(vendor.id, {
       title: '🛍️ Solicitud de retiro',
       body: `El padre de ${order.student.full_name} solicita retirar el pedido a la salida.`,

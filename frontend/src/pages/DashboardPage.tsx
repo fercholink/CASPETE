@@ -157,7 +157,7 @@ function SuperAdminDashboard() {
     apiClient.get<{ data: AdminSummary }>('/reports/summary').then(r => setAdmin(r.data.data)).catch(() => {});
   }, []);
 
-  useEffect(() => { fetchAll(); const i = setInterval(fetchAll, 30_000); return () => clearInterval(i); }, [fetchAll]);
+  useEffect(() => { fetchAll(); const i = setInterval(fetchAll, 15_000); return () => clearInterval(i); }, [fetchAll]);
 
   return (
     <>
@@ -573,7 +573,7 @@ function ParentDashboard() {
     apiClient.get<{ data: ParentSummary }>('/reports/parent').then(r => setData(r.data.data)).catch(() => {});
   }, []);
 
-  useEffect(() => { fetchData(); const i = setInterval(fetchData, 30_000); return () => clearInterval(i); }, [fetchData]);
+  useEffect(() => { fetchData(); const i = setInterval(fetchData, 10_000); return () => clearInterval(i); }, [fetchData]);
 
   if (!data) return <div className="roadmap-note">Cargando...</div>;
 

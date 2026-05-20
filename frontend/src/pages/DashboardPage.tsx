@@ -97,30 +97,34 @@ function StatCard({ label, value, color = 'var(--color-text)', icon, sub, onClic
 }
 
 // ─── Accesos rápidos ──────────────────────────────────────────
-const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: string }[]>> = {
+const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: string; isSetup?: boolean }[]>> = {
   SUPER_ADMIN: [
-    { to: '/schools',         label: 'Colegios',          icon: '🏫' },
-    { to: '/users',           label: 'Usuarios',           icon: '👥' },
-    { to: '/students',        label: 'Estudiantes',        icon: '🎒' },
-    { to: '/stores',          label: 'Tiendas',            icon: '🏪' },
-    { to: '/products',        label: 'Productos',          icon: '🍱' },
-    { to: '/orders',          label: 'Pedidos',            icon: '📋' },
-    { to: '/topup-requests',  label: 'Recargas',           icon: '💰' },
-    { to: '/transactions',    label: 'Transacciones',      icon: '📊' },
-    { to: '/payment-methods', label: 'Métodos de pago',   icon: '🏦' },
-    { to: '/ley2120',         label: 'Ley 2120',           icon: '⬛' },
-    { to: '/suppliers',       label: 'Proveedores',        icon: '🏭' },
-    { to: '/school-leads',    label: 'Solicitudes',        icon: '📥' },
+    // --- Configuración Inicial ---
+    { to: '/schools',         label: '1. Colegios',          icon: '🏫', isSetup: true },
+    { to: '/payment-methods', label: '2. Métodos de Pago',   icon: '🏦', isSetup: true },
+    { to: '/suppliers',       label: '3. Proveedores',        icon: '🏭', isSetup: true },
+    { to: '/products',        label: '4. Productos',          icon: '🍱', isSetup: true },
+    { to: '/ley2120',         label: '5. Ley 2120',           icon: '⬛', isSetup: true },
+    { to: '/users',           label: '6. Usuarios',           icon: '👥', isSetup: true },
+    { to: '/stores',          label: '7. Tiendas',            icon: '🏪', isSetup: true },
+    { to: '/students',        label: '8. Estudiantes',        icon: '🎒', isSetup: true },
+    // --- Operación Diaria ---
+    { to: '/school-leads',    label: 'Solicitudes',          icon: '📥' },
+    { to: '/orders',          label: 'Pedidos',              icon: '📋' },
+    { to: '/topup-requests',  label: 'Recargas',             icon: '💰' },
+    { to: '/transactions',    label: 'Transacciones',        icon: '📊' },
   ],
   SCHOOL_ADMIN: [
-    { to: '/students',       label: 'Estudiantes',   icon: '🎒' },
-    { to: '/users',          label: 'Usuarios',      icon: '👥' },
-    { to: '/stores',         label: 'Tiendas',       icon: '🏪' },
-    { to: '/products',       label: 'Productos',     icon: '🍱' },
-    { to: '/orders',         label: 'Pedidos',       icon: '📋' },
-    { to: '/topup-requests', label: 'Recargas',      icon: '💰' },
-    { to: '/transactions',   label: 'Transacciones', icon: '📊' },
-    { to: '/ley2120',        label: 'Ley 2120',      icon: '⬛' },
+    // --- Configuración Inicial ---
+    { to: '/products',       label: '1. Productos',     icon: '🍱', isSetup: true },
+    { to: '/ley2120',        label: '2. Ley 2120',      icon: '⬛', isSetup: true },
+    { to: '/users',          label: '3. Usuarios',      icon: '👥', isSetup: true },
+    { to: '/stores',         label: '4. Tiendas',       icon: '🏪', isSetup: true },
+    { to: '/students',       label: '5. Estudiantes',   icon: '🎒', isSetup: true },
+    // --- Operación Diaria ---
+    { to: '/orders',         label: 'Pedidos',          icon: '📋' },
+    { to: '/topup-requests', label: 'Recargas',         icon: '💰' },
+    { to: '/transactions',   label: 'Transacciones',    icon: '📊' },
   ],
   VENDOR: [
     { to: '/stores',   label: 'Mi Tienda',       icon: '🏪' },
@@ -563,6 +567,8 @@ export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const quickLinks = QUICK_LINKS[user?.role ?? ''] ?? [];
+  const setupLinks = quickLinks.filter(l => l.isSetup);
+  const opsLinks = quickLinks.filter(l => !l.isSetup);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -626,19 +632,69 @@ export default function DashboardPage() {
         {/* Accesos rápidos */}
         {quickLinks.length > 0 && (
           <>
-            <p className="dashboard-label" style={{ marginBottom: 10 }}>Accesos rápidos</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10, marginBottom: 24 }}>
-              {quickLinks.map(link => (
-                <Link key={link.to} to={link.to} style={{ textDecoration: 'none' }}>
-                  <div className="user-card" style={{ padding: '16px 14px', marginBottom: 0, cursor: 'pointer', textAlign: 'center', transition: 'border-color 0.15s, transform 0.15s' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
-                    <p style={{ margin: '0 0 6px', fontSize: 26 }}>{link.icon}</p>
-                    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--color-text)' }}>{link.label}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {setupLinks.length > 0 ? (
+              <>
+                <p className="dashboard-label" style={{ marginBottom: 10, color: '#98FF00', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  ⚙️ Configuración y Puesta en Marcha (Paso a Paso)
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginBottom: 24 }}>
+                  {setupLinks.map(link => (
+                    <Link key={link.to} to={link.to} style={{ textDecoration: 'none' }}>
+                      <div className="user-card" style={{ padding: '16px 14px', marginBottom: 0, cursor: 'pointer', textAlign: 'center', transition: 'border-color 0.15s, transform 0.15s', border: '1px solid rgba(152, 255, 0, 0.15)' }}
+                        onMouseEnter={e => { 
+                          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; 
+                          (e.currentTarget as HTMLDivElement).style.borderColor = '#98FF00';
+                          (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 15px rgba(152, 255, 0, 0.1)';
+                        }}
+                        onMouseLeave={e => { 
+                          (e.currentTarget as HTMLDivElement).style.transform = 'none'; 
+                          (e.currentTarget as HTMLDivElement).style.borderColor = '';
+                          (e.currentTarget as HTMLDivElement).style.boxShadow = '';
+                        }}>
+                        <p style={{ margin: '0 0 6px', fontSize: 26 }}>{link.icon}</p>
+                        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>{link.label}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {opsLinks.length > 0 && (
+                  <>
+                    <p className="dashboard-label" style={{ marginBottom: 10 }}>
+                      📋 Operación y Gestión Diaria
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginBottom: 24 }}>
+                      {opsLinks.map(link => (
+                        <Link key={link.to} to={link.to} style={{ textDecoration: 'none' }}>
+                          <div className="user-card" style={{ padding: '16px 14px', marginBottom: 0, cursor: 'pointer', textAlign: 'center', transition: 'border-color 0.15s, transform 0.15s' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
+                            <p style={{ margin: '0 0 6px', fontSize: 26 }}>{link.icon}</p>
+                            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--color-text)' }}>{link.label}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="dashboard-label" style={{ marginBottom: 10 }}>Accesos rápidos</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10, marginBottom: 24 }}>
+                  {quickLinks.map(link => (
+                    <Link key={link.to} to={link.to} style={{ textDecoration: 'none' }}>
+                      <div className="user-card" style={{ padding: '16px 14px', marginBottom: 0, cursor: 'pointer', textAlign: 'center', transition: 'border-color 0.15s, transform 0.15s' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
+                        <p style={{ margin: '0 0 6px', fontSize: 26 }}>{link.icon}</p>
+                        <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--color-text)' }}>{link.label}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
 

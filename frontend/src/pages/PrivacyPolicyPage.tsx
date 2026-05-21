@@ -39,8 +39,8 @@ export default function PrivacyPolicyPage() {
         </div>
 
         <Section title="1. Responsable del Tratamiento">
-          <p><strong>Razón Social:</strong> Caspete.com SAS (en proceso de constitución)</p>
-          <p><strong>NIT:</strong> En trámite</p>
+          <p><strong>Razón Social:</strong> Caspete.com (Ferney Blanco)</p>
+          <p><strong>NIT:</strong> 1093752731-1</p>
           <p><strong>Correo:</strong> <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a></p>
           <p><strong>Canal ARCO:</strong> <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a> | Plazo: 15 días hábiles</p>
         </Section>

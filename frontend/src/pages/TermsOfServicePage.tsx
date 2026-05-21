@@ -41,7 +41,7 @@ export default function TermsOfServicePage() {
         <Section title="1. Relación Contractual y Aceptación">
           <p>
             El presente documento constituye un contrato legalmente vinculante entre usted (en adelante, el "Usuario")
-            y <strong>Caspete.com SAS</strong> (en proceso de constitución), que regula el uso de la plataforma web,
+            y <strong>Caspete.com</strong> (representado por Ferney Blanco, NIT 1093752731-1), que regula el uso de la plataforma web,
             aplicaciones móviles, APIs y servicios de software de Caspete.
           </p>
           <p>

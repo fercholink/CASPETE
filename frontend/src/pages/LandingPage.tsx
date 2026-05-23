@@ -15,8 +15,7 @@ import {
   X,
   Smile,
   Star,
-  Award,
-  BellRing
+  Award
 } from 'lucide-react';
 import { COLOMBIAN_FOOD_ITEMS } from '../data/landingMockData';
 import type { FoodItem } from '../data/landingMockData';

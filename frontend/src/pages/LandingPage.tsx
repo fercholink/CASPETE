@@ -472,7 +472,6 @@ export default function LandingPage() {
                             </span>
                           </div>
                         </div>
-                        <div className="text-xs font-black font-mono text-[#8c6d71]">${food.price.toLocaleString('es-CO')}</div>
                       </button>
                     ))}
                   </div>

@@ -18,6 +18,9 @@ router.get('/:id', allAcademicRoles, communicationController.getOne);
 // POST   /api/communications — Compose/send a message
 router.post('/', allAcademicRoles, communicationController.create);
 
+// PUT    /api/communications/:id/read — Mark message as read
+router.put('/:id/read', allAcademicRoles, communicationController.markAsRead);
+
 // DELETE /api/communications/:id — Delete a message
 router.delete('/:id', allAcademicRoles, communicationController.deleteOne);
 

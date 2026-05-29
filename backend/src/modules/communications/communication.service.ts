@@ -162,3 +162,37 @@ export async function deleteCommunication(id: string, actor: JwtPayload) {
 
   await prisma.communication.delete({ where: { id } });
 }
+
+export async function markAsRead(id: string, actor: JwtPayload) {
+  const communication = await prisma.communication.findUnique({ where: { id } });
+  if (!communication) throw new AppError('Mensaje no encontrado', 404);
+
+  // Check if actor is the receiver
+  if (communication.receiver_id !== actor.sub) {
+    throw new AppError('No estás autorizado para marcar este mensaje como leído', 403);
+  }
+
+  return prisma.communication.update({
+    where: { id },
+    data: { is_read: true },
+    include: {
+      sender: {
+        select: {
+          id: true,
+          full_name: true,
+          email: true,
+          role: true,
+        },
+      },
+      receiver: {
+        select: {
+          id: true,
+          full_name: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+  });
+}
+

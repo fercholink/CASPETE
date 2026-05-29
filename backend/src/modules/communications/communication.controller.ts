@@ -29,3 +29,9 @@ export async function deleteOne(req: Request, res: Response) {
   await communicationService.deleteCommunication(id, req.user!);
   sendSuccess(res, null, 'Mensaje eliminado con éxito');
 }
+
+export async function markAsRead(req: Request, res: Response) {
+  const id = req.params['id'] as string;
+  const comm = await communicationService.markAsRead(id, req.user!);
+  sendSuccess(res, comm, 'Mensaje marcado como leído');
+}

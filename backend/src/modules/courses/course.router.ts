@@ -19,8 +19,9 @@ router.get('/:id', allAcademicRoles, courseController.getOne);
 // POST   /api/courses — Create a course
 router.post('/', adminRoles, courseController.create);
 
-// PATCH  /api/courses/:id — Update a course
+// PATCH/PUT  /api/courses/:id — Update a course / Sync enrollment
 router.patch('/:id', adminRoles, courseController.update);
+router.put('/:id', adminRoles, courseController.update);
 
 // DELETE /api/courses/:id — Delete a course
 router.delete('/:id', adminRoles, courseController.deleteOne);

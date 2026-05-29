@@ -13,14 +13,18 @@ const writeRoles = requireRole('SCHOOL_ADMIN', 'SUPER_ADMIN', 'TEACHER');
 // GET    /api/grades — List all grades (filtered by context)
 router.get('/', allAcademicRoles, gradeController.list);
 
+// GET    /api/grades/student/:studentId — Get all grades for a student
+router.get('/student/:studentId', allAcademicRoles, gradeController.studentGrades);
+
 // GET    /api/grades/:id — Get details of a single grade
 router.get('/:id', allAcademicRoles, gradeController.getOne);
 
 // POST   /api/grades — Register a new grade
 router.post('/', writeRoles, gradeController.create);
 
-// PATCH  /api/grades/:id — Update a grade
+// PATCH/PUT  /api/grades/:id — Update a grade
 router.patch('/:id', writeRoles, gradeController.update);
+router.put('/:id', writeRoles, gradeController.update);
 
 // DELETE /api/grades/:id — Delete a grade
 router.delete('/:id', writeRoles, gradeController.deleteOne);

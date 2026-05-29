@@ -39,3 +39,9 @@ export async function deleteOne(req: Request, res: Response) {
   await gradeService.deleteGrade(id, req.user!);
   sendSuccess(res, null, 'Calificación eliminada con éxito');
 }
+
+export async function studentGrades(req: Request, res: Response) {
+  const studentId = req.params['studentId'] as string;
+  const grades = await gradeService.studentGrades(studentId, req.user!);
+  sendSuccess(res, grades);
+}

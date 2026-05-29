@@ -173,6 +173,24 @@ export async function updateCourse(id: string, input: UpdateCourseInput, actor: 
   if (input.academic_period !== undefined) data.academic_period = input.academic_period;
   if (input.teacher_id !== undefined) data.teacher_id = input.teacher_id;
 
+  if (input.student_ids !== undefined) {
+    // Verify that all students belong to the same school
+    const studentsCount = await prisma.student.count({
+      where: {
+        id: { in: input.student_ids },
+        school_id: course.school_id,
+      },
+    });
+
+    if (studentsCount !== input.student_ids.length) {
+      throw new AppError('Uno o más estudiantes no pertenecen al mismo colegio o no existen', 400);
+    }
+
+    data.students = {
+      set: input.student_ids.map((id) => ({ id })),
+    };
+  }
+
   return prisma.course.update({
     where: { id },
     data,
@@ -185,6 +203,17 @@ export async function updateCourse(id: string, input: UpdateCourseInput, actor: 
               email: true,
             },
           },
+        },
+      },
+      students: {
+        select: {
+          id: true,
+          full_name: true,
+          national_id: true,
+          grade: true,
+        },
+        orderBy: {
+          full_name: 'asc',
         },
       },
     },

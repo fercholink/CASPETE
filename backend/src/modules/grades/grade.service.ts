@@ -248,3 +248,61 @@ export async function deleteGrade(id: string, actor: JwtPayload) {
 
   await prisma.grade.delete({ where: { id } });
 }
+
+export async function studentGrades(studentId: string, actor: JwtPayload) {
+  const student = await prisma.student.findUnique({ where: { id: studentId } });
+  if (!student) throw new AppError('Estudiante no encontrado', 404);
+
+  // Multi-tenant check
+  if (actor.role !== 'SUPER_ADMIN' && student.school_id !== actor.schoolId) {
+    throw new AppError('No tienes acceso a este colegio', 403);
+  }
+
+  // Parent check
+  if (actor.role === 'PARENT' && student.parent_id !== actor.sub) {
+    throw new AppError('No estás autorizado para ver las notas de este estudiante', 403);
+  }
+
+  // Teacher check
+  if (actor.role === 'TEACHER') {
+    const teacher = await prisma.teacher.findUnique({ where: { user_id: actor.sub } });
+    if (!teacher) throw new AppError('Perfil de docente no encontrado', 404);
+
+    const sharesCourse = await prisma.course.findFirst({
+      where: {
+        teacher_id: teacher.id,
+        students: {
+          some: {
+            id: studentId,
+          },
+        },
+      },
+    });
+    if (!sharesCourse) {
+      throw new AppError('No estás autorizado para ver las notas de este estudiante', 403);
+    }
+  }
+
+  return prisma.grade.findMany({
+    where: { student_id: studentId },
+    orderBy: { created_at: 'desc' },
+    include: {
+      course: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      teacher: {
+        include: {
+          user: {
+            select: {
+              full_name: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+

@@ -9,7 +9,7 @@ interface User {
   full_name: string;
   phone: string | null;
   country_code: string | null;
-  role: 'PARENT' | 'VENDOR' | 'SCHOOL_ADMIN' | 'SUPER_ADMIN';
+  role: 'PARENT' | 'VENDOR' | 'SCHOOL_ADMIN' | 'SUPER_ADMIN' | 'TEACHER';
   auth_provider: string;
   avatar_url: string | null;
   active: boolean;
@@ -20,18 +20,19 @@ interface User {
 interface UsersResp { users: User[]; total: number; page: number; pages: number; stats?: { total: number; parents: number; vendors: number; admins: number } }
 interface School { id: string; name: string; city: string }
 
-const RL: Record<string, string> = { PARENT: 'Padre/Madre', VENDOR: 'Tendero', SCHOOL_ADMIN: 'Admin Colegio', SUPER_ADMIN: 'Super Admin' };
+const RL: Record<string, string> = { PARENT: 'Padre/Madre', VENDOR: 'Tendero', SCHOOL_ADMIN: 'Admin Colegio', SUPER_ADMIN: 'Super Admin', TEACHER: 'Docente' };
 const RS: Record<string, { bg: string; color: string; icon: string }> = {
   PARENT:       { bg: 'var(--color-gray-100)', color: 'var(--color-text-muted)', icon: '👨‍👩‍👧' },
   VENDOR:       { bg: 'rgba(195,125,13,0.1)', color: '#c37d0d', icon: '🏪' },
   SCHOOL_ADMIN: { bg: 'var(--color-brand-light)', color: 'var(--color-brand-deep)', icon: '🎓' },
   SUPER_ADMIN:  { bg: 'rgba(55,114,207,0.1)', color: '#3772cf', icon: '🛡️' },
+  TEACHER:      { bg: 'rgba(124,58,237,0.1)', color: '#7c3aed', icon: '👩‍🏫' },
 };
 
 function initials(name: string) { return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase(); }
 function timeAgo(d: string) { const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : days < 30 ? `Hace ${days}d` : `Hace ${Math.floor(days/30)}m`; }
 
-const emptyForm = { full_name: '', email: '', password: '', phone: '', country_code: '+57', role: 'VENDOR' as 'VENDOR' | 'SCHOOL_ADMIN', school_id: '' };
+const emptyForm = { full_name: '', email: '', password: '', phone: '', country_code: '+57', role: 'VENDOR' as 'VENDOR' | 'SCHOOL_ADMIN' | 'TEACHER', school_id: '' };
 const emptyEditForm = { full_name: '', phone: '', country_code: '+57', role: '' as string, school_id: '' };
 
 export default function UsersPage() {
@@ -215,6 +216,7 @@ export default function UsersPage() {
             <option value="">Todos los roles</option>
             <option value="PARENT">👨‍👩‍👧 Padres</option>
             <option value="VENDOR">🏪 Tenderos</option>
+            <option value="TEACHER">👩‍🏫 Docentes</option>
             <option value="SCHOOL_ADMIN">🎓 Admin Colegio</option>
             {isSA && <option value="SUPER_ADMIN">🛡️ Super Admin</option>}
           </select>
@@ -324,6 +326,7 @@ export default function UsersPage() {
                   <label className="form-label" htmlFor="new-role">Rol</label>
                   <select id="new-role" className="form-select" value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value as any }))}>
                     <option value="VENDOR">🏪 Tendero</option>
+                    <option value="TEACHER">👩‍🏫 Docente</option>
                     <option value="SCHOOL_ADMIN">🎓 Admin Colegio</option>
                   </select>
                 </div>
@@ -370,6 +373,7 @@ export default function UsersPage() {
                   <select id="edit-role" className="form-select" value={editForm.role} onChange={e => setEditForm(p => ({ ...p, role: e.target.value }))}>
                     <option value="PARENT">👨‍👩‍👧 Padre/Madre</option>
                     <option value="VENDOR">🏪 Tendero</option>
+                    <option value="TEACHER">👩‍🏫 Docente</option>
                     <option value="SCHOOL_ADMIN">🎓 Admin Colegio</option>
                     {isSA && <option value="SUPER_ADMIN">🛡️ Super Admin</option>}
                   </select>

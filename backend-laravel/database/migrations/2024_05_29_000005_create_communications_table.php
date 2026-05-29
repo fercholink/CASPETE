@@ -14,17 +14,17 @@ return new class extends Migration
         Schema::create('communications', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('school_id');
-            $table->uuid('sender_id');
-            $table->uuid('receiver_id');
+            $table->unsignedBigInteger('sender_id');
+            $table->unsignedBigInteger('receiver_id');
             $table->string('title');
             $table->text('body');
             $table->text('attachment_url')->nullable();
             $table->boolean('is_read')->default(false);
             $table->timestamps();
 
-            // $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
-            // $table->foreign('sender_id')->references('id')->on('users')->onDelete('cascade');
-            // $table->foreign('receiver_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
+            $table->foreign('sender_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('receiver_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

@@ -17,6 +17,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('phone', 20)->nullable();
+            $table->string('role', 20)->default('PARENT'); // PARENT, VENDOR, SCHOOL_ADMIN, SUPER_ADMIN, TEACHER
+            $table->uuid('school_id')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

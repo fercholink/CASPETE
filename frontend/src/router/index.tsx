@@ -39,6 +39,7 @@ import RootLayout from '../components/RootLayout';
 import TeacherDashboardPage from '../pages/TeacherDashboardPage';
 import StudentGradesPage from '../pages/StudentGradesPage';
 import CommunicationsPage from '../pages/CommunicationsPage';
+import CoursesPage from '../pages/CoursesPage';
 
 export const router = createBrowserRouter([
   {
@@ -93,6 +94,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['PARENT', 'TEACHER', 'SCHOOL_ADMIN', 'SUPER_ADMIN']}>
         <CommunicationsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/courses',
+    element: (
+      <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <CoursesPage />
       </ProtectedRoute>
     ),
   },

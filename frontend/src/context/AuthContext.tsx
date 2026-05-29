@@ -7,7 +7,7 @@ export interface AuthUser {
   email: string;
   full_name: string;
   phone?: string | null;
-  role: 'PARENT' | 'VENDOR' | 'SCHOOL_ADMIN' | 'SUPER_ADMIN';
+  role: 'PARENT' | 'VENDOR' | 'SCHOOL_ADMIN' | 'SUPER_ADMIN' | 'TEACHER' | 'STUDENT';
   school_id: string | null;
   school?: { id: string; name: string; city: string } | null;
 }

@@ -129,8 +129,9 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/products',       label: '1. Productos',     icon: '🍱', isSetup: true },
     { to: '/ley2120',        label: '2. Ley 2120',      icon: '⬛', isSetup: true },
     { to: '/users',          label: '3. Usuarios',      icon: '👥', isSetup: true },
-    { to: '/stores',         label: '4. Tiendas',       icon: '🏪', isSetup: true },
-    { to: '/students',       label: '5. Estudiantes',   icon: '🎒', isSetup: true },
+    { to: '/courses',        label: '4. Cursos',        icon: '📚', isSetup: true },
+    { to: '/stores',         label: '5. Tiendas',       icon: '🏪', isSetup: true },
+    { to: '/students',       label: '6. Estudiantes',   icon: '🎒', isSetup: true },
     // --- Operación Diaria ---
     { to: '/orders',         label: 'Pedidos',          icon: '📋' },
   ],
@@ -139,10 +140,15 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/orders',   label: 'Pedidos del día', icon: '📋' },
     { to: '/products', label: 'Catálogo global', icon: '🍱' },
   ],
+  TEACHER: [
+    { to: '/teacher/dashboard', label: 'Mi Panel',       icon: '👩‍🏫' },
+    { to: '/communications',     label: 'Comunicados',    icon: '📬' },
+  ],
   PARENT: [
     { to: '/students',    label: 'Mis hijos',     icon: '🎒' },
     { to: '/orders',      label: 'Mis pedidos',   icon: '📋' },
     { to: '/orders/new',  label: 'Nuevo pedido',  icon: '✨' },
+    { to: '/grades',      label: 'Calificaciones',icon: '📊' },
     { to: '/transactions',label: 'Transacciones', icon: '📊' },
   ],
 };

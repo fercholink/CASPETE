@@ -17,7 +17,7 @@ return new class extends Migration
 
             $table->primary(['course_id', 'student_id']);
             $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
-            // $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
+            $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
         });
     }
 

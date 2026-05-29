@@ -59,7 +59,7 @@ caspete/
 │   │   │   ├── Listeners/
 │   │   │   ├── Policies/
 │   │   │   └── Enums/
-│   │   │       ├── UserRole.php        # admin, school_admin, storekeeper, guardian, student
+│   │   │       ├── UserRole.php        # admin, school_admin, storekeeper, guardian, student, teacher
 │   │   │       ├── TransactionType.php # recharge, purchase, refund
 │   │   │       └── NutritionFlag.php   # green, yellow, red
 │   │   ├── database/
@@ -201,7 +201,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(30) NOT NULL CHECK (role IN (
-        'super_admin', 'school_admin', 'storekeeper', 'guardian', 'student'
+        'super_admin', 'school_admin', 'storekeeper', 'guardian', 'student', 'teacher'
     )),
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
@@ -245,6 +245,57 @@ CREATE TABLE guardian_student (
     relationship VARCHAR(50) DEFAULT 'parent',  -- parent, grandparent, tutor
     is_primary BOOLEAN DEFAULT false,
     PRIMARY KEY (guardian_id, student_id)
+);
+
+-- ============================================
+-- GESTIÓN ACADÉMICA Y COMUNICACIONES (NUEVO MÓDULO)
+-- ============================================
+
+CREATE TABLE teachers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+    specialty VARCHAR(100),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE courses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+    teacher_id UUID REFERENCES teachers(id),
+    name VARCHAR(100) NOT NULL,         -- "Matemáticas 5°A"
+    academic_period VARCHAR(50),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE course_student (
+    course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+    PRIMARY KEY (course_id, student_id)
+);
+
+CREATE TABLE grades (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+    teacher_id UUID REFERENCES teachers(id),
+    score DECIMAL(4,2),                 -- Nota numérica (ej: 4.5)
+    evaluation_name VARCHAR(100),       -- "Examen Final", "Taller 1"
+    comments TEXT,                      -- Observaciones del docente
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE communications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES users(id),    -- Puede ser teacher, guardian, admin
+    receiver_id UUID REFERENCES users(id),  -- Puede ser guardian, teacher
+    title VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    attachment_url TEXT,                    -- Archivo adjunto (ej: excusa médica)
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ============================================
@@ -485,6 +536,18 @@ Autenticadas (Sanctum token):
   POST   /admin/schools
   PUT    /admin/schools/{id}
   GET    /admin/users
+
+  -- ACADÉMICO (NOTAS Y PROFESORES) --
+  GET    /courses
+  GET    /courses/{courseId}/students
+  GET    /grades/student/{studentId}
+  POST   /grades                   ← Profesor califica a un estudiante
+  PUT    /grades/{id}
+
+  -- COMUNICACIONES (EXCUSAS Y AVISOS) --
+  GET    /communications
+  POST   /communications           ← Padre envía excusa / Profesor envía reporte
+  PUT    /communications/{id}/read
 ```
 
 ---

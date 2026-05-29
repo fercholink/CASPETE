@@ -36,6 +36,9 @@ import DataDeletionPage from '../pages/DataDeletionPage';
 import ChatPage from '../pages/ChatPage';
 import SchoolLeadsPage from '../pages/SchoolLeadsPage';
 import RootLayout from '../components/RootLayout';
+import TeacherDashboardPage from '../pages/TeacherDashboardPage';
+import StudentGradesPage from '../pages/StudentGradesPage';
+import CommunicationsPage from '../pages/CommunicationsPage';
 
 export const router = createBrowserRouter([
   {
@@ -64,6 +67,32 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <DashboardPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ── Módulo Académico (Docentes, Notas, Comunicaciones) ────────
+  {
+    path: '/teacher/dashboard',
+    element: (
+      <ProtectedRoute allowedRoles={['TEACHER', 'SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <TeacherDashboardPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/grades',
+    element: (
+      <ProtectedRoute allowedRoles={['PARENT', 'STUDENT']}>
+        <StudentGradesPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/communications',
+    element: (
+      <ProtectedRoute allowedRoles={['PARENT', 'TEACHER', 'SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <CommunicationsPage />
       </ProtectedRoute>
     ),
   },

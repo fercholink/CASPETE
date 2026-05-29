@@ -129,17 +129,43 @@ async function main() {
       role: 'VENDOR',
       full_name: 'Pedro Garcia',
       active: true,
+    },
+    {
+      id: '8a5c3b9d-4372-47be-a016-b7eb504d7266',
+      school_id: 'e4348165-3d9b-4b85-81fb-c8d56237290d',
+      email: 'docente@liceomoderno.co',
+      password_hash: '$2b$12$vz2Vsd4zhBMgo7nLEgSNzO9woQ9mzDK0HQk7yjjmGtefbWDcvmi32',
+      role: 'TEACHER',
+      full_name: 'Clara Gómez',
+      active: true,
     }
   ];
 
   for (const u of users) {
-    await prisma.user.upsert({
-      where: { id: u.id },
-      update: u as any,
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: {
+        school_id: u.school_id,
+        role: u.role as any,
+        full_name: u.full_name,
+        active: u.active,
+      },
       create: u as any,
     });
+
+    if (u.role === 'TEACHER') {
+      await prisma.teacher.upsert({
+        where: { user_id: user.id },
+        update: {},
+        create: {
+          user_id: user.id,
+          school_id: user.school_id!,
+          specialty: 'Ciencias Naturales',
+        },
+      });
+    }
   }
-  console.log('Users seeded.');
+  console.log('Users and teachers seeded.');
 
   console.log('Database seeded successfully!');
   await prisma.$disconnect();

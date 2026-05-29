@@ -24,6 +24,9 @@ import arcoRouter from './modules/arco/arco.router.js';
 import chatRouter from './modules/chat/chat.router.js';
 import { nutritionalAuditRouter } from './modules/products/nutritional-audit.router.js';
 import leadsRouter from './modules/leads/leads.router.js';
+import courseRouter from './modules/courses/course.router.js';
+import gradeRouter from './modules/grades/grade.router.js';
+import communicationRouter from './modules/communications/communication.router.js';
 
 const app = express();
  
@@ -73,6 +76,9 @@ app.use('/api/allergies', allergyRouter);
 app.use('/api/arco', arcoRouter);   // Derechos ARCO — Ley 1581/2012
 app.use('/api/chat', chatRouter);   // Chat interno Tendero ↔ Padre
 app.use('/api/leads', leadsRouter); // Colegios interesados (landing)
+app.use('/api/courses', courseRouter);
+app.use('/api/grades', gradeRouter);
+app.use('/api/communications', communicationRouter);
 
 app.use(errorHandler);
 

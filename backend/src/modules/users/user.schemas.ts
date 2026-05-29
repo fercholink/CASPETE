@@ -6,7 +6,7 @@ export const createUserSchema = z.object({
   full_name: z.string().min(2).max(200),
   phone: z.string().regex(/^[0-9]{10}$/, 'Formato: 10 dígitos numéricos').optional(),
   country_code: z.string().optional(),
-  role: z.enum(['VENDOR', 'SCHOOL_ADMIN']),
+  role: z.enum(['VENDOR', 'SCHOOL_ADMIN', 'TEACHER']),
   school_id: z.string().uuid().optional(),
 });
 
@@ -14,7 +14,7 @@ export const updateUserSchema = z.object({
   full_name: z.string().min(2).max(200).optional(),
   phone: z.string().max(20).nullable().optional(),
   country_code: z.string().nullable().optional(),
-  role: z.enum(['PARENT', 'VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN']).optional(),
+  role: z.enum(['PARENT', 'VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN', 'TEACHER']).optional(),
   active: z.boolean().optional(),
   school_id: z.string().uuid().nullable().optional(),
 });

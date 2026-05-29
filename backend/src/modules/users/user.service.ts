@@ -38,17 +38,32 @@ export async function createUser(input: CreateUserInput, actor: JwtPayload) {
   if (existing) throw new AppError('Este email ya está registrado', 409);
 
   const password_hash = await bcrypt.hash(input.password, 12);
-  return prisma.user.create({
-    data: {
-      email: input.email,
-      password_hash,
-      full_name: input.full_name,
-      phone: input.phone ?? null,
-      country_code: input.country_code ?? null,
-      role: input.role as UserRole,
-      school_id: schoolId,
-    },
-    select: userSelect,
+  
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        email: input.email,
+        password_hash,
+        full_name: input.full_name,
+        phone: input.phone ?? null,
+        country_code: input.country_code ?? null,
+        role: input.role as UserRole,
+        school_id: schoolId,
+      },
+      select: userSelect,
+    });
+
+    if (input.role === 'TEACHER') {
+      await tx.teacher.create({
+        data: {
+          user_id: user.id,
+          school_id: schoolId,
+          specialty: 'General',
+        },
+      });
+    }
+
+    return user;
   });
 }
 

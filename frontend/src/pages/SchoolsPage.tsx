@@ -28,6 +28,7 @@ interface SchoolsResponse {
 const PLAN_CFG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
   BASIC:    { label: 'Plan Mensual',   color: '#64748b', bg: 'rgba(100,116,139,0.08)', icon: '⚡' },
   STANDARD: { label: 'Plan Comisión', color: '#2563eb', bg: 'rgba(37,99,235,0.08)',  icon: '⭐' },
+  PREMIUM:  { label: 'Plan Premium',  color: '#d97706', bg: 'rgba(217,119,6,0.08)',   icon: '👑' },
 };
 
 export default function SchoolsPage() {
@@ -140,6 +141,7 @@ export default function SchoolsPage() {
             <option value="">Todos los planes</option>
             <option value="BASIC">⚡ Plan Mensual</option>
             <option value="STANDARD">⭐ Plan Comisión</option>
+            <option value="PREMIUM">👑 Plan Premium</option>
           </select>
           <select className="form-select" value={filterActive} onChange={e => { setFilterActive(e.target.value); setPage(1); }} style={{ width: 'auto', minWidth: 120, marginBottom: 0 }}>
             <option value="">Todos</option>
@@ -169,7 +171,7 @@ export default function SchoolsPage() {
         {!loading && data && data.schools.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {data.schools.map(school => {
-              const plan = PLAN_CFG[school.plan];
+              const plan = PLAN_CFG[school.plan] || { label: school.plan || 'Plan Desconocido', color: '#64748b', bg: 'rgba(100,116,139,0.08)', icon: '❓' };
               return (
                 <div key={school.id} className="user-card" style={{ padding: '20px 24px', marginBottom: 0, opacity: school.active ? 1 : 0.65 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>

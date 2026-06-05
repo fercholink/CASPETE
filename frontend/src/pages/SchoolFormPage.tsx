@@ -160,6 +160,7 @@ export default function SchoolFormPage() {
               <select id="plan" name="plan" className="form-select" value={form.plan} onChange={handleChange}>
                 <option value="BASIC">⚡ Plan Mensual</option>
                 <option value="STANDARD">⭐ Plan Comisión</option>
+                <option value="PREMIUM">👑 Plan Premium</option>
               </select>
             </div>
           </div>

@@ -193,26 +193,43 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
       select: orderSelect,
     });
 
-    // Decrementar stock de StoreProducts
+    // Decrementar stock de StoreProducts de forma atómica (con guard anti-carrera)
     for (const item of orderItemsData) {
       const sp = spMap.get(item.store_product_id)!;
       if (sp.stock !== null) {
-        await tx.storeProduct.update({
-          where: { id: item.store_product_id },
+        const stockResult = await tx.storeProduct.updateMany({
+          where: { id: item.store_product_id, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
         });
+        if (stockResult.count === 0) {
+          throw new AppError(`Stock insuficiente para "${sp.product.name}". Alguien más lo compró justo antes.`, 400);
+        }
       }
     }
 
-    const newBalance = Math.round((balance - totalAmount) * 100) / 100;
-    await tx.student.update({ where: { id: input.student_id }, data: { balance: newBalance } });
+    // Descuento de saldo atómico: solo aplica si el saldo actual alcanza (evita double-spend por carrera)
+    const debit = await tx.student.updateMany({
+      where: { id: input.student_id, balance: { gte: totalAmount } },
+      data: { balance: { decrement: totalAmount } },
+    });
+    if (debit.count === 0) {
+      throw new AppError(
+        `Saldo insuficiente. Disponible: $${balance.toLocaleString('es-CO')}, Pedido: $${totalAmount.toLocaleString('es-CO')}`,
+        400,
+      );
+    }
+    const debitedStudent = await tx.student.findUniqueOrThrow({
+      where: { id: input.student_id },
+      select: { balance: true },
+    });
+
     await tx.transaction.create({
       data: {
         school_id: student.school_id,
         student_id: input.student_id,
         type: 'CHARGE',
         amount: totalAmount,
-        balance_after: newBalance,
+        balance_after: debitedStudent.balance,
         order_id: order.id,
       },
     });
@@ -352,21 +369,18 @@ export async function cancelOrder(id: string, actor: JwtPayload) {
       select: orderSelect,
     });
 
-    const student = await tx.student.findUnique({
+    const refunded = await tx.student.update({
       where: { id: order.student.id },
+      data: { balance: { increment: refundAmount } },
       select: { balance: true },
     });
-    if (!student) return updated;
-
-    const newBalance = Math.round((student.balance.toNumber() + refundAmount) * 100) / 100;
-    await tx.student.update({ where: { id: order.student.id }, data: { balance: newBalance } });
     await tx.transaction.create({
       data: {
         school_id: order.school_id,
         student_id: order.student.id,
         type: 'REFUND',
         amount: refundAmount,
-        balance_after: newBalance,
+        balance_after: refunded.balance,
         order_id: id,
       },
     });
@@ -615,21 +629,18 @@ export async function cancelOrderPartial(id: string, actor: JwtPayload) {
       select: orderSelect,
     });
 
-    const student = await tx.student.findUnique({
+    const refunded = await tx.student.update({
       where: { id: order.student.id },
+      data: { balance: { increment: refundAmount } },
       select: { balance: true },
     });
-    if (!student) return updated;
-
-    const newBalance = Math.round((student.balance.toNumber() + refundAmount) * 100) / 100;
-    await tx.student.update({ where: { id: order.student.id }, data: { balance: newBalance } });
     await tx.transaction.create({
       data: {
         school_id: order.school_id,
         student_id: order.student.id,
         type: 'REFUND',
         amount: refundAmount,
-        balance_after: newBalance,
+        balance_after: refunded.balance,
         order_id: id,
       },
     });
@@ -809,11 +820,15 @@ export async function deliverStudentOrders(studentId: string, deliveryCode: stri
     ? (actor.schoolId ?? (await prisma.user.findUnique({ where: { id: actor.sub }, select: { school_id: true } }))?.school_id)
     : null;
 
+  if (actor.role === 'VENDOR' && !vendorSchoolId) {
+    throw new AppError('Tu cuenta no tiene colegio asignado', 403);
+  }
+
   const pendingDeliveries = await prisma.lunchOrder.findMany({
     where: {
       student_id: studentId,
       status: 'CONFIRMED',
-      ...(actor.role === 'VENDOR' && vendorSchoolId ? { store: { school_id: vendorSchoolId } } : {}),
+      ...(actor.role === 'VENDOR' ? { store: { school_id: vendorSchoolId! } } : {}),
     },
     select: { id: true }
   });
@@ -986,12 +1001,10 @@ export async function topupStudent(studentId: string, input: TopupInput, actor: 
   if (actor.role === 'SCHOOL_ADMIN' && actor.schoolId !== student.school_id)
     throw new AppError('No tienes permiso para recargar este estudiante', 403);
 
-  const newBalance = Math.round((student.balance.toNumber() + input.amount) * 100) / 100;
-
   return prisma.$transaction(async (tx) => {
     const updated = await tx.student.update({
       where: { id: studentId },
-      data: { balance: newBalance },
+      data: { balance: { increment: input.amount } },
       select: { id: true, full_name: true, balance: true, school: { select: { name: true } } },
     });
     await tx.transaction.create({
@@ -1000,7 +1013,7 @@ export async function topupStudent(studentId: string, input: TopupInput, actor: 
         student_id: studentId,
         type: 'TOPUP',
         amount: input.amount,
-        balance_after: newBalance,
+        balance_after: updated.balance,
       },
     });
     return updated;

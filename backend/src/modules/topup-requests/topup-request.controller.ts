@@ -20,13 +20,6 @@ const nequiSchema = z.object({
   phoneNumber: z.string().min(10).max(15),
 });
 
-const confirmSchema = z.object({
-  studentId: z.string().uuid('studentId debe ser un UUID válido'),
-  amount: z.number().positive('El monto debe ser positivo').max(10_000_000),
-  paymentMethod: z.enum(['NEQUI', 'BANCOLOMBIA', 'DAVIVIENDA']),
-  gatewayRef: z.string().min(1).max(200),
-});
-
 const processSchema = z.object({
   action: z.enum(['APPROVED', 'REJECTED']),
 });
@@ -78,10 +71,4 @@ export async function processRequest(req: Request, res: Response) {
   const id = req.params['id'] as string;
   const result = await topupService.processTopupRequest(id, input.action, req.user as JwtPayload);
   sendSuccess(res, result, 'Solicitud procesada');
-}
-
-export async function confirm(req: Request, res: Response) {
-  const input = confirmSchema.parse(req.body);
-  const result = await topupService.confirmTopup(input);
-  sendSuccess(res, result, 'Saldo recargado exitosamente');
 }

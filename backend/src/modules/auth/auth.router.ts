@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as authController from './auth.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
-import { loginLimiter, registerLimiter } from '../../middleware/rate-limit.middleware.js';
+import { loginLimiter, registerLimiter, accountRecoveryLimiter } from '../../middleware/rate-limit.middleware.js';
 import passport from '../../lib/passport.js';
 import { env } from '../../config/env.js';
 
@@ -29,7 +29,7 @@ router.patch('/profile', authenticate, authController.updateProfile);
 router.post('/change-password', authenticate, authController.changePassword);
 
 // POST  /api/auth/forgot-password — solicitar recuperación por email
-router.post('/forgot-password', authController.forgotPassword);
+router.post('/forgot-password', accountRecoveryLimiter, authController.forgotPassword);
 
 // POST  /api/auth/reset-password — establecer nueva contraseña con token
 router.post('/reset-password', authController.resetPassword);
@@ -38,7 +38,7 @@ router.post('/reset-password', authController.resetPassword);
 router.post('/verify-email', authController.verifyEmail);
 
 // POST  /api/auth/resend-verification — reenviar enlace de confirmación
-router.post('/resend-verification', authController.resendVerification);
+router.post('/resend-verification', accountRecoveryLimiter, authController.resendVerification);
 
 // ── Google OAuth ─────────────────────────────────────────────────────────────
 // GET  /api/auth/google         — redirige a Google para autenticación

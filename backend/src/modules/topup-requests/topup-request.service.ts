@@ -248,12 +248,10 @@ export async function confirmTopup(input: ConfirmTopupInput) {
   });
   if (!student?.active) throw new AppError('Estudiante no encontrado o inactivo', 404);
 
-  const newBalance = Math.round((student.balance.toNumber() + amount) * 100) / 100;
-
   const result = await prisma.$transaction(async (tx) => {
     const updated = await tx.student.update({
       where: { id: studentId },
-      data: { balance: newBalance },
+      data: { balance: { increment: amount } },
       select: { id: true, full_name: true, balance: true, school: { select: { name: true } } },
     });
     await tx.transaction.create({
@@ -262,7 +260,7 @@ export async function confirmTopup(input: ConfirmTopupInput) {
         student_id: studentId,
         type: 'TOPUP',
         amount,
-        balance_after: newBalance,
+        balance_after: updated.balance,
         payment_method: paymentMethod,
         gateway_ref: gatewayRef,
       },
@@ -273,7 +271,7 @@ export async function confirmTopup(input: ConfirmTopupInput) {
   try {
     await sendTopupConfirmationEmail(
       student.parent.email, student.parent.full_name,
-      student.full_name, amount, newBalance, paymentMethod,
+      student.full_name, amount, result.balance.toNumber(), paymentMethod,
     );
     console.log(`[Email] Confirmación de recarga enviada a ${student.parent.email}`);
   } catch (emailErr) {

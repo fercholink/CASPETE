@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import passport from './lib/passport.js';
@@ -29,7 +30,8 @@ import gradeRouter from './modules/grades/grade.router.js';
 import communicationRouter from './modules/communications/communication.router.js';
 
 const app = express();
- 
+
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 const allowedOrigins = env.FRONTEND_URL.split(',').map((o) => o.trim());
 

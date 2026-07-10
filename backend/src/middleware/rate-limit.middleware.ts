@@ -24,6 +24,14 @@ export const deliveryLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+export const accountRecoveryLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { success: false, error: 'Demasiadas solicitudes. Vuelve a intentarlo en 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 export const leadsLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
   max: 3, // limit each IP to 3 requests per hour

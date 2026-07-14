@@ -40,6 +40,7 @@ import TeacherDashboardPage from '../pages/TeacherDashboardPage';
 import StudentGradesPage from '../pages/StudentGradesPage';
 import CommunicationsPage from '../pages/CommunicationsPage';
 import CoursesPage from '../pages/CoursesPage';
+import GPSTrackingPage from '../pages/GPSTrackingPage';
 
 export const router = createBrowserRouter([
   {
@@ -102,6 +103,18 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']}>
         <CoursesPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ── Rastreo GPS ───────────────────────────────────────
+  // Solo PARENT (su(s) hijo(s)) y SUPER_ADMIN (soporte, con auditoría).
+  // SCHOOL_ADMIN NUNCA tiene acceso a ubicación GPS.
+  {
+    path: '/tracking',
+    element: (
+      <ProtectedRoute allowedRoles={['PARENT', 'SUPER_ADMIN']}>
+        <GPSTrackingPage />
       </ProtectedRoute>
     ),
   },

@@ -4,6 +4,7 @@ import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { CreateOrderInput, TopupInput } from './order.schemas.js';
 import type { OrderStatus } from '@prisma/client';
 import { sendPushToUser } from '../push/push.service.js';
+import { resolveStudentByQrToken } from '../gps/gps.service.js';
 
 const OTP_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas
 
@@ -1033,4 +1034,39 @@ export async function deleteOrder(id: string, actor: JwtPayload) {
     prisma.transaction.deleteMany({ where: { order_id: id } }),
     prisma.lunchOrder.delete({ where: { id } }),
   ]);
+}
+
+// ── Identificar estudiante por QR de la tarjeta (VENDOR) ─────────────────────
+// Solo preselecciona al estudiante y sus pedidos listos para entregar.
+// El código de 6 dígitos sigue siendo la única confirmación real de entrega.
+export async function identifyStudentByQr(qrToken: string, actor: JwtPayload) {
+  const student = await resolveStudentByQrToken(qrToken, actor.schoolId, actor.sub);
+
+  const orders = await prisma.lunchOrder.findMany({
+    where: { student_id: student.id, status: 'CONFIRMED' },
+    orderBy: { scheduled_date: 'asc' },
+    select: {
+      id: true,
+      scheduled_date: true,
+      total_amount: true,
+      store: { select: { name: true } },
+      order_items: {
+        select: {
+          quantity: true,
+          store_product: { select: { product: { select: { name: true } } } },
+        },
+      },
+    },
+  });
+
+  return {
+    student: {
+      id: student.id,
+      full_name: student.full_name,
+      grade: student.grade,
+      photo_url: student.photo_url,
+    },
+    orders,
+    ready_to_deliver: orders.length,
+  };
 }

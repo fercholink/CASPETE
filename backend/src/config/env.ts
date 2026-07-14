@@ -7,6 +7,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('15m'),
   REFRESH_TOKEN_SECRET: z.string().min(32, 'REFRESH_TOKEN_SECRET debe tener al menos 32 caracteres'),
   PORT: z.coerce.number().default(3001),
+  GPS_TCP_PORT: z.coerce.number().default(5001),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY es requerida'),

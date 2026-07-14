@@ -62,8 +62,8 @@ export default function CoursesPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await apiClient.get<{ success: boolean; data: Course[] }>('/courses');
-      setCourses(res.data.data);
+      const res = await apiClient.get<{ success: boolean; data: { courses: Course[] } }>('/courses');
+      setCourses(res.data.data.courses);
     } catch (err: any) {
       setError(err.response?.data?.error ?? 'Error al cargar los cursos escolares.');
     } finally {

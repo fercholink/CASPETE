@@ -2,6 +2,7 @@ import app from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './lib/prisma.js';
 import { initCronJobs } from './jobs/cron.js';
+import { startGpsTcpServer } from './tcp-server.js';
 
 async function main() {
   try {
@@ -10,6 +11,9 @@ async function main() {
 
     // Iniciar tareas programadas una vez confirmada la conexión a la BD
     initCronJobs();
+
+    // Iniciar servidor TCP de rastreadores GPS (protocolo Zhongxun)
+    startGpsTcpServer();
   } catch (err) {
     console.error('[DB] Error al conectar con PostgreSQL:', err);
     process.exit(1);

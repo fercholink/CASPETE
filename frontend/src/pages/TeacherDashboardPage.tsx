@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
+import AttendanceScanner from '../components/AttendanceScanner';
 
 interface Course {
   id: string;
@@ -28,6 +29,17 @@ interface Grade {
   student?: Student;
 }
 
+interface AttendanceRecord {
+  id: string;
+  scanned_at: string;
+  type: string;
+  student: { id: string; full_name: string; grade: string | null; photo_url: string | null };
+}
+
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+}
+
 export default function TeacherDashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -39,8 +51,10 @@ export default function TeacherDashboardPage() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [courseStudents, setCourseStudents] = useState<Student[]>([]);
   const [courseGrades, setCourseGrades] = useState<Grade[]>([]);
+  const [courseAttendance, setCourseAttendance] = useState<AttendanceRecord[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [detailTab, setDetailTab] = useState<'students' | 'grades'>('students');
+  const [detailTab, setDetailTab] = useState<'students' | 'grades' | 'attendance'>('students');
+  const [showScanner, setShowScanner] = useState(false);
 
   // Modales
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
@@ -60,8 +74,8 @@ export default function TeacherDashboardPage() {
     setLoadingCourses(true);
     setCoursesError('');
     try {
-      const res = await apiClient.get<{ success: boolean; data: Course[] }>('/courses');
-      setCourses(res.data.data);
+      const res = await apiClient.get<{ success: boolean; data: { courses: Course[] } }>('/courses');
+      setCourses(res.data.data.courses);
     } catch (err: any) {
       setCoursesError(err.response?.data?.error ?? 'Error al cargar cursos.');
     } finally {
@@ -78,17 +92,30 @@ export default function TeacherDashboardPage() {
     setLoadingDetail(true);
     setDetailTab('students');
     try {
-      // Cargar estudiantes del curso
-      const studentsRes = await apiClient.get<{ success: boolean; data: Student[] }>(`/courses/${course.id}/students`);
-      setCourseStudents(studentsRes.data.data);
+      // Cargar estudiantes del curso (vienen incluidos en el detalle del curso)
+      const courseRes = await apiClient.get<{ success: boolean; data: { students: Student[] } }>(`/courses/${course.id}`);
+      setCourseStudents(courseRes.data.data.students);
 
       // Cargar notas de este curso
       const gradesRes = await apiClient.get<{ success: boolean; data: Grade[] }>(`/grades?course_id=${course.id}`);
       setCourseGrades(gradesRes.data.data);
+
+      // Cargar asistencia registrada
+      const attendanceRes = await apiClient.get<{ success: boolean; data: AttendanceRecord[] }>(`/attendance/course/${course.id}`);
+      setCourseAttendance(attendanceRes.data.data);
     } catch (err) {
       alert('Error al cargar la información del curso');
     } finally {
       setLoadingDetail(false);
+    }
+  };
+
+  const reloadAttendance = async (courseId: string) => {
+    try {
+      const res = await apiClient.get<{ success: boolean; data: AttendanceRecord[] }>(`/attendance/course/${courseId}`);
+      setCourseAttendance(res.data.data);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -338,6 +365,21 @@ export default function TeacherDashboardPage() {
               >
                 📊 Calificaciones Registradas ({courseGrades.length})
               </button>
+              <button
+                style={{
+                  padding: '10px 16px',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: detailTab === 'attendance' ? '2px solid var(--color-text)' : 'none',
+                  fontWeight: detailTab === 'attendance' ? 600 : 400,
+                  color: detailTab === 'attendance' ? 'var(--color-text)' : 'var(--color-text-muted)',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                }}
+                onClick={() => setDetailTab('attendance')}
+              >
+                📷 Asistencia ({courseAttendance.length})
+              </button>
             </div>
 
             {loadingDetail && <div className="roadmap-note">Cargando información del curso...</div>}
@@ -469,11 +511,68 @@ export default function TeacherDashboardPage() {
                     )}
                   </div>
                 )}
+
+                {/* PESTAÑA ASISTENCIA */}
+                {detailTab === 'attendance' && (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
+                        Escanea la tarjeta de cada estudiante para registrar su llegada a clase.
+                      </p>
+                      <button className="btn-primary" style={{ width: 'auto' }} onClick={() => setShowScanner(true)}>
+                        📷 Tomar asistencia
+                      </button>
+                    </div>
+
+                    {courseAttendance.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-text-muted)' }}>
+                        Aún no se ha registrado asistencia para esta clase.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {courseAttendance.map((a) => (
+                          <div
+                            key={a.id}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 12,
+                              padding: '10px 16px', borderRadius: 'var(--radius-md)',
+                              border: '1px solid var(--color-border)', background: 'var(--color-gray-50)',
+                            }}
+                          >
+                            {a.student.photo_url ? (
+                              <img src={a.student.photo_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>
+                                {a.student.full_name.charAt(0)}
+                              </div>
+                            )}
+                            <div style={{ flex: 1 }}>
+                              <p style={{ margin: 0, fontWeight: 500, fontSize: 14 }}>{a.student.full_name}</p>
+                              {a.student.grade && <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>{a.student.grade}</p>}
+                            </div>
+                            <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>{fmtTime(a.scanned_at)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
       </main>
+
+      {/* Escáner de asistencia */}
+      {showScanner && selectedCourse && (
+        <AttendanceScanner
+          courseId={selectedCourse.id}
+          onClose={() => {
+            setShowScanner(false);
+            reloadAttendance(selectedCourse.id);
+          }}
+        />
+      )}
 
       {/* MODAL AGREGAR / EDITAR CALIFICACIÓN */}
       {isGradeModalOpen && selectedCourse && (

@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import * as orderService from './order.service.js';
-import { createOrderSchema, deliverOrderSchema, topupSchema } from './order.schemas.js';
+import { createOrderSchema, deliverOrderSchema, topupSchema, scanStudentSchema } from './order.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
 export async function create(req: Request, res: Response) {
@@ -115,4 +115,10 @@ export async function cancelPartial(req: Request, res: Response) {
 export async function getNovedades(req: Request, res: Response) {
   const data = await orderService.getNovedades(req.user!);
   sendSuccess(res, data);
+}
+
+export async function scanStudent(req: Request, res: Response) {
+  const { qr_token } = scanStudentSchema.parse(req.body);
+  const result = await orderService.identifyStudentByQr(qr_token, req.user!);
+  sendSuccess(res, result);
 }

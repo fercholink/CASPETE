@@ -1,7 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import QRCodeLib from 'react-qr-code';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
+
+const QRCode = (QRCodeLib as any).default || QRCodeLib;
 
 interface School { id: string; name: string; city: string }
 
@@ -27,6 +30,18 @@ interface PaymentMethodInfo {
 
 
 interface Stats { total: number; active: number; inactive: number; totalBalance: string }
+
+interface TrackerData {
+  id: string;
+  qr_token: string;
+  device_name: string | null;
+  battery_level: number | null;
+  signal_strength: number | null;
+  online: boolean;
+  last_seen_at: string | null;
+  extended_tracking_until: string | null;
+  active: boolean;
+}
 
 export default function StudentsPage() {
   const { user, logout } = useAuth();
@@ -59,6 +74,18 @@ export default function StudentsPage() {
   const [rechargeRef, setRechargeRef] = useState('');
   const [rechargeLoading, setRechargeLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodInfo[]>([]);
+
+  // Localizador GPS
+  const [gpsStudentId, setGpsStudentId] = useState<string | null>(null);
+  const [gpsTracker, setGpsTracker] = useState<TrackerData | null>(null);
+  const [gpsNotLinked, setGpsNotLinked] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError, setGpsError] = useState('');
+  const [imei, setImei] = useState('');
+  const [pairingSecret, setPairingSecret] = useState('');
+  const [deviceName, setDeviceName] = useState('');
+  const [linking, setLinking] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
 
   const isParent = user?.role === 'PARENT';
   const isAdmin = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -197,6 +224,62 @@ export default function StudentsPage() {
       alert((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al enviar comprobante');
     } finally {
       setRechargeLoading(false);
+    }
+  }
+
+  function openGpsModal(studentId: string) {
+    setGpsStudentId(studentId);
+    setGpsTracker(null);
+    setGpsNotLinked(false);
+    setGpsError('');
+    setImei('');
+    setPairingSecret('');
+    setDeviceName('');
+    setGpsLoading(true);
+    apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)
+      .then((r) => setGpsTracker(r.data.data.tracker))
+      .catch((err) => {
+        if ((err as { response?: { status?: number } }).response?.status === 404) setGpsNotLinked(true);
+        else setGpsError('No se pudo consultar el localizador');
+      })
+      .finally(() => setGpsLoading(false));
+  }
+
+  async function handleLinkTracker(e: React.FormEvent) {
+    e.preventDefault();
+    if (!gpsStudentId) return;
+    if (imei.length !== 15) { setGpsError('El IMEI debe tener 15 dígitos'); return; }
+    if (pairingSecret.length < 16) { setGpsError('El código de emparejamiento debe tener al menos 16 caracteres'); return; }
+    setLinking(true);
+    setGpsError('');
+    try {
+      const r = await apiClient.post<{ data: TrackerData }>('/gps/trackers', {
+        student_id: gpsStudentId,
+        imei,
+        pairing_secret: pairingSecret,
+        device_name: deviceName || undefined,
+      });
+      setGpsTracker(r.data.data);
+      setGpsNotLinked(false);
+    } catch (err) {
+      setGpsError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al vincular el localizador');
+    } finally {
+      setLinking(false);
+    }
+  }
+
+  async function handleUnlinkTracker() {
+    if (!gpsTracker) return;
+    if (!confirm('¿Desvincular este localizador? El estudiante dejará de ser rastreado hasta que vincules uno nuevo.')) return;
+    setUnlinking(true);
+    try {
+      await apiClient.delete(`/gps/trackers/${gpsTracker.id}`);
+      setGpsTracker(null);
+      setGpsNotLinked(true);
+    } catch {
+      alert('No se pudo desvincular el localizador');
+    } finally {
+      setUnlinking(false);
     }
   }
 
@@ -351,6 +434,15 @@ export default function StudentsPage() {
                         }}
                       >
                         + Recargar
+                      </button>
+                    )}
+                    {isParent && student.active && (
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: 13, padding: '5px 14px' }}
+                        onClick={() => openGpsModal(student.id)}
+                      >
+                        📍 GPS
                       </button>
                     )}
                     {isAdmin && student.active && (
@@ -663,6 +755,104 @@ export default function StudentsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal localizador GPS */}
+      {gpsStudentId && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}
+          onClick={(e) => { if (e.target === e.currentTarget) setGpsStudentId(null); }}
+        >
+          <div className="user-card" style={{ maxWidth: 420, width: '100%', padding: '32px 28px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, letterSpacing: '-0.4px' }}>📍 Localizador GPS</h2>
+              <button className="btn-ghost" style={{ padding: '4px 10px', fontSize: 18, lineHeight: 1 }} onClick={() => setGpsStudentId(null)}>×</button>
+            </div>
+
+            {gpsLoading && <p style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>Consultando...</p>}
+            {gpsError && <p className="form-error" style={{ marginTop: 0 }}>{gpsError}</p>}
+
+            {/* Ya tiene un localizador vinculado */}
+            {gpsTracker && !gpsLoading && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                  <div style={{ background: '#fff', padding: 16, borderRadius: 12, border: '1px solid var(--color-border)' }}>
+                    <QRCode value={`CASPETE:CARD:${gpsTracker.qr_token}`} size={160} />
+                  </div>
+                </div>
+                <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 20 }}>
+                  Este es el código que va impreso en la tarjeta del estudiante — el colegio lo usa para asistencia y el tendero para identificarlo en la entrega.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20, fontSize: 13 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--color-text-muted)' }}>Dispositivo</span>
+                    <span style={{ fontWeight: 600 }}>{gpsTracker.device_name ?? 'Sin nombre'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--color-text-muted)' }}>Estado</span>
+                    <span style={{ fontWeight: 600, color: gpsTracker.online ? '#059669' : 'var(--color-text-muted)' }}>
+                      {gpsTracker.online ? '🟢 En línea' : '⚪ Sin conexión'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--color-text-muted)' }}>Batería</span>
+                    <span style={{ fontWeight: 600 }}>{gpsTracker.battery_level ?? '—'}%</span>
+                  </div>
+                </div>
+
+                <Link to="/tracking" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', display: 'block', marginBottom: 10 }}>
+                  Ver ubicación en el mapa
+                </Link>
+                <button className="btn-ghost" style={{ width: '100%', color: '#dc2626' }} disabled={unlinking} onClick={handleUnlinkTracker}>
+                  {unlinking ? 'Desvinculando...' : 'Desvincular localizador'}
+                </button>
+              </div>
+            )}
+
+            {/* Sin localizador — formulario de vinculación */}
+            {gpsNotLinked && !gpsLoading && (
+              <form onSubmit={handleLinkTracker}>
+                <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                  Ingresa los datos de la tarjeta localizadora que compraste. El rastreo solo funciona durante el horario escolar del colegio.
+                </p>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="imei">IMEI (15 dígitos)</label>
+                  <input
+                    id="imei" className="form-input" value={imei}
+                    onChange={(e) => setImei(e.target.value.replace(/\D/g, '').slice(0, 15))}
+                    placeholder="123456789012345" autoFocus
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="pairing-secret">Código de emparejamiento</label>
+                  <input
+                    id="pairing-secret" className="form-input" value={pairingSecret}
+                    onChange={(e) => setPairingSecret(e.target.value)}
+                    placeholder="Código impreso en la caja del dispositivo"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="device-name">Nombre (opcional)</label>
+                  <input
+                    id="device-name" className="form-input" value={deviceName}
+                    onChange={(e) => setDeviceName(e.target.value)}
+                    placeholder="Ej: Mochila de Sofía" style={{ marginBottom: 0 }}
+                  />
+                </div>
+
+                {gpsError && <p className="form-error">{gpsError}</p>}
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                  <button type="button" className="btn-ghost" style={{ flex: 1 }} onClick={() => setGpsStudentId(null)}>Cancelar</button>
+                  <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={linking}>
+                    {linking ? 'Vinculando...' : 'Vincular'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

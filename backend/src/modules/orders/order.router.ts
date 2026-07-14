@@ -37,6 +37,9 @@ router.post('/:id/deliver', deliveryLimiter, requireRole('VENDOR'), orderControl
 // POST   /api/orders/preview-delivery         — previsualizar entrega: info estudiante (VENDOR)
 router.post('/preview-delivery', requireRole('VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN'), orderController.previewDelivery);
 
+// POST   /api/orders/scan-student             — identificar estudiante por QR de la tarjeta (VENDOR, mismo colegio)
+router.post('/scan-student', requireRole('VENDOR'), orderController.scanStudent);
+
 // POST   /api/orders/deliver-student         — entregar pedidos de un estudiante (VENDOR)
 router.post('/deliver-student', deliveryLimiter, requireRole('VENDOR'), orderController.deliverStudent);
 

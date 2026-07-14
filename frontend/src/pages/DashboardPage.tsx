@@ -148,6 +148,7 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/students',    label: 'Mis hijos',     icon: '🎒' },
     { to: '/orders',      label: 'Mis pedidos',   icon: '📋' },
     { to: '/orders/new',  label: 'Nuevo pedido',  icon: '✨' },
+    { to: '/tracking',    label: 'Rastreo GPS',   icon: '📍' },
     { to: '/grades',      label: 'Calificaciones',icon: '📊' },
     { to: '/transactions',label: 'Transacciones', icon: '📊' },
   ],

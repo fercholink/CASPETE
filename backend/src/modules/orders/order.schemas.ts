@@ -32,5 +32,9 @@ export const topupSchema = z.object({
   amount: z.number().positive(),
 });
 
+export const scanStudentSchema = z.object({
+  qr_token: z.string().min(10).max(64),
+});
+
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type TopupInput = z.infer<typeof topupSchema>;

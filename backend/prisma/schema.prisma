@@ -77,6 +77,12 @@ enum AcquisitionModel {
   MONTHLY_FEE
 }
 
+enum PositionSource {
+  GPS
+  WIFI
+  LBS
+}
+
 model School {
   id         String   @id @default(uuid()) @db.Uuid
   name       String   @db.VarChar(200)
@@ -93,6 +99,12 @@ model School {
   acquisition_model AcquisitionModel @default(COMMISSION)
   commission_rate   Decimal?         @db.Decimal(5, 2) // e.g. 5.00 for 5%
   monthly_fee       Decimal?         @db.Decimal(10, 2) // e.g. 200000
+
+  // ── Rastreo GPS (tarjetas localizadoras) ─────────────────────────────────
+  gps_tracking_enabled  Boolean @default(false) // el colegio habilita rastreo GPS
+  attendance_qr_enabled Boolean @default(false) // el colegio habilita asistencia por QR
+  school_start_time     String? @db.VarChar(5)  // "07:00" — inicio jornada
+  school_end_time       String? @db.VarChar(5)  // "14:00" — fin jornada
 
   active     Boolean  @default(true)
   created_at DateTime @default(now())
@@ -199,6 +211,8 @@ model Student {
   nutrition_reports NutritionDailyReport[]
   courses        Course[]
   grades         Grade[]
+  gps_tracker    GPSTracker?
+  attendances    Attendance[]
 
   @@unique([school_id, national_id])
 }
@@ -633,6 +647,7 @@ model Teacher {
   school School @relation(fields: [school_id], references: [id], onDelete: Cascade)
   courses Course[]
   grades  Grade[]
+  attendances_scanned Attendance[]
 }
 
 model Course {
@@ -648,6 +663,7 @@ model Course {
   school   School    @relation(fields: [school_id], references: [id], onDelete: Cascade)
   students Student[] // Implicit many-to-many
   grades   Grade[]
+  attendances Attendance[]
 }
 
 model Grade {
@@ -681,6 +697,70 @@ model Communication {
   school   School @relation(fields: [school_id], references: [id], onDelete: Cascade)
   sender   User   @relation("SentCommunications", fields: [sender_id], references: [id], onDelete: Cascade)
   receiver User   @relation("ReceivedCommunications", fields: [receiver_id], references: [id], onDelete: Cascade)
+}
+
+// ── Rastreo GPS (tarjetas localizadoras Zhongxun) ──────────────────────────
+// Solo horario escolar por defecto (Student.school + School.school_start_time/
+// school_end_time); rastreo extendido es un add-on habilitado por extended_tracking_until.
+// SCHOOL_ADMIN no tiene acceso a estos datos bajo ninguna circunstancia.
+model GPSTracker {
+  id                      String    @id @default(uuid()) @db.Uuid
+  imei                    String    @unique @db.VarChar(20)
+  pairing_secret_hash     String    @db.VarChar(64)  // sha256 del secreto de emparejamiento — nunca el IMEI solo
+  qr_token                String    @unique @db.VarChar(64) // opaco — usado solo para asistencia/identificación de entrega, nunca para auth del dispositivo
+  student_id              String?   @unique @db.Uuid
+  device_name             String?   @db.VarChar(100)
+  battery_level           Int?      @default(100)
+  signal_strength         Int?      @default(100)
+  online                  Boolean   @default(false)
+  last_seen_at            DateTime?
+  extended_tracking_until DateTime? // null = solo horario escolar; con fecha = rastreo extendido de pago activo
+  active                  Boolean   @default(true)
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+
+  student   Student?       @relation(fields: [student_id], references: [id], onDelete: SetNull)
+  telemetry GPSTelemetry[]
+}
+
+model GPSTelemetry {
+  id              String         @id @default(uuid()) @db.Uuid
+  tracker_id      String         @db.Uuid
+  latitude        Decimal        @db.Decimal(10, 7)
+  longitude       Decimal        @db.Decimal(10, 7)
+  speed           Decimal?       @db.Decimal(5, 2)   // km/h
+  heading         Decimal?       @db.Decimal(5, 2)   // 0-360°
+  altitude        Decimal?       @db.Decimal(8, 2)
+  battery_level   Int?
+  signal_strength Int?
+  alert_type      String?        @db.VarChar(50)     // vibration | speeding | low_power (SOS pendiente para actualización futura)
+  source          PositionSource @default(GPS)
+  recorded_at     DateTime       @default(now())
+  created_at      DateTime       @default(now())
+
+  tracker GPSTracker @relation(fields: [tracker_id], references: [id], onDelete: Cascade)
+
+  @@index([tracker_id, recorded_at])
+}
+
+// ── Asistencia por QR ───────────────────────────────────────────────────────
+// El QR de la tarjeta codifica GPSTracker.qr_token (opaco). Lo escanea:
+//  - TEACHER: marca llegada a clase, restringido a su propio curso (course_id)
+//  - VENDOR: solo identifica al estudiante para el flujo de entrega (no se persiste aquí)
+model Attendance {
+  id         String   @id @default(uuid()) @db.Uuid
+  student_id String   @db.Uuid
+  course_id  String?  @db.Uuid
+  teacher_id String   @db.Uuid
+  type       String   @default("CLASS_ARRIVAL") @db.VarChar(20)
+  scanned_at DateTime @default(now())
+
+  student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  course  Course? @relation(fields: [course_id], references: [id], onDelete: SetNull)
+  teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@index([student_id, scanned_at])
+  @@index([course_id, scanned_at])
 }
 
 

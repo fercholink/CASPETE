@@ -657,9 +657,21 @@ export default function LandingPage() {
                       <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                       <span>Alertas SMS en tiempo real de lo consumido</span>
                     </li>
+                    <li className="flex items-center gap-x-2">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>📍 Ubicación GPS de tu hijo en el trayecto casa-colegio</span>
+                    </li>
+                    <li className="flex items-center gap-x-2">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>📍 Batería, señal y última ubicación conocida en vivo</span>
+                    </li>
+                    <li className="flex items-center gap-x-2">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>📍 Activa rastreo extendido fuera del horario escolar cuando lo necesites</span>
+                    </li>
                   </ul>
                 </div>
-                <Link 
+                <Link
                   to="/register"
                   className="w-full py-3.5 rounded-xl border border-[#faeae1] bg-[#fffaf6] hover:bg-emerald-50 text-emerald-805 font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer text-xs uppercase tracking-wider text-decoration-none"
                 >

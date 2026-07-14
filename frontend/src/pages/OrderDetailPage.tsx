@@ -55,7 +55,9 @@ function fmt(price: string) {
   return `$${parseFloat(price).toLocaleString('es-CO', { minimumFractionDigits: 0 })}`;
 }
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+  // scheduled_date es una fecha sin hora (@db.Date) — se formatea en UTC para que
+  // no se corra un día por la zona horaria local del navegador (Colombia = UTC-5).
+  return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 function fmtDateTime(iso: string) {
   const d = new Date(iso);
@@ -216,7 +218,7 @@ export default function OrderDetailPage() {
     try {
       const res = await apiClient.post<{ success: boolean; data?: { id: string }; message?: string }>(
         '/chat/threads',
-        { order_id: id, subject: `Consulta pedido ${new Date(order!.scheduled_date).toLocaleDateString('es-CO')}`, first_message: chatInitMsg.trim() },
+        { order_id: id, subject: `Consulta pedido ${new Date(order!.scheduled_date).toLocaleDateString('es-CO', { timeZone: 'UTC' })}`, first_message: chatInitMsg.trim() },
       );
       if (!res.data.success) throw new Error(res.data.message ?? 'Error');
       navigate(`/chat/${res.data.data!.id}`);
@@ -235,7 +237,7 @@ export default function OrderDetailPage() {
         {
           order_id: order.id,
           parent_id: order.student.parent_id,
-          subject: chatSubject || `Novedad pedido ${new Date(order.scheduled_date).toLocaleDateString('es-CO')}`,
+          subject: chatSubject || `Novedad pedido ${new Date(order.scheduled_date).toLocaleDateString('es-CO', { timeZone: 'UTC' })}`,
           first_message: chatMessage,
         },
       );
@@ -939,7 +941,7 @@ export default function OrderDetailPage() {
               border: '1.5px solid var(--color-border)', borderRadius: 10, padding: '11px 0', fontSize: 14,
             }}
             onClick={() => {
-              setChatSubject(`Novedad pedido ${new Date(order.scheduled_date).toLocaleDateString('es-CO')}`);
+              setChatSubject(`Novedad pedido ${new Date(order.scheduled_date).toLocaleDateString('es-CO', { timeZone: 'UTC' })}`);
               setChatMessage('');
               setChatError('');
               setChatOpen(true);

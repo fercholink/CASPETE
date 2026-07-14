@@ -62,7 +62,10 @@ function fmt(price: number | string) {
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  // Fecha calendario local del navegador — toISOString() convertía a UTC y podía
+  // adelantar un día en la noche (Colombia = UTC-5).
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 const categoryLabels: Record<string, string> = {

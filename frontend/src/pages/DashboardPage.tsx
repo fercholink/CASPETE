@@ -459,7 +459,7 @@ function VendorNovedadesPanel() {
         {novedades.slice(0, 8).map(nov => {
           const style = NOVEDAD_STYLES[nov.type] ?? NOVEDAD_STYLES['chat'];
           const dateStr = nov.scheduled_date
-            ? new Date(nov.scheduled_date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+            ? new Date(nov.scheduled_date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' })
             : null;
 
           const handleClick = () => {

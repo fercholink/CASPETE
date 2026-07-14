@@ -34,7 +34,9 @@ function fmt(price: string) {
   return `$${parseFloat(price).toLocaleString('es-CO', { minimumFractionDigits: 0 })}`;
 }
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'long' });
+  // scheduled_date es una fecha sin hora — formatear en UTC evita que se corra
+  // un día por la zona horaria local del navegador (Colombia = UTC-5).
+  return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', timeZone: 'UTC' });
 }
 
 export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) {

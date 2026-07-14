@@ -201,7 +201,7 @@ export default function TransactionsPage() {
                       </div>
                       {tx.order && (
                         <Link to={`/orders/${tx.order.id}`} style={{ fontSize: 12, color: 'var(--color-text-muted)', textDecoration: 'none' }}>
-                          Pedido del {new Date(tx.order.scheduled_date).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })} →
+                          Pedido del {new Date(tx.order.scheduled_date).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', timeZone: 'UTC' })} →
                         </Link>
                       )}
                     </div>

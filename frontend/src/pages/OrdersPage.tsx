@@ -48,9 +48,14 @@ function fmt(price: string) {
   return `$${parseFloat(price).toLocaleString('es-CO', { minimumFractionDigits: 0 })}`;
 }
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+  // scheduled_date es una fecha sin hora (@db.Date) — se formatea en UTC para que
+  // no se corra un día por la zona horaria local del navegador (Colombia = UTC-5).
+  return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
-function today() { return new Date().toISOString().slice(0, 10); }
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 interface OrderStats { total: number; pending: number; confirmed: number; delivered: number; cancelled: number }
 

@@ -24,15 +24,22 @@ function onTokenRefreshed(token: string) {
   refreshSubscribers = [];
 }
 
+// Endpoints públicos de auth: un 401 aquí es una respuesta de negocio normal
+// (credenciales inválidas, correo no verificado) — no una sesión expirada.
+// No debe disparar el refresh ni la redirección a /login.
+const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh'];
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: unknown) => {
     const axiosError = error as {
-      config?: { _retry?: boolean; headers?: Record<string, string>; [key: string]: unknown };
+      config?: { _retry?: boolean; headers?: Record<string, string>; url?: string; [key: string]: unknown };
       response?: { status?: number };
     };
 
-    if (axiosError.response?.status !== 401 || axiosError.config?._retry) {
+    const isPublicAuthRequest = PUBLIC_AUTH_PATHS.some((path) => axiosError.config?.url?.includes(path));
+
+    if (axiosError.response?.status !== 401 || axiosError.config?._retry || isPublicAuthRequest) {
       return Promise.reject(error);
     }
 

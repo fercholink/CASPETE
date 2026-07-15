@@ -194,10 +194,10 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 bg-[#fffaf5]/95 backdrop-blur-md border-b border-[#faeae1] shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center text-left">
           
-          {/* Logo Brand Accent with a cute round kid face feel */}
+          {/* Logo Brand Accent — mochila Caspete */}
           <Link to="/" className="flex items-center gap-2.5 focus:outline-none cursor-pointer group text-decoration-none">
-            <div className="w-11 h-11 rounded-3xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-all">
-              <Smile className="h-6 w-6 stroke-[2.5px] animate-bounce" />
+            <div className="w-11 h-11 flex items-center justify-center group-hover:scale-105 transition-all">
+              <img src="/favicon.svg" alt="Caspete" className="w-full h-full drop-shadow-sm" />
             </div>
             <div>
               <div className="flex items-center gap-1">
@@ -1169,8 +1169,8 @@ export default function LandingPage() {
           {/* Brand Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-550 text-white flex items-center justify-center font-bold">
-                <Smile className="h-5 w-5 fill-current" />
+              <div className="w-8 h-8 rounded-xl bg-[#fdf8f4] flex items-center justify-center p-1">
+                <img src="/favicon.svg" alt="Caspete" className="w-full h-full" />
               </div>
               <span className="font-display font-black text-xl text-white tracking-tight">
                 Caspete<span>🥦</span>

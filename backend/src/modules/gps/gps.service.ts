@@ -1,4 +1,4 @@
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes } from 'crypto';
 import type { Request } from 'express';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
@@ -19,10 +19,6 @@ const trackerSelect = {
   extended_tracking_until: true,
   active: true,
 } as const;
-
-export function hashPairingSecret(secret: string): string {
-  return createHash('sha256').update(secret).digest('hex');
-}
 
 async function assertParentOwnsStudent(studentId: string, actor: JwtPayload) {
   const student = await prisma.student.findUnique({
@@ -51,7 +47,6 @@ export async function linkTracker(input: LinkTrackerInput, actor: JwtPayload) {
   return prisma.gPSTracker.create({
     data: {
       imei: input.imei,
-      pairing_secret_hash: hashPairingSecret(input.pairing_secret),
       qr_token,
       student_id: input.student_id,
       device_name: input.device_name ?? null,

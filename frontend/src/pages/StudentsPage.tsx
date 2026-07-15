@@ -82,7 +82,6 @@ export default function StudentsPage() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState('');
   const [imei, setImei] = useState('');
-  const [pairingSecret, setPairingSecret] = useState('');
   const [deviceName, setDeviceName] = useState('');
   const [linking, setLinking] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
@@ -249,14 +248,12 @@ export default function StudentsPage() {
     e.preventDefault();
     if (!gpsStudentId) return;
     if (imei.length !== 15) { setGpsError('El IMEI debe tener 15 dígitos'); return; }
-    if (pairingSecret.length < 16) { setGpsError('El código de emparejamiento debe tener al menos 16 caracteres'); return; }
     setLinking(true);
     setGpsError('');
     try {
       const r = await apiClient.post<{ data: TrackerData }>('/gps/trackers', {
         student_id: gpsStudentId,
         imei,
-        pairing_secret: pairingSecret,
         device_name: deviceName || undefined,
       });
       setGpsTracker(r.data.data);
@@ -824,14 +821,6 @@ export default function StudentsPage() {
                     id="imei" className="form-input" value={imei}
                     onChange={(e) => setImei(e.target.value.replace(/\D/g, '').slice(0, 15))}
                     placeholder="123456789012345" autoFocus
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="pairing-secret">Código de emparejamiento</label>
-                  <input
-                    id="pairing-secret" className="form-input" value={pairingSecret}
-                    onChange={(e) => setPairingSecret(e.target.value)}
-                    placeholder="Código impreso en la caja del dispositivo"
                   />
                 </div>
                 <div className="form-group">

@@ -706,7 +706,6 @@ model Communication {
 model GPSTracker {
   id                      String    @id @default(uuid()) @db.Uuid
   imei                    String    @unique @db.VarChar(20)
-  pairing_secret_hash     String    @db.VarChar(64)  // sha256 del secreto de emparejamiento — nunca el IMEI solo
   qr_token                String    @unique @db.VarChar(64) // opaco — usado solo para asistencia/identificación de entrega, nunca para auth del dispositivo
   student_id              String?   @unique @db.Uuid
   device_name             String?   @db.VarChar(100)

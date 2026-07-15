@@ -169,12 +169,14 @@ NEQUI_CHANNEL=PNP04-C001
 VAPID_PUBLIC_KEY=         # Web Push
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=mailto:info@caspete.com
+SENTRY_DSN=               # Monitoreo de errores (opcional — sin esto, Sentry queda desactivado)
 ```
 
 ### Frontend (`.env.local`)
 ```env
 VITE_API_URL=https://api.tudominio.com/api
 VITE_VAPID_PUBLIC_KEY=    # Mismo VAPID_PUBLIC_KEY del backend
+VITE_SENTRY_DSN=          # Monitoreo de errores (opcional — sin esto, Sentry queda desactivado)
 ```
 
 ---

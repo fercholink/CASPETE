@@ -10,6 +10,7 @@ const envSchema = z.object({
   GPS_TCP_PORT: z.coerce.number().default(5001),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
+  SENTRY_DSN: z.string().optional(),
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY es requerida'),
   EMAIL_FROM: z.string().default('info@caspete.com'),
   PAYMENT_EMAIL: z.string().default('pagos@caspete.com'),

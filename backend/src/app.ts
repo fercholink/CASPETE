@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import * as Sentry from '@sentry/node';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import passport from './lib/passport.js';
@@ -85,6 +86,10 @@ app.use('/api/grades', gradeRouter);
 app.use('/api/communications', communicationRouter);
 app.use('/api/gps', gpsRouter);
 app.use('/api/attendance', attendanceRouter);
+
+if (env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 app.use(errorHandler);
 

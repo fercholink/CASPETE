@@ -232,7 +232,6 @@ export default function StudentsPage() {
     setGpsNotLinked(false);
     setGpsError('');
     setImei('');
-    setPairingSecret('');
     setDeviceName('');
     setGpsLoading(true);
     apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)

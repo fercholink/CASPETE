@@ -44,9 +44,9 @@ router.post('/resend-verification', accountRecoveryLimiter, authController.resen
 // GET  /api/auth/google         — redirige a Google para autenticación
 router.get(
   '/google',
-  passport.authenticate('google', { 
-    scope: ['profile', 'email', 'https://www.googleapis.com/auth/user.phonenumbers.read'], 
-    session: false 
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false
   }),
 );
 

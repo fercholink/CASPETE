@@ -27,4 +27,5 @@ RUN pnpm run build
 EXPOSE 3000
 
 # Comando para arrancar en producción
-CMD ["node", "dist/server.js"]
+# --import precarga la instrumentación de Sentry antes de que se cargue Express (requisito de Sentry en ESM)
+CMD ["node", "--import", "./dist/instrument.js", "dist/server.js"]

@@ -1,4 +1,3 @@
-import './instrument.js';
 import app from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './lib/prisma.js';

@@ -10,6 +10,7 @@
  */
 
 import { prisma } from '../lib/prisma.js';
+import { captureError } from '../lib/monitoring.js';
 
 export async function runCleanupTokensJob(): Promise<void> {
   const label = '[CRON:cleanup-tokens]';
@@ -58,6 +59,6 @@ export async function runCleanupTokensJob(): Promise<void> {
       `OTPs limpiados: ${clearedOtps}`,
     );
   } catch (err) {
-    console.error(`${label} Error en la limpieza:`, err);
+    captureError(err, 'cron');
   }
 }

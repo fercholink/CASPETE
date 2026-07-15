@@ -10,6 +10,7 @@
 
 import { prisma } from '../lib/prisma.js';
 import { anonymizeUser } from '../modules/arco/arco.service.js';
+import { captureError } from '../lib/monitoring.js';
 
 const GRACE_PERIOD_DAYS = 30;
 
@@ -45,13 +46,13 @@ export async function runAnonymizeUsersJob(): Promise<void> {
         console.log(`${label} ✅ Anonimizado: ${user.id} (solicitado: ${user.deletion_requested_at?.toISOString()})`);
         success++;
       } catch (err) {
-        console.error(`${label} ❌ Error al anonimizar ${user.id}:`, err);
+        captureError(err, 'cron', { userId: user.id });
         errors++;
       }
     }
 
     console.log(`${label} Completado — ${success} exitosos, ${errors} errores.`);
   } catch (err) {
-    console.error(`${label} Error crítico en el job:`, err);
+    captureError(err, 'cron');
   }
 }

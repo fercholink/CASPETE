@@ -5,6 +5,7 @@
 import net from 'net';
 import { prisma } from './lib/prisma.js';
 import { env } from './config/env.js';
+import { captureError } from './lib/monitoring.js';
 import { isTelemetryAllowed } from './modules/gps/gps.service.js';
 import {
   extractFrame,
@@ -44,7 +45,7 @@ async function handleLogin(socket: net.Socket, state: ConnectionState, data: Buf
   await prisma.gPSTracker.update({
     where: { id: tracker.id },
     data: { online: true, last_seen_at: new Date() },
-  }).catch(() => {});
+  }).catch((err) => captureError(err, 'gps-tcp'));
 
   socket.write(buildLoginReply(true));
 }
@@ -54,7 +55,7 @@ async function handleHeartbeat(state: ConnectionState) {
   await prisma.gPSTracker.update({
     where: { id: state.trackerId },
     data: { online: true, last_seen_at: new Date() },
-  }).catch(() => {});
+  }).catch((err) => captureError(err, 'gps-tcp'));
   // 0x08 no requiere respuesta (sección 8 del protocolo)
 }
 
@@ -66,7 +67,7 @@ async function handleGpsPosition(socket: net.Socket, state: ConnectionState, pro
   await prisma.gPSTracker.update({
     where: { id: state.trackerId },
     data: { online: true, last_seen_at: new Date() },
-  }).catch(() => {});
+  }).catch((err) => captureError(err, 'gps-tcp'));
 
   const fix = decodeGpsPosition(data);
   if (!fix.gpsFixed) return; // sin fix válido, no hay coordenada real que guardar
@@ -86,7 +87,7 @@ async function handleGpsPosition(socket: net.Socket, state: ConnectionState, pro
       source: 'GPS',
       recorded_at: fix.recordedAt,
     },
-  }).catch((err) => console.error('[GPS TCP] Error al guardar telemetría:', err));
+  }).catch((err) => captureError(err, 'gps-tcp'));
 }
 
 async function handleStatus(socket: net.Socket, state: ConnectionState, data: Buffer) {
@@ -102,7 +103,7 @@ async function handleStatus(socket: net.Socket, state: ConnectionState, data: Bu
       online: true,
       last_seen_at: new Date(),
     },
-  }).catch(() => {});
+  }).catch((err) => captureError(err, 'gps-tcp'));
 }
 
 function handleTimeSync(socket: net.Socket) {
@@ -166,7 +167,7 @@ export function startGpsTcpServer(): net.Server {
       prisma.gPSTracker.update({
         where: { id: state.trackerId },
         data: { online: false },
-      }).catch(() => {});
+      }).catch((err) => captureError(err, 'gps-tcp'));
     });
   });
 

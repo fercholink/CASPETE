@@ -145,7 +145,7 @@ export default function TermsOfServicePage() {
         <div style={{ background: '#f3f4f6', borderRadius: 10, padding: '16px 20px', marginTop: 32, fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
           <p style={{ margin: 0 }}>
             Caspete.com — Versión 1.0 — Mayo 2026 ·{' '}
-            <a href="mailto:soporte@caspete.com" style={{ color: '#1a4731' }}>soporte@caspete.com</a> ·{' '}
+            <a href="mailto:info@caspete.com" style={{ color: '#1a4731' }}>info@caspete.com</a> ·{' '}
             Supervisado por la <a href="https://www.sic.gov.co" target="_blank" rel="noreferrer" style={{ color: '#1a4731' }}>SIC</a>
           </p>
           <div style={{ marginTop: 10, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>

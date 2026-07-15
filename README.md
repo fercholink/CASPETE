@@ -168,7 +168,7 @@ NEQUI_API_KEY=
 NEQUI_CHANNEL=PNP04-C001
 VAPID_PUBLIC_KEY=         # Web Push
 VAPID_PRIVATE_KEY=
-VAPID_SUBJECT=mailto:admin@caspete.com
+VAPID_SUBJECT=mailto:info@caspete.com
 ```
 
 ### Frontend (`.env.local`)

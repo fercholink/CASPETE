@@ -1223,7 +1223,7 @@ export default function LandingPage() {
               ¿Tienes alguna duda o quieres soporte directo en Colombia? Escríbenos a:
             </p>
             <div className="flex flex-col gap-1 text-[11px]">
-              <a href="mailto:hola@caspete.co" className="text-[#cbdcd0] hover:text-white text-decoration-none font-bold">hola@caspete.co</a>
+              <a href="mailto:info@caspete.com" className="text-[#cbdcd0] hover:text-white text-decoration-none font-bold">info@caspete.com</a>
               <a href="mailto:privacidad@caspete.com" className="text-[#cbdcd0] hover:text-white text-decoration-none font-bold">privacidad@caspete.com</a>
               <a href="https://wa.me/573214364223" target="_blank" rel="noopener noreferrer" className="text-[#cbdcd0] hover:text-white text-decoration-none mt-1 font-bold">💬 WhatsApp: +57 321 436 4223</a>
             </div>

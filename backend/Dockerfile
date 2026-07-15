@@ -1,6 +1,9 @@
 # Usar Node 22 (necesario para pnpm moderno)
 FROM node:22-alpine
 
+# pg_dump — necesario para el respaldo diario de la base de datos a S3
+RUN apk add --no-cache postgresql-client
+
 # Instalar pnpm 9.x (compatible con Node 22, sin restriccion ERR_PNPM_IGNORED_BUILDS)
 RUN npm install -g pnpm@9
 

@@ -9,11 +9,13 @@
  * Jobs registrados:
  *  • anonymize-users    → Diario 02:00 — Ley 1581/2012 Art. 15
  *  • cleanup-tokens     → Diario 03:00 — Higiene de BD
+ *  • db-backup          → Diario 04:00 — Respaldo a S3
  */
 
 import cron from 'node-cron';
 import { runAnonymizeUsersJob } from './anonymize-users.job.js';
 import { runCleanupTokensJob } from './cleanup-tokens.job.js';
+import { runDatabaseBackupJob } from './backup-database.job.js';
 
 const TIMEZONE = 'America/Bogota';
 
@@ -37,6 +39,15 @@ export function initCronJobs(): void {
     timezone: TIMEZONE,
   });
   console.log('[CRON] ✅ cleanup-tokens     → todos los días a las 03:00 (Bogotá)');
+
+  // ── Job 3: Respaldo diario de la base de datos a S3 ─────────────────────
+  // Ejecuta cada día a las 04:00 AM hora Colombia
+  cron.schedule('0 4 * * *', async () => {
+    await runDatabaseBackupJob();
+  }, {
+    timezone: TIMEZONE,
+  });
+  console.log('[CRON] ✅ db-backup          → todos los días a las 04:00 (Bogotá)');
 
   console.log('[CRON] Scheduler activo. Todos los jobs programados correctamente.');
 }

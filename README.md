@@ -170,6 +170,10 @@ VAPID_PUBLIC_KEY=         # Web Push
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=mailto:info@caspete.com
 SENTRY_DSN=               # Monitoreo de errores (opcional — sin esto, Sentry queda desactivado)
+AWS_ACCESS_KEY_ID=        # Respaldo diario de la BD a S3 (opcional — sin esto, el job se omite)
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1
+S3_BACKUP_BUCKET=
 ```
 
 ### Frontend (`.env.local`)

@@ -11,6 +11,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
   SENTRY_DSN: z.string().optional(),
+  // Respaldo diario de la base de datos a S3 (opcional — sin esto, el job se omite)
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_REGION: z.string().default('us-east-1'),
+  S3_BACKUP_BUCKET: z.string().optional(),
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY es requerida'),
   EMAIL_FROM: z.string().default('info@caspete.com'),
   PAYMENT_EMAIL: z.string().default('pagos@caspete.com'),

@@ -31,7 +31,8 @@ function reportConsentToBackend(accepted: CookiePreferences) {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    fetch(`${API_URL}/api/arco/cookie-consent`, {
+    const url = API_URL.endsWith('/api') ? `${API_URL}/arco/cookie-consent` : `${API_URL}/api/arco/cookie-consent`;
+    fetch(url, {
       method: 'POST',
       headers,
       body,

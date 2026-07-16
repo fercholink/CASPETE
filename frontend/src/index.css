@@ -85,6 +85,7 @@
 
 :root {
   --color-bg: #ffffff;
+  --color-surface: #ffffff;
   --color-text: #0d0d0d;
   --color-text-secondary: #333333;
   --color-text-muted: #666666;

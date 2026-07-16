@@ -15,6 +15,7 @@ export const createSchoolSchema = z.object({
   acquisition_model: z.enum(['COMMISSION', 'MONTHLY_FEE']).default('COMMISSION'),
   commission_rate: z.coerce.number().min(0).max(100).optional(),
   monthly_fee: z.coerce.number().min(0).optional(),
+  gps_tracking_enabled: z.boolean().default(false),
 });
 
 export const updateSchoolSchema = z.object({
@@ -33,6 +34,7 @@ export const updateSchoolSchema = z.object({
   acquisition_model: z.enum(['COMMISSION', 'MONTHLY_FEE']).optional(),
   commission_rate: z.coerce.number().min(0).max(100).optional(),
   monthly_fee: z.coerce.number().min(0).optional(),
+  gps_tracking_enabled: z.boolean().optional(),
 });
 
 export type CreateSchoolInput = z.infer<typeof createSchoolSchema>;

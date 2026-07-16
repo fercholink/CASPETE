@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { apiClient } from '../api/client';
 
@@ -31,11 +31,19 @@ const DEPARTMENTS = [
 
 const emptyForm = {
   name: '', nit: '', city: '', department: '', address: '',
-  phone: '', country_code: '+57', email: '', logo_url: '', plan: 'BASIC' as const,
+  phone: '', country_code: '+57', email: '', logo_url: '',
   meal_payment_model: 'PER_ORDER' as 'PER_ORDER' | 'INCLUDED',
   acquisition_model: 'COMMISSION' as 'COMMISSION' | 'MONTHLY_FEE',
   commission_rate: '', monthly_fee: '',
 };
+
+// plan y gps_tracking_enabled son resultado de la modalidad elegida, no una
+// opción manual aparte — evita que queden desincronizados entre sí.
+function derivePlan(meal: 'PER_ORDER' | 'INCLUDED', acquisition: 'COMMISSION' | 'MONTHLY_FEE') {
+  if (meal === 'INCLUDED') return { plan: 'PREMIUM' as const, gps_tracking_enabled: true };
+  if (acquisition === 'COMMISSION') return { plan: 'STANDARD' as const, gps_tracking_enabled: true };
+  return { plan: 'BASIC' as const, gps_tracking_enabled: false };
+}
 
 export default function SchoolFormPage() {
   const navigate = useNavigate();
@@ -48,6 +56,12 @@ export default function SchoolFormPage() {
   const [error, setError] = useState('');
   const [logoMode, setLogoMode] = useState<'url' | 'file'>('url');
   const [logoPreview, setLogoPreview] = useState<string>('');
+
+  const derived = useMemo(
+    () => derivePlan(form.meal_payment_model, form.acquisition_model),
+    [form.meal_payment_model, form.acquisition_model],
+  );
+  const PLAN_LABEL: Record<string, string> = { BASIC: '⚡ Básico', STANDARD: '⭐ Estándar', PREMIUM: '👑 Premium' };
 
   function handleLogoFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -71,7 +85,7 @@ export default function SchoolFormPage() {
           name: s.name, nit: s.nit ?? '', city: s.city,
           department: s.department ?? '', address: s.address ?? '',
           phone: s.phone ?? '', country_code: s.country_code ?? '+57', email: s.email ?? '',
-          logo_url: s.logo_url ?? '', plan: s.plan as typeof emptyForm.plan,
+          logo_url: s.logo_url ?? '',
           meal_payment_model: s.meal_payment_model ?? 'PER_ORDER',
           acquisition_model: s.acquisition_model ?? 'COMMISSION',
           commission_rate: s.commission_rate ?? '', monthly_fee: s.monthly_fee ?? '',
@@ -94,12 +108,14 @@ export default function SchoolFormPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    const { plan, gps_tracking_enabled } = derivePlan(form.meal_payment_model, form.acquisition_model);
     const payload = {
-      name: form.name, city: form.city, plan: form.plan,
+      name: form.name, city: form.city, plan, gps_tracking_enabled,
       meal_payment_model: form.meal_payment_model,
-      acquisition_model: form.acquisition_model,
-      ...(form.acquisition_model === 'COMMISSION' && form.commission_rate ? { commission_rate: Number(form.commission_rate) } : {}),
-      ...(form.acquisition_model === 'MONTHLY_FEE' && form.monthly_fee ? { monthly_fee: Number(form.monthly_fee) } : {}),
+      // Colegios de pensión incluida siempre son tarifa fija — no hay volumen del cual cobrar comisión
+      acquisition_model: form.meal_payment_model === 'INCLUDED' ? 'MONTHLY_FEE' as const : form.acquisition_model,
+      ...(form.acquisition_model === 'COMMISSION' && form.meal_payment_model === 'PER_ORDER' && form.commission_rate ? { commission_rate: Number(form.commission_rate) } : {}),
+      ...(form.monthly_fee ? { monthly_fee: Number(form.monthly_fee) } : {}),
       ...(form.nit ? { nit: form.nit } : {}),
       ...(form.department ? { department: form.department } : {}),
       ...(form.address ? { address: form.address } : {}),
@@ -161,7 +177,7 @@ export default function SchoolFormPage() {
             </div>
           </div>
 
-          {/* NIT + Plan */}
+          {/* NIT + Plan (resultado, no elección manual) */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="nit">
@@ -170,12 +186,11 @@ export default function SchoolFormPage() {
               <input id="nit" name="nit" className="form-input" type="text" value={form.nit} onChange={handleChange} placeholder="900123456-1" />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="plan">Nivel de plan</label>
-              <select id="plan" name="plan" className="form-select" value={form.plan} onChange={handleChange}>
-                <option value="BASIC">⚡ Básico</option>
-                <option value="STANDARD">⭐ Estándar</option>
-                <option value="PREMIUM">👑 Premium</option>
-              </select>
+              <label className="form-label">Nivel de plan</label>
+              <div className="form-input" style={{ display: 'flex', alignItems: 'center', fontWeight: 700, background: 'var(--color-surface)' }}>
+                {PLAN_LABEL[derived.plan]}
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-placeholder)' }}>Se calcula según la modalidad elegida abajo</p>
             </div>
           </div>
 
@@ -214,26 +229,36 @@ export default function SchoolFormPage() {
 
           {/* Modalidad de cobro al colegio */}
           <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, marginTop: 20, fontWeight: 600 }}>Modalidad de cobro al colegio</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="acquisition_model">Caspete le cobra al colegio</label>
-              <select id="acquisition_model" name="acquisition_model" className="form-select" value={form.acquisition_model} onChange={handleChange}>
-                <option value="COMMISSION">Comisión transaccional</option>
-                <option value="MONTHLY_FEE">Tarifa fija mensual</option>
-              </select>
-            </div>
-            {form.acquisition_model === 'COMMISSION' ? (
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" htmlFor="commission_rate">Comisión (%)</label>
-                <input id="commission_rate" name="commission_rate" className="form-input" type="number" min={0} max={100} step={0.1} value={form.commission_rate} onChange={handleChange} placeholder="5" />
-              </div>
-            ) : (
-              <div className="form-group" style={{ marginBottom: 0 }}>
+          {form.meal_payment_model === 'INCLUDED' ? (
+            <div style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--color-brand-light)', fontSize: 12, color: 'var(--color-text)' }}>
+              👑 Colegios de pensión incluida usan siempre <strong>tarifa fija mensual</strong> — no hay volumen de pedidos del cual cobrar comisión. GPS incluido sin costo adicional.
+              <div className="form-group" style={{ marginTop: 10, marginBottom: 0 }}>
                 <label className="form-label" htmlFor="monthly_fee">Tarifa mensual (COP)</label>
                 <input id="monthly_fee" name="monthly_fee" className="form-input" type="number" min={0} step={1000} value={form.monthly_fee} onChange={handleChange} placeholder="200000" />
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" htmlFor="acquisition_model">Caspete le cobra al colegio</label>
+                <select id="acquisition_model" name="acquisition_model" className="form-select" value={form.acquisition_model} onChange={handleChange}>
+                  <option value="COMMISSION">Comisión transaccional (incluye GPS)</option>
+                  <option value="MONTHLY_FEE">Tarifa fija mensual</option>
+                </select>
+              </div>
+              {form.acquisition_model === 'COMMISSION' ? (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="commission_rate">Comisión (%)</label>
+                  <input id="commission_rate" name="commission_rate" className="form-input" type="number" min={0} max={100} step={0.1} value={form.commission_rate} onChange={handleChange} placeholder="5" />
+                </div>
+              ) : (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="monthly_fee">Tarifa mensual (COP)</label>
+                  <input id="monthly_fee" name="monthly_fee" className="form-input" type="number" min={0} step={1000} value={form.monthly_fee} onChange={handleChange} placeholder="200000" />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Dirección */}
           <div className="form-group" style={{ marginTop: 14 }}>

@@ -21,6 +21,7 @@ const schoolSelect = {
   acquisition_model: true,
   commission_rate: true,
   monthly_fee: true,
+  gps_tracking_enabled: true,
   active: true,
   created_at: true,
   _count: { select: { users: true, students: true, stores: true, lunch_orders: true } },
@@ -49,6 +50,7 @@ export async function createSchool(input: CreateSchoolInput) {
       acquisition_model: input.acquisition_model,
       commission_rate: input.commission_rate ?? null,
       monthly_fee: input.monthly_fee ?? null,
+      gps_tracking_enabled: input.gps_tracking_enabled,
     },
     select: schoolSelect,
   });
@@ -129,6 +131,7 @@ export async function updateSchool(id: string, input: UpdateSchoolInput) {
       ...(input.acquisition_model !== undefined && { acquisition_model: input.acquisition_model }),
       ...(input.commission_rate !== undefined && { commission_rate: input.commission_rate }),
       ...(input.monthly_fee !== undefined && { monthly_fee: input.monthly_fee }),
+      ...(input.gps_tracking_enabled !== undefined && { gps_tracking_enabled: input.gps_tracking_enabled }),
     },
     select: schoolSelect,
   });

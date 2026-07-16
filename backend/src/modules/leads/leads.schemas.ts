@@ -14,6 +14,8 @@ export const CreateLeadSchema = z.object({
 
 export const AdminCreateLeadSchema = CreateLeadSchema.extend({
   status: z.enum(['NEW', 'CONTACTED', 'DEMO', 'CLOSED']).optional(),
+  // Fecha/hora real del contacto (llamada/WhatsApp) — por defecto "ahora" si se omite
+  created_at: z.coerce.date().optional(),
 });
 
 export const UpdateLeadSchema = z.object({

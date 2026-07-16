@@ -33,6 +33,7 @@ export async function createLeadAdmin(input: AdminCreateLeadInput) {
       ...(input.contact_phone  !== undefined && { contact_phone:  input.contact_phone }),
       ...(input.students_count !== undefined && { students_count: input.students_count }),
       ...(input.message        !== undefined && { message:        input.message }),
+      ...(input.created_at     !== undefined && { created_at:     input.created_at }),
     },
   });
 }

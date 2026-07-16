@@ -21,6 +21,7 @@ interface Lead {
 type NewLeadForm = {
   school_name: string; nit: string; city: string; contact_name: string; contact_email: string;
   contact_phone: string; students_count: string; plan_interest: 'COMMISSION' | 'MONTHLY'; message: string;
+  contacted_at: string;
 };
 
 const STATUS_LABEL: Record<string, string> = { NEW: 'Nuevo', CONTACTED: 'Contactado', DEMO: 'Demo agendada', CLOSED: 'Cerrado' };
@@ -32,13 +33,22 @@ const STATUS_COLOR: Record<string, React.CSSProperties> = {
 };
 const PLAN_LABEL: Record<string, string> = { COMMISSION: 'Por Comisión', MONTHLY: 'Mensual' };
 
-const EMPTY_FORM: NewLeadForm = {
-  school_name: '', nit: '', city: '', contact_name: '', contact_email: '',
-  contact_phone: '', students_count: '', plan_interest: 'COMMISSION', message: '',
-};
+function nowForInput() {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function emptyForm(): NewLeadForm {
+  return {
+    school_name: '', nit: '', city: '', contact_name: '', contact_email: '',
+    contact_phone: '', students_count: '', plan_interest: 'COMMISSION', message: '',
+    contacted_at: nowForInput(),
+  };
+}
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function waLink(phone: string) {
@@ -60,7 +70,7 @@ export default function SchoolLeadsPage() {
   const [deleting, setDeleting] = useState(false);
 
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState<NewLeadForm>(EMPTY_FORM);
+  const [form, setForm] = useState<NewLeadForm>(emptyForm());
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
 
@@ -107,15 +117,17 @@ export default function SchoolLeadsPage() {
     setCreating(true);
     setCreateError('');
     try {
+      const { contacted_at, ...rest } = form;
       await apiClient.post('/leads/admin', {
-        ...form,
+        ...rest,
         nit: form.nit || undefined,
         contact_phone: form.contact_phone || undefined,
         students_count: form.students_count ? Number(form.students_count) : undefined,
         message: form.message || undefined,
+        created_at: contacted_at ? new Date(contacted_at).toISOString() : undefined,
       });
       setShowCreate(false);
-      setForm(EMPTY_FORM);
+      setForm(emptyForm());
       await fetchLeads();
     } catch (err: unknown) {
       setCreateError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al crear el lead');
@@ -153,7 +165,7 @@ export default function SchoolLeadsPage() {
               {total} solicitud{total !== 1 ? 'es' : ''} recibida{total !== 1 ? 's' : ''} desde la landing page
             </p>
           </div>
-          <button className="btn-primary" style={{ width: 'auto' }} onClick={() => { setForm(EMPTY_FORM); setCreateError(''); setShowCreate(true); }}>
+          <button className="btn-primary" style={{ width: 'auto' }} onClick={() => { setForm(emptyForm()); setCreateError(''); setShowCreate(true); }}>
             + Nuevo lead
           </button>
         </div>
@@ -354,6 +366,10 @@ export default function SchoolLeadsPage() {
                     <option value="MONTHLY">Mensual</option>
                   </select>
                 </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Fecha y hora del contacto *</label>
+                <input className="form-input" type="datetime-local" required value={form.contacted_at} onChange={e => setForm(f => ({ ...f, contacted_at: e.target.value }))} />
               </div>
               <div className="form-group">
                 <label className="form-label">Notas de la conversación</label>

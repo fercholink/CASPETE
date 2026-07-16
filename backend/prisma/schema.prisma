@@ -77,6 +77,13 @@ enum AcquisitionModel {
   MONTHLY_FEE
 }
 
+// Cómo paga el padre la alimentación — independiente de AcquisitionModel
+// (que es cómo Caspete le cobra al colegio)
+enum MealPaymentModel {
+  PER_ORDER // hoy: el padre recarga saldo y paga por cada pedido
+  INCLUDED  // la alimentación ya está cubierta por la pensión del colegio
+}
+
 enum PositionSource {
   GPS
   WIFI
@@ -96,9 +103,10 @@ model School {
   logo_url   String?  @db.Text
   plan       PlanType @default(BASIC)
   
-  acquisition_model AcquisitionModel @default(COMMISSION)
-  commission_rate   Decimal?         @db.Decimal(5, 2) // e.g. 5.00 for 5%
-  monthly_fee       Decimal?         @db.Decimal(10, 2) // e.g. 200000
+  acquisition_model  AcquisitionModel @default(COMMISSION)
+  commission_rate    Decimal?         @db.Decimal(5, 2) // e.g. 5.00 for 5%
+  monthly_fee        Decimal?         @db.Decimal(10, 2) // e.g. 200000
+  meal_payment_model MealPaymentModel @default(PER_ORDER)
 
   // ── Rastreo GPS (tarjetas localizadoras) ─────────────────────────────────
   gps_tracking_enabled  Boolean @default(false) // el colegio habilita rastreo GPS

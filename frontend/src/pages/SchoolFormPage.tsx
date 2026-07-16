@@ -14,6 +14,10 @@ interface SchoolData {
   email: string | null;
   logo_url: string | null;
   plan: 'BASIC' | 'STANDARD' | 'PREMIUM';
+  meal_payment_model: 'PER_ORDER' | 'INCLUDED';
+  acquisition_model: 'COMMISSION' | 'MONTHLY_FEE';
+  commission_rate: string | null;
+  monthly_fee: string | null;
   active: boolean;
 }
 
@@ -28,6 +32,9 @@ const DEPARTMENTS = [
 const emptyForm = {
   name: '', nit: '', city: '', department: '', address: '',
   phone: '', country_code: '+57', email: '', logo_url: '', plan: 'BASIC' as const,
+  meal_payment_model: 'PER_ORDER' as 'PER_ORDER' | 'INCLUDED',
+  acquisition_model: 'COMMISSION' as 'COMMISSION' | 'MONTHLY_FEE',
+  commission_rate: '', monthly_fee: '',
 };
 
 export default function SchoolFormPage() {
@@ -65,6 +72,9 @@ export default function SchoolFormPage() {
           department: s.department ?? '', address: s.address ?? '',
           phone: s.phone ?? '', country_code: s.country_code ?? '+57', email: s.email ?? '',
           logo_url: s.logo_url ?? '', plan: s.plan as typeof emptyForm.plan,
+          meal_payment_model: s.meal_payment_model ?? 'PER_ORDER',
+          acquisition_model: s.acquisition_model ?? 'COMMISSION',
+          commission_rate: s.commission_rate ?? '', monthly_fee: s.monthly_fee ?? '',
         });
       })
       .catch(() => setError('No se pudo cargar el colegio'))
@@ -86,6 +96,10 @@ export default function SchoolFormPage() {
     setError('');
     const payload = {
       name: form.name, city: form.city, plan: form.plan,
+      meal_payment_model: form.meal_payment_model,
+      acquisition_model: form.acquisition_model,
+      ...(form.acquisition_model === 'COMMISSION' && form.commission_rate ? { commission_rate: Number(form.commission_rate) } : {}),
+      ...(form.acquisition_model === 'MONTHLY_FEE' && form.monthly_fee ? { monthly_fee: Number(form.monthly_fee) } : {}),
       ...(form.nit ? { nit: form.nit } : {}),
       ...(form.department ? { department: form.department } : {}),
       ...(form.address ? { address: form.address } : {}),
@@ -156,13 +170,69 @@ export default function SchoolFormPage() {
               <input id="nit" name="nit" className="form-input" type="text" value={form.nit} onChange={handleChange} placeholder="900123456-1" />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="plan">Plan</label>
+              <label className="form-label" htmlFor="plan">Nivel de plan</label>
               <select id="plan" name="plan" className="form-select" value={form.plan} onChange={handleChange}>
-                <option value="BASIC">⚡ Plan Mensual</option>
-                <option value="STANDARD">⭐ Plan Comisión</option>
-                <option value="PREMIUM">👑 Plan Premium</option>
+                <option value="BASIC">⚡ Básico</option>
+                <option value="STANDARD">⭐ Estándar</option>
+                <option value="PREMIUM">👑 Premium</option>
               </select>
             </div>
+          </div>
+
+          {/* Modalidad de alimentación */}
+          <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, marginTop: 20, fontWeight: 600 }}>Modalidad de alimentación</p>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <label
+                style={{
+                  display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
+                  border: `1.5px solid ${form.meal_payment_model === 'PER_ORDER' ? 'var(--color-brand-deep)' : 'var(--color-border)'}`,
+                  background: form.meal_payment_model === 'PER_ORDER' ? 'var(--color-brand-light)' : 'transparent',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13 }}>
+                  <input type="radio" name="meal_payment_model" value="PER_ORDER" checked={form.meal_payment_model === 'PER_ORDER'} onChange={handleChange} />
+                  Pago por pedido
+                </span>
+                <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>El padre recarga saldo y paga cada lonchera (modelo actual)</span>
+              </label>
+              <label
+                style={{
+                  display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
+                  border: `1.5px solid ${form.meal_payment_model === 'INCLUDED' ? 'var(--color-brand-deep)' : 'var(--color-border)'}`,
+                  background: form.meal_payment_model === 'INCLUDED' ? 'var(--color-brand-light)' : 'transparent',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13 }}>
+                  <input type="radio" name="meal_payment_model" value="INCLUDED" checked={form.meal_payment_model === 'INCLUDED'} onChange={handleChange} />
+                  Incluida en la pensión
+                </span>
+                <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>La alimentación ya está cubierta — sin saldo por lonchera</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Modalidad de cobro al colegio */}
+          <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, marginTop: 20, fontWeight: 600 }}>Modalidad de cobro al colegio</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="acquisition_model">Caspete le cobra al colegio</label>
+              <select id="acquisition_model" name="acquisition_model" className="form-select" value={form.acquisition_model} onChange={handleChange}>
+                <option value="COMMISSION">Comisión transaccional</option>
+                <option value="MONTHLY_FEE">Tarifa fija mensual</option>
+              </select>
+            </div>
+            {form.acquisition_model === 'COMMISSION' ? (
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" htmlFor="commission_rate">Comisión (%)</label>
+                <input id="commission_rate" name="commission_rate" className="form-input" type="number" min={0} max={100} step={0.1} value={form.commission_rate} onChange={handleChange} placeholder="5" />
+              </div>
+            ) : (
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" htmlFor="monthly_fee">Tarifa mensual (COP)</label>
+                <input id="monthly_fee" name="monthly_fee" className="form-input" type="number" min={0} step={1000} value={form.monthly_fee} onChange={handleChange} placeholder="200000" />
+              </div>
+            )}
           </div>
 
           {/* Dirección */}

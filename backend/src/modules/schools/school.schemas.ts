@@ -11,6 +11,10 @@ export const createSchoolSchema = z.object({
   email: z.string().email().max(255).optional(),
   logo_url: z.string().url().max(500).optional(),
   plan: z.enum(['BASIC', 'STANDARD', 'PREMIUM']).default('BASIC'),
+  meal_payment_model: z.enum(['PER_ORDER', 'INCLUDED']).default('PER_ORDER'),
+  acquisition_model: z.enum(['COMMISSION', 'MONTHLY_FEE']).default('COMMISSION'),
+  commission_rate: z.coerce.number().min(0).max(100).optional(),
+  monthly_fee: z.coerce.number().min(0).optional(),
 });
 
 export const updateSchoolSchema = z.object({
@@ -25,6 +29,10 @@ export const updateSchoolSchema = z.object({
   logo_url: z.string().url().max(500).optional(),
   plan: z.enum(['BASIC', 'STANDARD', 'PREMIUM']).optional(),
   active: z.boolean().optional(),
+  meal_payment_model: z.enum(['PER_ORDER', 'INCLUDED']).optional(),
+  acquisition_model: z.enum(['COMMISSION', 'MONTHLY_FEE']).optional(),
+  commission_rate: z.coerce.number().min(0).max(100).optional(),
+  monthly_fee: z.coerce.number().min(0).optional(),
 });
 
 export type CreateSchoolInput = z.infer<typeof createSchoolSchema>;

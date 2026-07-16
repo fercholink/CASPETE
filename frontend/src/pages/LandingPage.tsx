@@ -159,7 +159,7 @@ export default function LandingPage() {
   // Abre el formulario automáticamente si llegan con ?demo=1 (link para compartir con colegios)
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('demo') === '1') {
-      openModal('MONTHLY');
+      openModal('COMMISSION');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -352,7 +352,7 @@ export default function LandingPage() {
                     <ArrowRight className="h-4 w-4 stroke-[3px]" />
                   </Link>
                   <button
-                    onClick={() => openModal('MONTHLY')}
+                    onClick={() => openModal('COMMISSION')}
                     className="px-8 py-4 rounded-2xl text-xs uppercase tracking-wider font-extrabold transition-all border border-[#faeae1] bg-white text-[#7d5d61] hover:bg-[#fffcf9] flex items-center justify-center gap-2.5 cursor-pointer shadow-xs"
                   >
                     <School className="h-4 w-4 text-emerald-500" />
@@ -751,8 +751,8 @@ export default function LandingPage() {
                     </li>
                   </ul>
                 </div>
-                <button 
-                  onClick={() => openModal('MONTHLY')}
+                <button
+                  onClick={() => openModal('COMMISSION')}
                   className="w-full py-3.5 rounded-xl border border-emerald-250 bg-emerald-100/50 hover:bg-emerald-100 text-emerald-805 font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer text-xs uppercase tracking-wider"
                 >
                   <span>Solicitar Demo de Colegio</span>
@@ -806,7 +806,7 @@ export default function LandingPage() {
 
             <div className="mt-12 text-center">
               <button
-                onClick={() => openModal('MONTHLY')}
+                onClick={() => openModal('COMMISSION')}
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-xs uppercase tracking-wider font-extrabold transition-all bg-emerald-500 hover:bg-emerald-600 text-white shadow-md cursor-pointer"
               >
                 <span>Solicitar Demo para mi Colegio</span>
@@ -882,16 +882,16 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
               
-              {/* Commission Plan */}
-              <div className="bg-white p-8 rounded-[2.5rem] border border-[#f7e3d7] flex flex-col justify-between space-y-8 relative overflow-hidden group hover:border-emerald-250 transition-all text-left">
+              {/* Commission Plan — recomendado */}
+              <div className="bg-white p-8 rounded-[2.5rem] border-2 border-emerald-400 flex flex-col justify-between space-y-8 relative overflow-hidden group shadow-lg shadow-emerald-500/10 transition-all text-left">
                 <div>
                   <div className="flex justify-between items-center mb-6">
                     <span className="text-4xl">📊</span>
-                    <span className="bg-emerald-50 text-emerald-800 border border-emerald-150 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Sin Costo Fijo</span>
+                    <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Recomendado · Sin Costo Fijo</span>
                   </div>
                   <h3 className="font-display text-2xl font-black text-[#4e2f33] mb-3">Modalidad por Comisión</h3>
                   <p className="text-[#61494c] text-xs leading-relaxed mb-6 font-semibold">
-                    Caspete cobra un porcentaje mínimo por cada transacción procesada. Sin mensualidades fijas. Perfecto para colegios que desean digitalizar su comedor sin ningún riesgo financiero.
+                    Caspete solo cobra un pequeño porcentaje sobre lo que se transaccione en la tienda escolar. Si el colegio no vende, no paga nada — cero riesgo financiero para empezar.
                   </p>
                   <ul className="space-y-3.5 text-xs text-[#61494c] font-bold">
                     <li className="flex items-center gap-x-2.5">
@@ -908,9 +908,9 @@ export default function LandingPage() {
                     </li>
                   </ul>
                 </div>
-                <button 
+                <button
                   onClick={() => openModal('COMMISSION')}
-                  className="w-full py-4 rounded-2xl text-emerald-805 font-display font-black text-xs uppercase tracking-widest border border-emerald-250 bg-emerald-50/30 hover:bg-emerald-500 hover:text-white transition-all cursor-pointer text-center"
+                  className="w-full py-4 rounded-2xl text-white font-display font-black text-xs uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer text-center"
                 >
                   Solicitar Información
                 </button>
@@ -921,11 +921,11 @@ export default function LandingPage() {
                 <div>
                   <div className="flex justify-between items-center mb-6">
                     <span className="text-4xl">👑</span>
-                    <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Suscripción Fija</span>
+                    <span className="bg-emerald-50 text-emerald-800 border border-emerald-150 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Suscripción Fija</span>
                   </div>
                   <h3 className="font-display text-2xl font-black text-[#4e2f33] mb-3">Suscripción Institucional</h3>
                   <p className="text-[#61494c] text-xs leading-relaxed mb-6 font-semibold">
-                    Una tarifa fija mensual adaptada al número de estudiantes de tu institución, con 0% de comisiones por transacciones. Excelente para colegios grandes con alto flujo de recargas.
+                    Una tarifa fija mensual adaptada al número de estudiantes de tu institución, con 0% de comisiones por transacciones. Ideal para colegios grandes con alto flujo de recargas que prefieren costo predecible.
                   </p>
                   <ul className="space-y-3.5 text-xs text-[#61494c] font-bold">
                     <li className="flex items-center gap-x-2.5">
@@ -942,9 +942,9 @@ export default function LandingPage() {
                     </li>
                   </ul>
                 </div>
-                <button 
+                <button
                   onClick={() => openModal('MONTHLY')}
-                  className="w-full py-4 rounded-2xl text-white font-display font-black text-xs uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer text-center"
+                  className="w-full py-4 rounded-2xl text-emerald-805 font-display font-black text-xs uppercase tracking-widest border border-emerald-250 bg-emerald-50/30 hover:bg-emerald-500 hover:text-white transition-all cursor-pointer text-center"
                 >
                   Solicitar Información
                 </button>

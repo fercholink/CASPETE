@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js';
+import { getClientIp } from '../utils/ip.js';
 import type { Request } from 'express';
 
 /**
@@ -16,11 +17,7 @@ export async function logAudit(params: {
   justification?: string;
 }) {
   try {
-    const forwardedFor = params.req?.headers['x-forwarded-for'];
-    const remoteAddr   = params.req?.socket?.remoteAddress;
-    let ipAddress: string | null = null;
-    if (typeof forwardedFor === 'string') ipAddress = (forwardedFor.split(',')[0] ?? forwardedFor).trim().substring(0, 45);
-    else if (typeof remoteAddr === 'string') ipAddress = remoteAddr.substring(0, 45);
+    const ipAddress = getClientIp(params.req);
 
     await prisma.auditLog.create({
       data: {

@@ -2,8 +2,31 @@ import { AppError } from '../../middleware/error.middleware.js';
 import { prisma } from '../../lib/prisma.js';
 import type { CreateLeadInput, AdminCreateLeadInput, UpdateLeadInput } from './leads.schemas.js';
 
-/** Recibe un lead desde la landing (público, sin auth) */
-export async function createLead(input: CreateLeadInput) {
+const MIN_FILL_TIME_MS = 2500; // un humano no llena 6+ campos en menos de esto
+
+/**
+ * Recibe un lead desde la landing (público, sin auth).
+ * Devuelve null si se detecta spam (honeypot, envío demasiado rápido, o
+ * duplicado reciente) — el llamador responde éxito igual, sin crear el
+ * registro, para no darle señal útil a un bot que esté iterando.
+ */
+export async function createLead(input: CreateLeadInput, ipAddress: string | null) {
+  // 1. Honeypot: campo oculto que solo un bot llenaría
+  if (input.website) return null;
+
+  // 2. Envío demasiado rápido tras cargar el formulario
+  if (input.form_loaded_at !== undefined && Date.now() - input.form_loaded_at < MIN_FILL_TIME_MS) {
+    return null;
+  }
+
+  // 3. Duplicado: mismo correo en las últimas 24h — evita reenvíos repetidos de spam
+  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const recentDuplicate = await prisma.schoolLead.findFirst({
+    where: { contact_email: input.contact_email, created_at: { gte: dayAgo } },
+    select: { id: true },
+  });
+  if (recentDuplicate) return null;
+
   return prisma.schoolLead.create({
     data: {
       school_name:    input.school_name,
@@ -15,6 +38,7 @@ export async function createLead(input: CreateLeadInput) {
       ...(input.contact_phone  !== undefined && { contact_phone:  input.contact_phone }),
       ...(input.students_count !== undefined && { students_count: input.students_count }),
       ...(input.message        !== undefined && { message:        input.message }),
+      ip_address: ipAddress,
     },
   });
 }

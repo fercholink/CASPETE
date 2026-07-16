@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/auth.middleware.js';
 import { leadsLimiter } from '../../middleware/rate-limit.middleware.js';
+import { getClientIp } from '../../utils/ip.js';
 import * as leads from './leads.service.js';
 import { CreateLeadSchema, AdminCreateLeadSchema, UpdateLeadSchema } from './leads.schemas.js';
 
@@ -10,8 +11,10 @@ const router = Router();
 router.post('/', leadsLimiter, async (req, res, next) => {
   try {
     const body = CreateLeadSchema.parse(req.body);
-    const data = await leads.createLead(body);
-    res.status(201).json({ success: true, data: { id: data.id } });
+    const data = await leads.createLead(body, getClientIp(req));
+    // Responde éxito siempre, aunque se haya descartado por spam — no le damos
+    // señal útil a un bot para que ajuste su comportamiento.
+    res.status(201).json({ success: true, data: { id: data?.id ?? null } });
   } catch (e) { next(e); }
 });
 

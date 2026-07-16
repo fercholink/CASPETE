@@ -15,6 +15,7 @@ interface Lead {
   message: string | null;
   status: 'NEW' | 'CONTACTED' | 'DEMO' | 'CLOSED';
   notes: string | null;
+  ip_address: string | null;
   created_at: string;
 }
 
@@ -265,6 +266,7 @@ export default function SchoolLeadsPage() {
                 ['Teléfono', selected.contact_phone ?? '—'],
                 ['Estudiantes', selected.students_count?.toString() ?? '—'],
                 ['Recibido', fmtDate(selected.created_at)],
+                ['IP de origen', selected.ip_address ?? '— (registrado manualmente)'],
               ] as [string, string][]).map(([label, val]) => (
                 <div key={label} style={{ display: 'flex', gap: 12, fontSize: 14 }}>
                   <span style={{ fontWeight: 600, minWidth: 90, color: 'var(--color-text-muted)' }}>{label}</span>

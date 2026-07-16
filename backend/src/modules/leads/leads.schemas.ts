@@ -10,6 +10,9 @@ export const CreateLeadSchema = z.object({
   students_count: z.number().int().positive('El número de estudiantes debe ser un número positivo').optional(),
   plan_interest:  z.enum(['COMMISSION', 'MONTHLY']),
   message:        z.string().max(200, 'Las observaciones no pueden exceder los 200 caracteres').optional(),
+  // ── Anti-spam (público, sin auth) — nunca los llena un usuario real ──────
+  website:        z.string().max(200).optional(),      // honeypot: campo oculto, los bots lo autocompletan
+  form_loaded_at: z.coerce.number().optional(),         // Date.now() al montar el formulario
 });
 
 export const AdminCreateLeadSchema = CreateLeadSchema.extend({

@@ -100,23 +100,25 @@ export default function LandingPage() {
 
   // Lead Modal Form states (ported from original landing)
   const [leadModal, setLeadModal] = useState<null | 'COMMISSION' | 'MONTHLY'>(null);
-  const [form, setForm] = useState({ 
-    school_name: '', 
-    nit: '', 
-    city: '', 
-    contact_name: '', 
-    contact_email: '', 
-    contact_phone: '', 
-    students_count: '', 
-    message: '' 
+  const [form, setForm] = useState({
+    school_name: '',
+    nit: '',
+    city: '',
+    contact_name: '',
+    contact_email: '',
+    contact_phone: '',
+    students_count: '',
+    message: '',
+    website: '', // honeypot: campo oculto, solo lo llenan bots
   });
+  const [formLoadedAt, setFormLoadedAt] = useState(0);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [formError, setFormError] = useState('');
 
   async function submitLead(e: React.FormEvent) {
     e.preventDefault();
-    setSending(true); 
+    setSending(true);
     setFormError('');
     try {
       const baseUrl = import.meta.env.VITE_API_URL || '';
@@ -124,10 +126,11 @@ export default function LandingPage() {
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...form, 
-          students_count: form.students_count ? Number(form.students_count) : undefined, 
-          plan_interest: leadModal 
+        body: JSON.stringify({
+          ...form,
+          students_count: form.students_count ? Number(form.students_count) : undefined,
+          plan_interest: leadModal,
+          form_loaded_at: formLoadedAt,
         }),
       });
       const json = await res.json() as { success: boolean; message?: string };
@@ -141,17 +144,19 @@ export default function LandingPage() {
   }
 
   function openModal(plan: 'COMMISSION' | 'MONTHLY') {
-    setForm({ 
-      school_name: '', 
-      nit: '', 
-      city: '', 
-      contact_name: '', 
-      contact_email: '', 
-      contact_phone: '', 
-      students_count: '', 
-      message: '' 
+    setForm({
+      school_name: '',
+      nit: '',
+      city: '',
+      contact_name: '',
+      contact_email: '',
+      contact_phone: '',
+      students_count: '',
+      message: '',
+      website: '',
     });
-    setSent(false); 
+    setFormLoadedAt(Date.now());
+    setSent(false);
     setFormError('');
     setLeadModal(plan);
   }
@@ -1053,6 +1058,17 @@ export default function LandingPage() {
                   </div>
 
                   <form onSubmit={submitLead} className="space-y-4 text-left">
+                    {/* Honeypot anti-spam: invisible para personas, los bots suelen autocompletarlo */}
+                    <input
+                      type="text"
+                      name="website"
+                      value={form.website}
+                      onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                      style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+                    />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-[11px] font-bold text-[#8c6d71] uppercase tracking-wide">Nombre del Colegio *</label>

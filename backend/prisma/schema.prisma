@@ -626,6 +626,7 @@ model SchoolLead {
   message         String?  @db.Text                 // Mensaje adicional
   status          String   @default("NEW") @db.VarChar(20) // NEW | CONTACTED | DEMO | CLOSED
   notes           String?  @db.Text                 // Notas internas del super admin
+  ip_address      String?  @db.VarChar(45)          // IP del formulario público — trazabilidad/anti-spam
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 

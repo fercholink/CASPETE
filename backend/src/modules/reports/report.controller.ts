@@ -17,6 +17,11 @@ export async function globalStats(req: Request, res: Response) {
   sendSuccess(res, data);
 }
 
+export async function schoolsRevenue(req: Request, res: Response) {
+  const data = await reportService.getSchoolsRevenueReport(req.user!);
+  sendSuccess(res, data);
+}
+
 export async function parentSummary(req: Request, res: Response) {
   const data = await reportService.getParentSummary(req.user!);
   sendSuccess(res, data);

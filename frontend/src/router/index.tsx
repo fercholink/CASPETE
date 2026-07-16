@@ -41,6 +41,7 @@ import StudentGradesPage from '../pages/StudentGradesPage';
 import CommunicationsPage from '../pages/CommunicationsPage';
 import CoursesPage from '../pages/CoursesPage';
 import GPSTrackingPage from '../pages/GPSTrackingPage';
+import SchoolsRevenuePage from '../pages/SchoolsRevenuePage';
 
 export const router = createBrowserRouter([
   {
@@ -141,6 +142,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
         <SchoolFormPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/schools-revenue',
+    element: (
+      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+        <SchoolsRevenuePage />
       </ProtectedRoute>
     ),
   },

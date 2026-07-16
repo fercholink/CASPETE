@@ -15,6 +15,9 @@ router.get('/school-summary', requireRole('SCHOOL_ADMIN'), reportController.scho
 // GET /api/reports/global — métricas globales del sistema (SUPER_ADMIN only)
 router.get('/global', requireRole('SUPER_ADMIN'), reportController.globalStats);
 
+// GET /api/reports/schools-revenue — ingresos detallados por colegio (SUPER_ADMIN only)
+router.get('/schools-revenue', requireRole('SUPER_ADMIN'), reportController.schoolsRevenue);
+
 // GET /api/reports/parent — resumen para padres
 router.get('/parent', requireRole('PARENT'), reportController.parentSummary);
 

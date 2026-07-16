@@ -176,6 +176,46 @@ export async function getGlobalStats(actor: JwtPayload) {
   };
 }
 
+// ─── Ingresos por colegio — detalle completo (SUPER_ADMIN) ───────────
+export async function getSchoolsRevenueReport(actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo para Super Admin', 403);
+
+  const { start, end } = todayRange();
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
+
+  const schools = await prisma.school.findMany({
+    select: {
+      id: true, name: true, city: true, active: true, plan: true,
+      _count: { select: { students: true } },
+    },
+    orderBy: { name: 'asc' },
+  });
+
+  const rows = await Promise.all(schools.map(async (school) => {
+    const [revToday, revMonth, revYear, ordersMonth] = await Promise.all([
+      prisma.transaction.aggregate({ where: { school_id: school.id, type: 'CHARGE', created_at: { gte: start, lte: end } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { school_id: school.id, type: 'CHARGE', created_at: { gte: monthStart } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { school_id: school.id, type: 'CHARGE', created_at: { gte: yearStart } }, _sum: { amount: true } }),
+      prisma.lunchOrder.count({ where: { school_id: school.id, created_at: { gte: monthStart }, status: { not: 'CANCELLED' } } }),
+    ]);
+    return {
+      school_id: school.id,
+      name: school.name,
+      city: school.city,
+      active: school.active,
+      plan: school.plan,
+      students_count: school._count.students,
+      orders_month: ordersMonth,
+      revenue_today: revToday._sum.amount?.toNumber() ?? 0,
+      revenue_month: revMonth._sum.amount?.toNumber() ?? 0,
+      revenue_year: revYear._sum.amount?.toNumber() ?? 0,
+    };
+  }));
+
+  return rows.sort((a, b) => b.revenue_month - a.revenue_month);
+}
+
 // ─── Resumen para padres ───────────────────────────────────────
 export async function getParentSummary(actor: JwtPayload) {
   if (actor.role !== 'PARENT') throw new AppError('Solo para padres', 403);

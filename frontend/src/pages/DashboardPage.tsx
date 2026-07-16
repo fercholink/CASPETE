@@ -176,13 +176,16 @@ function SuperAdminDashboard() {
             <StatCard label="Estudiantes activos" value={global.students.active}   icon="🎒" sub={`${global.students.total} total`}   color="var(--color-brand-deep)" to="/students" />
             <StatCard label="Recargas pendientes" value={global.pending_topups}    icon="⏳"   color={global.pending_topups > 0 ? '#c37d0d' : 'var(--color-text)'} to="/topup-requests" />
             <StatCard label="Ingresos hoy"        value={fmt(global.revenue.today)} icon="💵" color="#059669" to="/transactions" />
-            <StatCard label="Ingresos del mes"    value={fmt(global.revenue.month)} icon="📈" color="#6366f1" to="/transactions" />
+            <StatCard label="Ingresos del mes"    value={fmt(global.revenue.month)} icon="📈" color="#6366f1" to="/schools-revenue" />
             <StatCard label="Pedidos hoy"         value={global.orders_today}       icon="📋"              to="/orders" />
           </div>
 
           {global.top_schools.length > 0 && (
             <div className="user-card" style={{ marginBottom: 20 }}>
-              <p className="dashboard-label" style={{ marginBottom: 12 }}>Top colegios — ingresos del mes</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <p className="dashboard-label" style={{ margin: 0 }}>Top colegios — ingresos del mes</p>
+                <Link to="/schools-revenue" style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-brand-deep)', textDecoration: 'none' }}>Ver todos los colegios →</Link>
+              </div>
               {global.top_schools.map((s, i) => (
                 <div key={s.school_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < global.top_schools.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

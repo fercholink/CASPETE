@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles,
@@ -155,6 +155,14 @@ export default function LandingPage() {
     setFormError('');
     setLeadModal(plan);
   }
+
+  // Abre el formulario automáticamente si llegan con ?demo=1 (link para compartir con colegios)
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('demo') === '1') {
+      openModal('MONTHLY');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const faqs = [
     {

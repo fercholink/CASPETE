@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/auth.middleware.js';
 import { leadsLimiter } from '../../middleware/rate-limit.middleware.js';
 import * as leads from './leads.service.js';
-import { CreateLeadSchema, UpdateLeadSchema } from './leads.schemas.js';
+import { CreateLeadSchema, AdminCreateLeadSchema, UpdateLeadSchema } from './leads.schemas.js';
 
 const router = Router();
 
@@ -31,6 +31,20 @@ router.get(
   },
 );
 
+// ── POST /api/leads/admin — SUPER_ADMIN: registrar lead manualmente (llamada/WhatsApp) ──
+router.post(
+  '/admin',
+  authenticate,
+  requireRole(['SUPER_ADMIN']),
+  async (req, res, next) => {
+    try {
+      const body = AdminCreateLeadSchema.parse(req.body);
+      const data = await leads.createLeadAdmin(body);
+      res.status(201).json({ success: true, data });
+    } catch (e) { next(e); }
+  },
+);
+
 // ── PATCH /api/leads/:id — SUPER_ADMIN: cambiar estado / agregar notas ────────
 router.patch(
   '/:id',
@@ -43,6 +57,21 @@ router.patch(
       const body = UpdateLeadSchema.parse(req.body);
       const data = await leads.updateLead(id, body);
       res.json({ success: true, data });
+    } catch (e) { next(e); }
+  },
+);
+
+// ── DELETE /api/leads/:id — SUPER_ADMIN: eliminar lead (prueba, duplicado, spam) ──
+router.delete(
+  '/:id',
+  authenticate,
+  requireRole(['SUPER_ADMIN']),
+  async (req, res, next) => {
+    try {
+      const id = req.params['id'] as string | undefined;
+      if (!id) { res.status(400).json({ success: false, error: 'ID requerido' }); return; }
+      await leads.deleteLead(id);
+      res.json({ success: true });
     } catch (e) { next(e); }
   },
 );

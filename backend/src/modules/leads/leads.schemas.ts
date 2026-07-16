@@ -12,10 +12,15 @@ export const CreateLeadSchema = z.object({
   message:        z.string().max(200, 'Las observaciones no pueden exceder los 200 caracteres').optional(),
 });
 
+export const AdminCreateLeadSchema = CreateLeadSchema.extend({
+  status: z.enum(['NEW', 'CONTACTED', 'DEMO', 'CLOSED']).optional(),
+});
+
 export const UpdateLeadSchema = z.object({
   status: z.enum(['NEW', 'CONTACTED', 'DEMO', 'CLOSED']).optional(),
   notes:  z.string().max(2000).optional(),
 });
 
 export type CreateLeadInput = z.infer<typeof CreateLeadSchema>;
+export type AdminCreateLeadInput = z.infer<typeof AdminCreateLeadSchema>;
 export type UpdateLeadInput = z.infer<typeof UpdateLeadSchema>;

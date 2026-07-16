@@ -1,5 +1,6 @@
+import { AppError } from '../../middleware/error.middleware.js';
 import { prisma } from '../../lib/prisma.js';
-import type { CreateLeadInput, UpdateLeadInput } from './leads.schemas.js';
+import type { CreateLeadInput, AdminCreateLeadInput, UpdateLeadInput } from './leads.schemas.js';
 
 /** Recibe un lead desde la landing (público, sin auth) */
 export async function createLead(input: CreateLeadInput) {
@@ -10,6 +11,24 @@ export async function createLead(input: CreateLeadInput) {
       contact_name:   input.contact_name,
       contact_email:  input.contact_email,
       plan_interest:  input.plan_interest,
+      ...(input.nit            !== undefined && { nit:            input.nit }),
+      ...(input.contact_phone  !== undefined && { contact_phone:  input.contact_phone }),
+      ...(input.students_count !== undefined && { students_count: input.students_count }),
+      ...(input.message        !== undefined && { message:        input.message }),
+    },
+  });
+}
+
+/** Registra un lead manualmente — SUPER_ADMIN (ej. contacto hecho por llamada/WhatsApp) */
+export async function createLeadAdmin(input: AdminCreateLeadInput) {
+  return prisma.schoolLead.create({
+    data: {
+      school_name:    input.school_name,
+      city:           input.city,
+      contact_name:   input.contact_name,
+      contact_email:  input.contact_email,
+      plan_interest:  input.plan_interest,
+      status:         input.status ?? 'NEW',
       ...(input.nit            !== undefined && { nit:            input.nit }),
       ...(input.contact_phone  !== undefined && { contact_phone:  input.contact_phone }),
       ...(input.students_count !== undefined && { students_count: input.students_count }),
@@ -42,4 +61,11 @@ export async function updateLead(id: string, input: UpdateLeadInput) {
       ...(input.notes  !== undefined && { notes:  input.notes }),
     },
   });
+}
+
+/** Elimina un lead — SUPER_ADMIN (ej. registros de prueba, duplicados o spam) */
+export async function deleteLead(id: string) {
+  const existing = await prisma.schoolLead.findUnique({ where: { id } });
+  if (!existing) throw new AppError('Lead no encontrado', 404);
+  await prisma.schoolLead.delete({ where: { id } });
 }

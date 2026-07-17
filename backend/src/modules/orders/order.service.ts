@@ -29,7 +29,7 @@ const orderSelect = {
   has_sweetener_alert: true,
   compliance_score: true,
   seal_summary: true,
-  school: { select: { id: true, name: true } },
+  school: { select: { id: true, name: true, meal_payment_model: true } },
   student: { select: { id: true, full_name: true, grade: true, photo_url: true, parent_id: true, balance: true, delivery_code: true } },
   store: { select: { id: true, name: true } },
   deliverer: { select: { id: true, full_name: true } },
@@ -88,6 +88,15 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   if (!student?.active) throw new AppError('Estudiante no encontrado', 404);
   if (student.parent_id !== actor.sub)
     throw new AppError('No puedes crear pedidos para este estudiante', 403);
+
+  // Colegios de pensión incluida: el pedido no descuenta saldo — la alimentación
+  // ya está cubierta por la pensión. Se sigue creando el pedido normalmente
+  // (cocina, entrega QR, cumplimiento Ley 2120), solo se salta el cobro.
+  const school = await prisma.school.findUnique({
+    where: { id: student.school_id },
+    select: { meal_payment_model: true },
+  });
+  const isIncluded = school?.meal_payment_model === 'INCLUDED';
 
   const store = await prisma.store.findUnique({ where: { id: input.store_id } });
   if (!store?.active) throw new AppError('Tienda no encontrada o inactiva', 404);
@@ -151,7 +160,7 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   totalAmount = Math.round(totalAmount * 100) / 100;
 
   const balance = student.balance.toNumber();
-  if (balance < totalAmount) {
+  if (!isIncluded && balance < totalAmount) {
     throw new AppError(
       `Saldo insuficiente. Disponible: $${balance.toLocaleString('es-CO')}, Pedido: $${totalAmount.toLocaleString('es-CO')}`,
       400,
@@ -208,32 +217,35 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
       }
     }
 
-    // Descuento de saldo atómico: solo aplica si el saldo actual alcanza (evita double-spend por carrera)
-    const debit = await tx.student.updateMany({
-      where: { id: input.student_id, balance: { gte: totalAmount } },
-      data: { balance: { decrement: totalAmount } },
-    });
-    if (debit.count === 0) {
-      throw new AppError(
-        `Saldo insuficiente. Disponible: $${balance.toLocaleString('es-CO')}, Pedido: $${totalAmount.toLocaleString('es-CO')}`,
-        400,
-      );
-    }
-    const debitedStudent = await tx.student.findUniqueOrThrow({
-      where: { id: input.student_id },
-      select: { balance: true },
-    });
+    // Colegios de pensión incluida: sin descuento de saldo ni transacción de cobro
+    if (!isIncluded) {
+      // Descuento de saldo atómico: solo aplica si el saldo actual alcanza (evita double-spend por carrera)
+      const debit = await tx.student.updateMany({
+        where: { id: input.student_id, balance: { gte: totalAmount } },
+        data: { balance: { decrement: totalAmount } },
+      });
+      if (debit.count === 0) {
+        throw new AppError(
+          `Saldo insuficiente. Disponible: $${balance.toLocaleString('es-CO')}, Pedido: $${totalAmount.toLocaleString('es-CO')}`,
+          400,
+        );
+      }
+      const debitedStudent = await tx.student.findUniqueOrThrow({
+        where: { id: input.student_id },
+        select: { balance: true },
+      });
 
-    await tx.transaction.create({
-      data: {
-        school_id: student.school_id,
-        student_id: input.student_id,
-        type: 'CHARGE',
-        amount: totalAmount,
-        balance_after: debitedStudent.balance,
-        order_id: order.id,
-      },
-    });
+      await tx.transaction.create({
+        data: {
+          school_id: student.school_id,
+          student_id: input.student_id,
+          type: 'CHARGE',
+          amount: totalAmount,
+          balance_after: debitedStudent.balance,
+          order_id: order.id,
+        },
+      });
+    }
 
     return order;
   });

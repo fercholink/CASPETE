@@ -18,7 +18,7 @@ interface Order {
   notes: string | null;
   otp_code: string | null;
   created_at: string;
-  school: { id: string; name: string };
+  school: { id: string; name: string; meal_payment_model?: 'PER_ORDER' | 'INCLUDED' };
   student: { id: string; full_name: string; grade: string | null; photo_url?: string | null; parent_id: string; balance: string };
   store: { id: string; name: string };
   deliverer: { id: string; full_name: string } | null;
@@ -675,9 +675,15 @@ export default function OrderDetailPage() {
               </div>
             );
           })}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
             <span style={{ fontWeight: 600 }}>Total</span>
-            <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.36px' }}>{fmt(order.total_amount)}</span>
+            {order.school.meal_payment_model === 'INCLUDED' ? (
+              <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-brand-deep)', background: 'var(--color-brand-light)', padding: '4px 10px', borderRadius: 999 }}>
+                👑 Incluido en la pensión
+              </span>
+            ) : (
+              <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.36px' }}>{fmt(order.total_amount)}</span>
+            )}
           </div>
         </div>
 

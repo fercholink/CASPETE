@@ -31,6 +31,7 @@ import gradeRouter from './modules/grades/grade.router.js';
 import communicationRouter from './modules/communications/communication.router.js';
 import gpsRouter from './modules/gps/gps.router.js';
 import attendanceRouter from './modules/attendance/attendance.router.js';
+import monthlyMenuRouter from './modules/monthly-menu/menu.router.js';
 
 const app = express();
 
@@ -86,6 +87,7 @@ app.use('/api/grades', gradeRouter);
 app.use('/api/communications', communicationRouter);
 app.use('/api/gps', gpsRouter);
 app.use('/api/attendance', attendanceRouter);
+app.use('/api/monthly-menu', monthlyMenuRouter);
 
 if (env.SENTRY_DSN) {
   Sentry.setupExpressErrorHandler(app);

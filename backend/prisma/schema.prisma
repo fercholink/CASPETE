@@ -127,6 +127,7 @@ model School {
   teachers       Teacher[]
   courses        Course[]
   communications Communication[]
+  menu_days      MenuDay[]
 }
 
 model User {
@@ -470,6 +471,7 @@ model Allergy {
 
   student_allergies StudentAllergy[]
   product_allergies ProductAllergy[]
+  menu_day_allergies MenuDayAllergen[]
 }
 
 model StudentAllergy {
@@ -492,6 +494,39 @@ model ProductAllergy {
   allergy Allergy @relation(fields: [allergy_id], references: [id], onDelete: Cascade)
 
   @@id([product_id, allergy_id])
+}
+
+// MÃ³dulo "MenÃº del Mes" â€” Fase 2 de PensiÃ³n Incluida.
+// Reemplaza los menÃºs en imagen/PDF que hoy publican los colegios.
+// EtiquetaÃ§Ã£o manual de alÃ©rgenos (reutiliza Allergy) porque el clasificador
+// automÃ¡tico Ley 2120 estÃ¡ pensado para productos empacados, no comida casera.
+model MenuDay {
+  id                   String   @id @default(uuid()) @db.Uuid
+  school_id            String   @db.Uuid
+  menu_date            DateTime @db.Date
+  soup                 String?  @db.VarChar(200)
+  main_protein         String   @db.VarChar(200)
+  optional_protein     String?  @db.VarChar(200)
+  energetic            String?  @db.VarChar(200) // carbohidrato / verdura caliente
+  dessert              String?  @db.VarChar(200)
+  vegetarian_available Boolean  @default(false)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  school    School            @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  allergens MenuDayAllergen[]
+
+  @@unique([school_id, menu_date])
+}
+
+model MenuDayAllergen {
+  menu_day_id String @db.Uuid
+  allergy_id  String @db.Uuid
+
+  menu_day MenuDay @relation(fields: [menu_day_id], references: [id], onDelete: Cascade)
+  allergy  Allergy @relation(fields: [allergy_id], references: [id], onDelete: Cascade)
+
+  @@id([menu_day_id, allergy_id])
 }
 
 // Historial de cambios nutricionales por producto -- Brecha #7

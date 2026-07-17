@@ -42,6 +42,7 @@ import CommunicationsPage from '../pages/CommunicationsPage';
 import CoursesPage from '../pages/CoursesPage';
 import GPSTrackingPage from '../pages/GPSTrackingPage';
 import SchoolsRevenuePage from '../pages/SchoolsRevenuePage';
+import MonthlyMenuPage from '../pages/MonthlyMenuPage';
 
 export const router = createBrowserRouter([
   {
@@ -116,6 +117,16 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['PARENT', 'SUPER_ADMIN']}>
         <GPSTrackingPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ── Menú del Mes (Pensión Incluida — Fase 2) ─────────────
+  {
+    path: '/monthly-menu',
+    element: (
+      <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN', 'PARENT', 'VENDOR', 'TEACHER']}>
+        <MonthlyMenuPage />
       </ProtectedRoute>
     ),
   },

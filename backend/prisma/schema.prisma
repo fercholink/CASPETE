@@ -107,6 +107,10 @@ model School {
   commission_rate    Decimal?         @db.Decimal(5, 2) // e.g. 5.00 for 5%
   monthly_fee        Decimal?         @db.Decimal(10, 2) // e.g. 200000
   meal_payment_model MealPaymentModel @default(PER_ORDER)
+  // Costo unitario que el colegio paga a SU proveedor de alimentación por comida —
+  // no tiene relación con lo que Caspete le cobra al colegio. Opcional, solo para
+  // el reporte de auditoría de Pensión Incluida (Fase 4): costo estimado = comidas × este valor.
+  cost_per_meal      Decimal?         @db.Decimal(10, 2)
 
   // ── Rastreo GPS (tarjetas localizadoras) ─────────────────────────────────
   gps_tracking_enabled  Boolean @default(false) // el colegio habilita rastreo GPS

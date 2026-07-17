@@ -120,6 +120,7 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/students',        label: '8. Estudiantes',        icon: '🎒', isSetup: true },
     // --- Operación Diaria ---
     { to: '/monthly-menu',    label: 'Menú del Mes',         icon: '🍽️' },
+    { to: '/pension-audit',   label: 'Auditoría Pensión',    icon: '🧾' },
     { to: '/school-leads',    label: 'Solicitudes',          icon: '📥' },
     { to: '/orders',          label: 'Pedidos',              icon: '📋' },
     { to: '/topup-requests',  label: 'Recargas',             icon: '💰' },
@@ -136,6 +137,7 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     // --- Operación Diaria ---
     { to: '/orders',         label: 'Pedidos',          icon: '📋' },
     { to: '/monthly-menu',   label: 'Menú del Mes',     icon: '🍽️' },
+    { to: '/pension-audit',  label: 'Auditoría Pensión',icon: '🧾' },
   ],
   VENDOR: [
     { to: '/stores',   label: 'Mi Tienda',       icon: '🏪' },

@@ -18,6 +18,7 @@ interface SchoolData {
   acquisition_model: 'COMMISSION' | 'MONTHLY_FEE';
   commission_rate: string | null;
   monthly_fee: string | null;
+  cost_per_meal: string | null;
   active: boolean;
 }
 
@@ -34,7 +35,7 @@ const emptyForm = {
   phone: '', country_code: '+57', email: '', logo_url: '',
   meal_payment_model: 'PER_ORDER' as 'PER_ORDER' | 'INCLUDED',
   acquisition_model: 'COMMISSION' as 'COMMISSION' | 'MONTHLY_FEE',
-  commission_rate: '', monthly_fee: '',
+  commission_rate: '', monthly_fee: '', cost_per_meal: '',
 };
 
 // plan y gps_tracking_enabled son resultado de la modalidad elegida, no una
@@ -89,6 +90,7 @@ export default function SchoolFormPage() {
           meal_payment_model: s.meal_payment_model ?? 'PER_ORDER',
           acquisition_model: s.acquisition_model ?? 'COMMISSION',
           commission_rate: s.commission_rate ?? '', monthly_fee: s.monthly_fee ?? '',
+          cost_per_meal: s.cost_per_meal ?? '',
         });
       })
       .catch(() => setError('No se pudo cargar el colegio'))
@@ -116,6 +118,7 @@ export default function SchoolFormPage() {
       acquisition_model: form.meal_payment_model === 'INCLUDED' ? 'MONTHLY_FEE' as const : form.acquisition_model,
       ...(form.acquisition_model === 'COMMISSION' && form.meal_payment_model === 'PER_ORDER' && form.commission_rate ? { commission_rate: Number(form.commission_rate) } : {}),
       ...(form.monthly_fee ? { monthly_fee: Number(form.monthly_fee) } : {}),
+      ...(form.meal_payment_model === 'INCLUDED' && form.cost_per_meal ? { cost_per_meal: Number(form.cost_per_meal) } : {}),
       ...(form.nit ? { nit: form.nit } : {}),
       ...(form.department ? { department: form.department } : {}),
       ...(form.address ? { address: form.address } : {}),
@@ -232,9 +235,15 @@ export default function SchoolFormPage() {
           {form.meal_payment_model === 'INCLUDED' ? (
             <div style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--color-brand-light)', fontSize: 12, color: 'var(--color-text)' }}>
               👑 Colegios de pensión incluida usan siempre <strong>tarifa fija mensual</strong> — no hay volumen de pedidos del cual cobrar comisión. GPS incluido sin costo adicional.
-              <div className="form-group" style={{ marginTop: 10, marginBottom: 0 }}>
-                <label className="form-label" htmlFor="monthly_fee">Tarifa mensual (COP)</label>
-                <input id="monthly_fee" name="monthly_fee" className="form-input" type="number" min={0} step={1000} value={form.monthly_fee} onChange={handleChange} placeholder="200000" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 10 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="monthly_fee">Tarifa mensual (COP)</label>
+                  <input id="monthly_fee" name="monthly_fee" className="form-input" type="number" min={0} step={1000} value={form.monthly_fee} onChange={handleChange} placeholder="200000" />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="cost_per_meal">Costo por comida al proveedor <span style={{ fontWeight: 400 }}>(opcional)</span></label>
+                  <input id="cost_per_meal" name="cost_per_meal" className="form-input" type="number" min={0} step={100} value={form.cost_per_meal} onChange={handleChange} placeholder="8000" />
+                </div>
               </div>
             </div>
           ) : (

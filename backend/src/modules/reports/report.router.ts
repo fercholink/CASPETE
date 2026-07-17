@@ -24,4 +24,8 @@ router.get('/parent', requireRole('PARENT'), reportController.parentSummary);
 // GET /api/reports/vendor — resumen para vendors
 router.get('/vendor', requireRole('VENDOR'), reportController.vendorSummary);
 
+// GET /api/reports/pension-audit?school_id=&month=&year= — auditoría de comidas
+// entregadas en colegios de pensión incluida (Fase 4)
+router.get('/pension-audit', requireRole('SCHOOL_ADMIN', 'SUPER_ADMIN'), reportController.pensionAudit);
+
 export default router;

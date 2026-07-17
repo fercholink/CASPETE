@@ -285,3 +285,85 @@ export async function getVendorSummary(actor: JwtPayload) {
     top_products_today: topProducts.map(p => ({ name: spMap.get(p.store_product_id)?.product.name ?? 'N/A', qty: p._sum?.quantity ?? 0 })),
   };
 }
+
+// ─── Auditoría "Pensión Incluida" (Fase 4) — comidas entregadas vs. matriculados ───
+// Ayuda al colegio a auditar a su proveedor de alimentación: cuántas comidas
+// cubiertas por la pensión se entregaron por día, cruzado con asistencia QR
+// (si el colegio la tiene habilitada) y un costo estimado si cargó cost_per_meal.
+
+function localDateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export async function getPensionAuditReport(actor: JwtPayload, schoolId: string, month: number, year: number) {
+  if (actor.role !== 'SUPER_ADMIN' && actor.schoolId !== schoolId) {
+    throw new AppError('No tienes permiso para el reporte de este colegio', 403);
+  }
+
+  const school = await prisma.school.findUnique({
+    where: { id: schoolId },
+    select: { id: true, name: true, meal_payment_model: true, cost_per_meal: true },
+  });
+  if (!school) throw new AppError('Colegio no encontrado', 404);
+
+  const start = new Date(Date.UTC(year, month - 1, 1));
+  const end = new Date(Date.UTC(month === 12 ? year + 1 : year, month === 12 ? 0 : month, 1));
+
+  const [enrolledStudents, deliveredOrders, attendances] = await Promise.all([
+    prisma.student.count({ where: { school_id: schoolId, active: true } }),
+    // "Comida incluida entregada": pedido con status DELIVERED y charged_amount=0
+    // (100% cubierto por la pensión — sin ítems "extra" mezclados).
+    prisma.lunchOrder.findMany({
+      where: { school_id: schoolId, status: 'DELIVERED', charged_amount: 0, scheduled_date: { gte: start, lt: end } },
+      select: { scheduled_date: true },
+    }),
+    prisma.attendance.findMany({
+      where: { student: { school_id: schoolId }, scanned_at: { gte: start, lt: end } },
+      select: { student_id: true, scanned_at: true },
+    }),
+  ]);
+
+  const mealsByDate = new Map<string, number>();
+  for (const o of deliveredOrders) {
+    const key = o.scheduled_date.toISOString().slice(0, 10); // @db.Date: ya es medianoche UTC del día correcto
+    mealsByDate.set(key, (mealsByDate.get(key) ?? 0) + 1);
+  }
+
+  const attendanceByDate = new Map<string, Set<string>>();
+  for (const a of attendances) {
+    const key = localDateKey(a.scanned_at); // scanned_at es timestamp real — usar fecha local del servidor (Bogotá)
+    if (!attendanceByDate.has(key)) attendanceByDate.set(key, new Set());
+    attendanceByDate.get(key)!.add(a.student_id);
+  }
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, i) => {
+    const d = i + 1;
+    const key = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    return {
+      date: key,
+      meals_delivered: mealsByDate.get(key) ?? 0,
+      attendance_count: attendanceByDate.get(key)?.size ?? 0,
+    };
+  });
+
+  const daysWithMeals = days.filter((d) => d.meals_delivered > 0);
+  const totalMeals = daysWithMeals.reduce((s, d) => s + d.meals_delivered, 0);
+  const avgMealsPerDay = daysWithMeals.length > 0 ? Math.round((totalMeals / daysWithMeals.length) * 10) / 10 : 0;
+  const costPerMeal = school.cost_per_meal?.toNumber() ?? null;
+  const estimatedCost = costPerMeal !== null ? Math.round(totalMeals * costPerMeal * 100) / 100 : null;
+
+  return {
+    school: {
+      id: school.id, name: school.name,
+      meal_payment_model: school.meal_payment_model,
+      cost_per_meal: costPerMeal,
+    },
+    enrolled_students: enrolledStudents,
+    total_meals_delivered: totalMeals,
+    avg_meals_per_day: avgMealsPerDay,
+    estimated_cost: estimatedCost,
+    has_attendance_data: attendances.length > 0,
+    days,
+  };
+}

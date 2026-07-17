@@ -43,6 +43,7 @@ import CoursesPage from '../pages/CoursesPage';
 import GPSTrackingPage from '../pages/GPSTrackingPage';
 import SchoolsRevenuePage from '../pages/SchoolsRevenuePage';
 import MonthlyMenuPage from '../pages/MonthlyMenuPage';
+import PensionAuditPage from '../pages/PensionAuditPage';
 
 export const router = createBrowserRouter([
   {
@@ -127,6 +128,16 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN', 'PARENT', 'VENDOR', 'TEACHER']}>
         <MonthlyMenuPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  // ── Auditoría Pensión Incluida (Fase 4) ──────────────────
+  {
+    path: '/pension-audit',
+    element: (
+      <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']}>
+        <PensionAuditPage />
       </ProtectedRoute>
     ),
   },

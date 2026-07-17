@@ -19,6 +19,7 @@ const orderSelect = {
   status: true,
   scheduled_date: true,
   total_amount: true,
+  charged_amount: true,
   delivered_at: true,
   otp_verified: true,
   notes: true,
@@ -44,6 +45,7 @@ const orderSelect = {
         select: {
           id: true,
           price: true,
+          is_pension_extra: true,
           product: {
             select: {
               id: true, name: true, is_healthy: true, base_price: true, image_url: true,
@@ -116,7 +118,7 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   const storeProducts = await prisma.storeProduct.findMany({
     where: { id: { in: storeProductIds }, active: true, store_id: input.store_id, product: { active: true } },
     select: {
-      id: true, price: true, stock: true,
+      id: true, price: true, stock: true, is_pension_extra: true,
       product: {
         select: {
           id: true, name: true, base_price: true,
@@ -159,10 +161,22 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   });
   totalAmount = Math.round(totalAmount * 100) / 100;
 
+  // Colegios de pensión incluida: solo se cobran los ítems marcados como "extra"
+  // (StoreProduct.is_pension_extra) — snacks/adicionales fuera del menú base.
+  // El resto del pedido queda cubierto por la pensión, sin costo.
+  const chargeableAmount = isIncluded
+    ? Math.round(
+        orderItemsData.reduce((sum, item) => {
+          const sp = spMap.get(item.store_product_id)!;
+          return sp.is_pension_extra ? sum + item.subtotal : sum;
+        }, 0) * 100,
+      ) / 100
+    : totalAmount;
+
   const balance = student.balance.toNumber();
-  if (!isIncluded && balance < totalAmount) {
+  if (chargeableAmount > 0 && balance < chargeableAmount) {
     throw new AppError(
-      `Saldo insuficiente. Disponible: $${balance.toLocaleString('es-CO')}, Pedido: $${totalAmount.toLocaleString('es-CO')}`,
+      `Saldo insuficiente. Disponible: $${balance.toLocaleString('es-CO')}, Pedido: $${chargeableAmount.toLocaleString('es-CO')}`,
       400,
     );
   }
@@ -192,6 +206,7 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
         store_id: input.store_id,
         scheduled_date: new Date(input.scheduled_date),
         total_amount: totalAmount,
+        charged_amount: chargeableAmount,
         notes: input.notes ?? null,
         // ── Ley 2120 compliance ──
         is_seal_free,
@@ -217,16 +232,16 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
       }
     }
 
-    // Colegios de pensión incluida: sin descuento de saldo ni transacción de cobro
-    if (!isIncluded) {
+    // Sin monto a cobrar (pedido 100% cubierto por la pensión): sin descuento de saldo ni transacción
+    if (chargeableAmount > 0) {
       // Descuento de saldo atómico: solo aplica si el saldo actual alcanza (evita double-spend por carrera)
       const debit = await tx.student.updateMany({
-        where: { id: input.student_id, balance: { gte: totalAmount } },
-        data: { balance: { decrement: totalAmount } },
+        where: { id: input.student_id, balance: { gte: chargeableAmount } },
+        data: { balance: { decrement: chargeableAmount } },
       });
       if (debit.count === 0) {
         throw new AppError(
-          `Saldo insuficiente. Disponible: $${balance.toLocaleString('es-CO')}, Pedido: $${totalAmount.toLocaleString('es-CO')}`,
+          `Saldo insuficiente. Disponible: $${balance.toLocaleString('es-CO')}, Pedido: $${chargeableAmount.toLocaleString('es-CO')}`,
           400,
         );
       }
@@ -240,7 +255,7 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
           school_id: student.school_id,
           student_id: input.student_id,
           type: 'CHARGE',
-          amount: totalAmount,
+          amount: chargeableAmount,
           balance_after: debitedStudent.balance,
           order_id: order.id,
         },

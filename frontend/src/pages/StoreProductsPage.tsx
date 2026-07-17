@@ -18,6 +18,7 @@ interface StoreProduct {
   price: string | null;
   stock: number | null;
   active: boolean;
+  is_pension_extra: boolean;
   product: {
     id: string;
     name: string;
@@ -47,6 +48,7 @@ type EditingState = {
   price: string;
   stock: string;
   active: boolean;
+  is_pension_extra: boolean;
 };
 
 const categoryLabels: Record<string, string> = {
@@ -159,6 +161,7 @@ export default function StoreProductsPage() {
       price: sp.price ?? '',
       stock: sp.stock !== null ? String(sp.stock) : '',
       active: sp.active,
+      is_pension_extra: sp.is_pension_extra,
     });
   }
 
@@ -170,6 +173,7 @@ export default function StoreProductsPage() {
         price:  editing.price !== '' ? parseFloat(editing.price) : null,
         stock:  editing.stock !== '' ? parseInt(editing.stock)   : null,
         active: editing.active,
+        is_pension_extra: editing.is_pension_extra,
       });
       setEditing(null);
       fetchStoreProducts();
@@ -341,6 +345,15 @@ export default function StoreProductsPage() {
                         </button>
                       </div>
                     </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={editing.is_pension_extra}
+                        onChange={e => setEditing(prev => prev ? { ...prev, is_pension_extra: e.target.checked } : null)}
+                        style={{ width: 16, height: 16, accentColor: 'var(--color-brand)' }}
+                      />
+                      💰 Es un extra de pago (se cobra aunque el colegio tenga pensión incluida)
+                    </label>
                   </div>
                 ) : (
                   /* ── Vista normal ── */
@@ -358,6 +371,7 @@ export default function StoreProductsPage() {
                         <p style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{sp.product.name}</p>
                         {!sp.active && <span className="role-badge" style={{ background: 'rgba(212,86,86,0.1)', color: 'var(--color-error)', fontSize: 11 }}>Inactivo</span>}
                         {sp.product.is_healthy && <span className="role-badge" style={{ fontSize: 11 }}>🥗 Saludable</span>}
+                        {sp.is_pension_extra && <span className="role-badge" style={{ fontSize: 11, background: 'rgba(217,119,6,0.1)', color: '#b45309' }}>💰 Extra de pago</span>}
                       </div>
                       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-brand-deep)', fontFamily: 'var(--font-mono)' }}>

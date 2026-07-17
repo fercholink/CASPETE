@@ -313,6 +313,9 @@ model StoreProduct {
   stock      Int?                          // null = sin lÃ­mite
   active     Boolean  @default(true)
   created_at DateTime @default(now())
+  // Pensión Incluida Fase 3: true = se cobra siempre (snack/extra), incluso en
+  // colegios meal_payment_model=INCLUDED. false (default) = cubierto por la pensión.
+  is_pension_extra Boolean @default(false)
 
   store       Store       @relation(fields: [store_id], references: [id])
   product     Product     @relation(fields: [product_id], references: [id])
@@ -329,6 +332,10 @@ model LunchOrder {
   scheduled_date DateTime    @db.Date
   status         OrderStatus @default(PENDING)
   total_amount   Decimal     @db.Decimal(10, 2)
+  // Monto realmente cobrado al saldo del estudiante — puede ser menor que total_amount
+  // en colegios de pensión incluida cuando el pedido mezcla ítems incluidos (gratis)
+  // con ítems "extra" (StoreProduct.is_pension_extra=true, siempre se cobran).
+  charged_amount Decimal     @default(0) @db.Decimal(10, 2)
   delivered_at   DateTime?
   delivered_by   String?     @db.Uuid
   otp_verified   Boolean     @default(false)

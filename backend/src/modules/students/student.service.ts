@@ -7,7 +7,7 @@ const studentSelect = {
   id: true, school_id: true, parent_id: true, national_id: true,
   full_name: true, grade: true, photo_url: true, balance: true,
   delivery_code: true, active: true, created_at: true,
-  school: { select: { id: true, name: true, city: true } },
+  school: { select: { id: true, name: true, city: true, meal_payment_model: true } },
   parent: { select: { id: true, full_name: true, email: true } },
   _count: { select: { lunch_orders: true, transactions: true } },
 } as const;

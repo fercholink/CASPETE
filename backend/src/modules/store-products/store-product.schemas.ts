@@ -4,12 +4,14 @@ export const addStoreProductSchema = z.object({
   product_id: z.string().uuid(),
   price: z.number().positive().optional().nullable(),
   stock: z.number().int().min(0).optional().nullable(),
+  is_pension_extra: z.boolean().optional(),
 });
 
 export const updateStoreProductSchema = z.object({
   price: z.number().positive().optional().nullable(),
   stock: z.number().int().min(0).optional().nullable(),
   active: z.boolean().optional(),
+  is_pension_extra: z.boolean().optional(),
 });
 
 export const bulkAddStoreProductsSchema = z.object({

@@ -12,6 +12,7 @@ const storeProductSelect = {
   price: true,
   stock: true,
   active: true,
+  is_pension_extra: true,
   created_at: true,
   product: {
     select: {
@@ -92,6 +93,7 @@ export async function addProductToStore(
       product_id: input.product_id,
       price: input.price ?? null,
       stock: input.stock ?? null,
+      is_pension_extra: input.is_pension_extra ?? false,
     },
     select: storeProductSelect,
   });
@@ -177,6 +179,7 @@ export async function updateStoreProduct(
       ...(input.price !== undefined && { price: input.price }),
       ...(input.stock !== undefined && { stock: input.stock }),
       ...(input.active !== undefined && { active: input.active }),
+      ...(input.is_pension_extra !== undefined && { is_pension_extra: input.is_pension_extra }),
     },
     select: storeProductSelect,
   });

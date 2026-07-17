@@ -13,6 +13,7 @@ interface Order {
   status: 'PENDING' | 'CONFIRMED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
   scheduled_date: string;
   total_amount: string;
+  charged_amount: string;
   delivered_at: string | null;
   otp_verified: boolean;
   notes: string | null;
@@ -675,16 +676,44 @@ export default function OrderDetailPage() {
               </div>
             );
           })}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-            <span style={{ fontWeight: 600 }}>Total</span>
-            {order.school.meal_payment_model === 'INCLUDED' ? (
-              <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-brand-deep)', background: 'var(--color-brand-light)', padding: '4px 10px', borderRadius: 999 }}>
-                👑 Incluido en la pensión
-              </span>
-            ) : (
-              <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.36px' }}>{fmt(order.total_amount)}</span>
-            )}
-          </div>
+          {(() => {
+            const charged = parseFloat(order.charged_amount);
+            const total = parseFloat(order.total_amount);
+            if (charged === 0) {
+              return (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+                  <span style={{ fontWeight: 600 }}>Total</span>
+                  <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-brand-deep)', background: 'var(--color-brand-light)', padding: '4px 10px', borderRadius: 999 }}>
+                    👑 Incluido en la pensión
+                  </span>
+                </div>
+              );
+            }
+            if (charged < total) {
+              return (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Total pedido</span>
+                    <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{fmt(order.total_amount)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, color: 'var(--color-brand-deep)' }}>👑 Cubierto por la pensión</span>
+                    <span style={{ fontSize: 13, color: 'var(--color-brand-deep)' }}>{fmt(String(total - charged))}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600 }}>Cobrado (extras)</span>
+                    <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.36px' }}>{fmt(order.charged_amount)}</span>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+                <span style={{ fontWeight: 600 }}>Total</span>
+                <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.36px' }}>{fmt(order.total_amount)}</span>
+              </div>
+            );
+          })()}
         </div>
 
         {/* OTP para PARENT — solo si CONFIRMED */}

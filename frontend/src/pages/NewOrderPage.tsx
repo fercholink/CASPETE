@@ -11,7 +11,7 @@ interface Student {
   grade: string | null;
   balance: string;
   active: boolean;
-  school: { id: string; name: string; city: string };
+  school: { id: string; name: string; city: string; meal_payment_model?: 'PER_ORDER' | 'INCLUDED' };
 }
 
 interface Store {
@@ -26,6 +26,7 @@ interface StoreProduct {
   price: string | null;
   stock: number | null;
   active: boolean;
+  is_pension_extra: boolean;
   product: {
     id: string; name: string; description: string | null;
     base_price: string; image_url: string | null;
@@ -172,7 +173,7 @@ export default function NewOrderPage() {
     return cart.find((i) => i.storeProduct.id === spId)?.quantity ?? 0;
   }
 
-  const total = cart.reduce((s, i) => {
+  function itemSubtotal(i: CartItem) {
     const base = getEffectivePrice(i.storeProduct);
     const extras = i.customizations.reduce((sum, custLabel) => {
       const match = (i.storeProduct.product.customizable_options ?? [])
@@ -180,10 +181,18 @@ export default function NewOrderPage() {
         .find(o => o.label === custLabel);
       return sum + (match?.price ?? 0);
     }, 0);
-    return s + (base + extras) * i.quantity;
-  }, 0);
+    return (base + extras) * i.quantity;
+  }
+
+  const total = cart.reduce((s, i) => s + itemSubtotal(i), 0);
+  const isIncludedSchool = selectedStudent?.school.meal_payment_model === 'INCLUDED';
+  // En colegios de pensión incluida solo se cobran los ítems marcados como "extra";
+  // el resto queda cubierto por la pensión.
+  const chargeableTotal = isIncludedSchool
+    ? cart.reduce((s, i) => s + (i.storeProduct.is_pension_extra ? itemSubtotal(i) : 0), 0)
+    : total;
   const balance = selectedStudent ? parseFloat(selectedStudent.balance) : 0;
-  const hasEnough = balance >= total && total > 0;
+  const hasEnough = cart.length > 0 && (chargeableTotal === 0 || balance >= chargeableTotal);
 
   // ── Compliance Ley 2120 ──────────────────────────────────────
   const complianceData = useMemo(() => {
@@ -341,6 +350,9 @@ export default function NewOrderPage() {
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                                     <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{sp.product.name}</p>
                                     {sp.product.is_healthy && <span className="role-badge" style={{ fontSize: 11 }}>Saludable</span>}
+                                    {isIncludedSchool && (sp.is_pension_extra
+                                      ? <span className="role-badge" style={{ fontSize: 11, background: 'rgba(217,119,6,0.1)', color: '#b45309' }}>💰 Extra de pago</span>
+                                      : <span className="role-badge" style={{ fontSize: 11, background: 'var(--color-brand-light)', color: 'var(--color-brand-deep)' }}>👑 Incluido</span>)}
                                     <NutritionalLevelBadge level={sp.product.nutritional_level} />
                                   </div>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -458,15 +470,25 @@ export default function NewOrderPage() {
                     <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>Total pedido</span>
                     <span style={{ fontSize: 16, fontWeight: 600 }}>${total.toLocaleString('es-CO')}</span>
                   </div>
+                  {isIncludedSchool && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>👑 Cubierto por la pensión</span>
+                      <span style={{ fontSize: 14, color: 'var(--color-brand-deep)', fontWeight: 500 }}>${(total - chargeableTotal).toLocaleString('es-CO')}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>{isIncludedSchool ? 'A cobrar (extras)' : 'A cobrar'}</span>
+                    <span style={{ fontSize: 16, fontWeight: 700 }}>${chargeableTotal.toLocaleString('es-CO')}</span>
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>Saldo disponible</span>
                     <span style={{ fontSize: 14, color: hasEnough ? 'var(--color-brand-deep)' : 'var(--color-error)', fontWeight: 500 }}>
                       ${balance.toLocaleString('es-CO')}
                     </span>
                   </div>
-                  {!hasEnough && total > 0 && (
+                  {!hasEnough && chargeableTotal > 0 && (
                     <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--color-error)' }}>
-                      Saldo insuficiente. Falta: ${(total - balance).toLocaleString('es-CO')}
+                      Saldo insuficiente. Falta: ${(chargeableTotal - balance).toLocaleString('es-CO')}
                     </p>
                   )}
                 </div>

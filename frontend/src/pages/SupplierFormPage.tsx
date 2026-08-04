@@ -6,9 +6,10 @@ import { apiClient } from '../api/client';
 interface SupplierForm {
   name: string; nit: string; contact_name: string; contact_phone: string;
   contact_email: string; city: string; tech_sheet_url: string; is_verified: boolean;
+  listing_fee_monthly: string;
 }
 
-const EMPTY: SupplierForm = { name: '', nit: '', contact_name: '', contact_phone: '', contact_email: '', city: '', tech_sheet_url: '', is_verified: false };
+const EMPTY: SupplierForm = { name: '', nit: '', contact_name: '', contact_phone: '', contact_email: '', city: '', tech_sheet_url: '', is_verified: false, listing_fee_monthly: '' };
 
 export default function SupplierFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,13 +24,14 @@ export default function SupplierFormPage() {
 
   useEffect(() => {
     if (!isEdit) return;
-    apiClient.get<{ data: SupplierForm & { id: string } }>(`/suppliers/${id}`)
+    apiClient.get<{ data: SupplierForm & { id: string; listing_fee_monthly: string | number | null } }>(`/suppliers/${id}`)
       .then(r => {
         const s = r.data.data;
         setForm({
           name: s.name ?? '', nit: s.nit ?? '', contact_name: s.contact_name ?? '',
           contact_phone: (s.contact_phone ?? '').replace(/^\+57/, ''), contact_email: s.contact_email ?? '',
           city: s.city ?? '', tech_sheet_url: s.tech_sheet_url ?? '', is_verified: s.is_verified,
+          listing_fee_monthly: s.listing_fee_monthly != null ? String(s.listing_fee_monthly) : '',
         });
       })
       .catch(() => setError('No se pudo cargar el proveedor'))
@@ -55,6 +57,7 @@ export default function SupplierFormPage() {
         city: form.city.trim() || null,
         tech_sheet_url: form.tech_sheet_url.trim() || null,
         is_verified: form.is_verified,
+        ...(form.listing_fee_monthly.trim() !== '' ? { listing_fee_monthly: Number(form.listing_fee_monthly) } : {}),
         ...(form.tech_sheet_url.trim() && !isEdit ? { tech_sheet_uploaded_at: new Date().toISOString() } : {}),
       };
       if (isEdit) {
@@ -141,6 +144,25 @@ export default function SupplierFormPage() {
                   <input className="form-input" type="email" placeholder="contacto@proveedor.com" value={form.contact_email} onChange={e => handleChange('contact_email', e.target.value)} />
                 </div>
               </div>
+            </div>
+
+            {/* Modelo de ingreso — tarifa de listado */}
+            <div className="user-card" style={{ padding: '20px 24px', marginBottom: 16 }}>
+              <p style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--color-text-muted)' }}>Modelo de ingreso</p>
+              <label className="form-label">Tarifa mensual de listado (COP)</label>
+              <input
+                className="form-input"
+                type="number"
+                min={0}
+                max={1000000}
+                step={1000}
+                placeholder="0"
+                value={form.listing_fee_monthly}
+                onChange={e => handleChange('listing_fee_monthly', e.target.value)}
+              />
+              <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>
+                Lo que este proveedor paga a CASPETE por listar sus productos para que los tenderos los ofrezcan. Déjalo en 0 si aún no hay tarifa acordada.
+              </p>
             </div>
 
             {/* Ficha técnica — Ley 2120 */}

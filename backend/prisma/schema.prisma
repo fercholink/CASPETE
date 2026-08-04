@@ -469,8 +469,37 @@ model Supplier {
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
+  // Modelo de ingreso: tarifa que el proveedor paga a CASPETE por listar
+  // sus productos para que los tenderos los ofrezcan. 0 = sin cobro (aÃºn no
+  // acordado / proveedor en periodo de prueba).
+  listing_fee_monthly Decimal @default(0) @db.Decimal(10, 2)
+
   // Relacion inversa -- Brecha #6
   products   Product[]
+  charges    SupplierCharge[]
+}
+
+// Cobro mensual de tarifa de listado a un proveedor. Un registro por
+// proveedor y periodo (Ãºnico), generado por SUPER_ADMIN y marcado como
+// pagado manualmente hasta que exista una pasarela automÃ¡tica.
+model SupplierCharge {
+  id          String               @id @default(uuid()) @db.Uuid
+  supplier_id String               @db.Uuid
+  period      String               @db.VarChar(7) // "YYYY-MM"
+  amount      Decimal              @db.Decimal(10, 2)
+  status      SupplierChargeStatus @default(PENDING)
+  paid_at     DateTime?
+  created_at  DateTime             @default(now())
+
+  supplier Supplier @relation(fields: [supplier_id], references: [id])
+
+  @@unique([supplier_id, period])
+}
+
+enum SupplierChargeStatus {
+  PENDING
+  PAID
+  CANCELLED
 }
 
 // Modelos Ley 2120

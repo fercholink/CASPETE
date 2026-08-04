@@ -10,6 +10,7 @@ export const createSupplierSchema = z.object({
   tech_sheet_url: z.string().url().max(500).nullable().optional(),
   tech_sheet_uploaded_at: z.coerce.date().nullable().optional(),
   is_verified:   z.boolean().optional(),
+  listing_fee_monthly: z.number().min(0).max(1000000).optional(),
 });
 
 export const updateSupplierSchema = createSupplierSchema.partial().extend({

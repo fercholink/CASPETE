@@ -9,6 +9,7 @@ const supplierSelect = {
   id: true, name: true, nit: true, contact_name: true, contact_phone: true,
   contact_email: true, city: true, tech_sheet_url: true, tech_sheet_uploaded_at: true,
   is_verified: true, active: true, created_at: true, updated_at: true,
+  listing_fee_monthly: true,
 } as const;
 
 function requireAdmin(actor: JwtPayload) {
@@ -30,6 +31,7 @@ export async function createSupplier(input: CreateSupplierInput, actor: JwtPaylo
       tech_sheet_url:         input.tech_sheet_url         ?? null,
       tech_sheet_uploaded_at: input.tech_sheet_uploaded_at ?? null,
       is_verified:   input.is_verified   ?? false,
+      listing_fee_monthly: input.listing_fee_monthly ?? 0,
     },
     select: supplierSelect,
   });
@@ -74,6 +76,7 @@ export async function updateSupplier(id: string, input: UpdateSupplierInput, act
   if (input.contact_email !== undefined)          data.contact_email = input.contact_email ?? null;
   if (input.city !== undefined)                   data.city = input.city ?? null;
   if (input.is_verified !== undefined)            data.is_verified = input.is_verified;
+  if (input.listing_fee_monthly !== undefined)    data.listing_fee_monthly = input.listing_fee_monthly;
   if (input.active !== undefined)                 data.active = input.active;
   if (input.tech_sheet_url !== undefined) {
     data.tech_sheet_url = input.tech_sheet_url ?? null;

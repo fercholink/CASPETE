@@ -85,7 +85,7 @@ async function assertAccess(order: OrderRow, actor: JwtPayload) {
 export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
   const student = await prisma.student.findUnique({
     where: { id: input.student_id },
-    select: { id: true, school_id: true, parent_id: true, active: true, balance: true },
+    select: { id: true, school_id: true, parent_id: true, active: true, balance: true, daily_spending_limit: true },
   });
   if (!student?.active) throw new AppError('Estudiante no encontrado', 404);
   if (student.parent_id !== actor.sub)
@@ -179,6 +179,28 @@ export async function createOrder(input: CreateOrderInput, actor: JwtPayload) {
       `Saldo insuficiente. Disponible: $${balance.toLocaleString('es-CO')}, Pedido: $${chargeableAmount.toLocaleString('es-CO')}`,
       400,
     );
+  }
+
+  // ── Límite de gasto diario configurado por el padre ─────────────────────
+  // Suma lo ya cobrado ese mismo scheduled_date (pedidos no cancelados) y valida
+  // que sumado a este pedido no exceda daily_spending_limit del estudiante.
+  if (chargeableAmount > 0) {
+    const dailyLimit = student.daily_spending_limit.toNumber();
+    const spentToday = await prisma.lunchOrder.aggregate({
+      where: {
+        student_id: input.student_id,
+        scheduled_date: new Date(input.scheduled_date),
+        status: { not: 'CANCELLED' },
+      },
+      _sum: { charged_amount: true },
+    });
+    const alreadySpent = spentToday._sum.charged_amount?.toNumber() ?? 0;
+    if (alreadySpent + chargeableAmount > dailyLimit) {
+      throw new AppError(
+        `Este pedido supera el límite diario de gasto configurado ($${dailyLimit.toLocaleString('es-CO')}). Ya gastado ese día: $${alreadySpent.toLocaleString('es-CO')}.`,
+        400,
+      );
+    }
   }
 
   // ── Cálculo de cumplimiento Ley 2120 (Brecha #1) ──────────────────────

@@ -14,6 +14,7 @@ interface StudentData {
   national_id: string | null;
   grade: string | null;
   delivery_code: string | null;
+  daily_spending_limit: string | number | null;
   school: ActiveSchool;
 }
 
@@ -24,6 +25,7 @@ const emptyForm: {
   grade: string;
   photo_url: string;
   delivery_code: string;
+  daily_spending_limit: string;
 } = {
   school_id: '',
   full_name: '',
@@ -31,6 +33,7 @@ const emptyForm: {
   grade: '',
   photo_url: '',
   delivery_code: '',
+  daily_spending_limit: '',
 };
 
 function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<string> {
@@ -95,6 +98,7 @@ export default function StudentFormPage() {
             national_id: s.national_id ?? '',
             grade: s.grade ?? '',
             delivery_code: s.delivery_code ?? '',
+            daily_spending_limit: s.daily_spending_limit != null ? String(s.daily_spending_limit) : '',
             photo_url: (s as any).photo_url ?? '',
           });
         }),
@@ -135,6 +139,7 @@ export default function StudentFormPage() {
       ...(form.national_id ? { national_id: form.national_id } : {}),
       ...(form.grade ? { grade: form.grade } : {}),
       ...(form.delivery_code ? { delivery_code: form.delivery_code } : {}),
+      ...(isEdit && form.daily_spending_limit !== '' ? { daily_spending_limit: Number(form.daily_spending_limit) } : {}),
       ...(form.photo_url ? { photo_url: form.photo_url } : {}),
     };
 
@@ -306,6 +311,29 @@ export default function StudentFormPage() {
               placeholder="Ej: 123456"
             />
           </div>
+
+          {isEdit && (
+            <div className="form-group" style={{ marginTop: 14 }}>
+              <label className="form-label" htmlFor="daily_spending_limit">
+                Límite de gasto diario{' '}
+                <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>
+                  (máximo que tu hijo puede gastar por día)
+                </span>
+              </label>
+              <input
+                id="daily_spending_limit"
+                name="daily_spending_limit"
+                className="form-input"
+                type="number"
+                min={0}
+                max={1000000}
+                step={500}
+                value={form.daily_spending_limit}
+                onChange={handleChange}
+                placeholder="15000"
+              />
+            </div>
+          )}
 
           <div className="form-group" style={{ marginTop: 14 }}>
             <label className="form-label" htmlFor="photo">

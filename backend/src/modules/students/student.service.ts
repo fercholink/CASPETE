@@ -6,7 +6,7 @@ import type { CreateStudentInput, UpdateStudentInput } from './student.schemas.j
 const studentSelect = {
   id: true, school_id: true, parent_id: true, national_id: true,
   full_name: true, grade: true, photo_url: true, balance: true,
-  delivery_code: true, active: true, created_at: true,
+  delivery_code: true, daily_spending_limit: true, active: true, created_at: true,
   school: { select: { id: true, name: true, city: true, meal_payment_model: true } },
   parent: { select: { id: true, full_name: true, email: true } },
   _count: { select: { lunch_orders: true, transactions: true } },
@@ -114,6 +114,7 @@ export async function updateStudent(id: string, input: UpdateStudentInput, actor
       ...(input.grade !== undefined && { grade: input.grade }),
       ...(input.photo_url !== undefined && { photo_url: input.photo_url }),
       ...(input.delivery_code !== undefined && { delivery_code: input.delivery_code }),
+      ...(input.daily_spending_limit !== undefined && { daily_spending_limit: input.daily_spending_limit }),
       ...(input.active !== undefined && { active: input.active }),
     },
     select: studentSelect,

@@ -22,7 +22,10 @@ import StoreProductsPage from '../pages/StoreProductsPage';
 import TransactionsPage from '../pages/TransactionsPage';
 import UsersPage from '../pages/UsersPage';
 import ProfilePage from '../pages/ProfilePage';
-import LandingPage from '../pages/LandingPage';
+import LandingLayout from '../components/landing/LandingLayout';
+import InicioPage from '../pages/landing/InicioPage';
+import BeneficiosPage from '../pages/landing/BeneficiosPage';
+import FuncionalidadesPage from '../pages/landing/FuncionalidadesPage';
 import TopupRequestsPage from '../pages/TopupRequestsPage';
 import PaymentMethodsPage from '../pages/PaymentMethodsPage';
 import Ley2120DashboardPage from '../pages/Ley2120DashboardPage';
@@ -49,7 +52,14 @@ export const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-  { path: '/', element: <LandingPage /> },
+  {
+    element: <LandingLayout />,
+    children: [
+      { path: '/', element: <InicioPage /> },
+      { path: '/beneficios', element: <BeneficiosPage /> },
+      { path: '/funcionalidades', element: <FuncionalidadesPage /> },
+    ],
+  },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },

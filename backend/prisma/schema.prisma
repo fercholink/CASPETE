@@ -798,6 +798,7 @@ model GPSTracker {
   online                  Boolean   @default(false)
   last_seen_at            DateTime?
   extended_tracking_until DateTime? // null = solo horario escolar; con fecha = rastreo extendido de pago activo
+  platform_tracker_id     String?   @db.Uuid // id del Tracker correspondiente en la Plataforma GPS externa (gps.bscomunicaciones.com)
   active                  Boolean   @default(true)
   created_at              DateTime  @default(now())
   updated_at              DateTime  @updatedAt

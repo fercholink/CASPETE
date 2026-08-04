@@ -5,20 +5,54 @@ import { AppError } from '../../middleware/error.middleware.js';
 import { logAudit } from '../../middleware/audit-log.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { LinkTrackerInput } from './gps.schemas.js';
+import * as gpsPlatform from '../../lib/gpsPlatform.js';
 
 // qr_token solo se expone al dueño (padre) o SUPER_ADMIN vía estos endpoints —
 // necesario para poder mostrar/imprimir el QR físico de la tarjeta.
+// battery_level/signal_strength/online/last_seen_at ya no se guardan localmente:
+// el dispositivo real conecta a la Plataforma GPS externa, así que ese estado se
+// consulta en vivo vía platform_tracker_id (ver buildTrackerInfo).
 const trackerSelect = {
   id: true,
   qr_token: true,
   device_name: true,
-  battery_level: true,
-  signal_strength: true,
-  online: true,
-  last_seen_at: true,
   extended_tracking_until: true,
   active: true,
+  platform_tracker_id: true,
 } as const;
+
+type LocalTracker = {
+  id: string;
+  qr_token: string;
+  device_name: string | null;
+  extended_tracking_until: Date | null;
+  active: boolean;
+};
+
+function buildTrackerInfo(local: LocalTracker, platform: gpsPlatform.PlatformTracker | null) {
+  return {
+    id: local.id,
+    qr_token: local.qr_token,
+    device_name: local.device_name ?? platform?.device_name ?? null,
+    battery_level: platform?.battery_level ?? null,
+    signal_strength: platform?.signal_strength ?? null,
+    online: platform?.online ?? false,
+    last_seen_at: platform?.last_seen_at ?? null,
+    extended_tracking_until: local.extended_tracking_until,
+    active: local.active,
+  };
+}
+
+function mapPosition(p: gpsPlatform.PlatformPosition) {
+  return {
+    id: p.id,
+    latitude: p.latitude,
+    longitude: p.longitude,
+    speed: p.speed,
+    heading: p.heading,
+    recorded_at: p.recorded_at,
+  };
+}
 
 async function assertParentOwnsStudent(studentId: string, actor: JwtPayload) {
   const student = await prisma.student.findUnique({
@@ -42,17 +76,22 @@ export async function linkTracker(input: LinkTrackerInput, actor: JwtPayload) {
   const existingImei = await prisma.gPSTracker.findUnique({ where: { imei: input.imei } });
   if (existingImei) throw new AppError('Este IMEI ya está registrado en otra tarjeta', 409);
 
+  const platformTracker = await gpsPlatform.registerTracker(input.imei, input.student_id, input.device_name);
+
   const qr_token = randomBytes(24).toString('hex');
 
-  return prisma.gPSTracker.create({
+  const tracker = await prisma.gPSTracker.create({
     data: {
       imei: input.imei,
       qr_token,
       student_id: input.student_id,
       device_name: input.device_name ?? null,
+      platform_tracker_id: platformTracker.id,
     },
     select: trackerSelect,
   });
+
+  return buildTrackerInfo(tracker, platformTracker);
 }
 
 export async function unlinkTracker(id: string, actor: JwtPayload) {
@@ -80,15 +119,23 @@ export async function getCurrentLocation(studentId: string, actor: JwtPayload, r
 
   const tracker = await prisma.gPSTracker.findUnique({
     where: { student_id: studentId },
-    select: {
-      ...trackerSelect,
-      telemetry: { orderBy: { recorded_at: 'desc' }, take: 1 },
-    },
+    select: trackerSelect,
   });
   if (!tracker) throw new AppError('Este estudiante no tiene un localizador vinculado', 404);
 
-  const { telemetry, ...trackerInfo } = tracker;
-  return { tracker: trackerInfo, location: telemetry[0] ?? null };
+  const [platformStatus, allowed] = await Promise.all([
+    tracker.platform_tracker_id ? gpsPlatform.getTrackerStatus(tracker.platform_tracker_id) : null,
+    isTelemetryAllowed(tracker.id),
+  ]);
+
+  const trackerInfo = buildTrackerInfo(tracker, platformStatus);
+
+  if (!allowed || !tracker.platform_tracker_id) {
+    return { tracker: trackerInfo, location: null };
+  }
+
+  const position = await gpsPlatform.getLatestPosition(tracker.platform_tracker_id);
+  return { tracker: trackerInfo, location: position ? mapPosition(position) : null };
 }
 
 export async function getHistory(studentId: string, hours: number, actor: JwtPayload, req: Request) {
@@ -104,19 +151,15 @@ export async function getHistory(studentId: string, hours: number, actor: JwtPay
 
   const tracker = await prisma.gPSTracker.findUnique({
     where: { student_id: studentId },
-    select: { id: true },
+    select: { id: true, platform_tracker_id: true },
   });
   if (!tracker) throw new AppError('Este estudiante no tiene un localizador vinculado', 404);
 
-  const since = new Date(Date.now() - hours * 60 * 60 * 1000);
-  return prisma.gPSTelemetry.findMany({
-    where: { tracker_id: tracker.id, recorded_at: { gte: since } },
-    orderBy: { recorded_at: 'asc' },
-    select: {
-      id: true, latitude: true, longitude: true, speed: true, heading: true,
-      battery_level: true, alert_type: true, source: true, recorded_at: true,
-    },
-  });
+  const allowed = await isTelemetryAllowed(tracker.id);
+  if (!allowed || !tracker.platform_tracker_id) return [];
+
+  const positions = await gpsPlatform.getPositionHistory(tracker.platform_tracker_id, hours);
+  return positions.map(mapPosition);
 }
 
 // ── Resolución del QR de la tarjeta (asistencia TEACHER / identificación VENDOR) ──
@@ -153,7 +196,8 @@ export async function resolveStudentByQrToken(
 }
 
 // ── Ventana de rastreo autorizada (horario escolar ± margen de trayecto, o extendido) ──
-// Usado por el servidor TCP para decidir si persiste un punto de telemetría.
+// La Plataforma GPS guarda telemetría sin condición; Caspete decide en tiempo de
+// lectura si se la muestra al padre según esta ventana.
 const TRAYECTO_MARGIN_MIN = 45;
 const BOGOTA_UTC_OFFSET_HOURS = -5;
 

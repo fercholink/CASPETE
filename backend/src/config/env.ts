@@ -28,6 +28,11 @@ const envSchema = z.object({
   NEQUI_CLIENT_SECRET: z.string().default(''),
   NEQUI_API_KEY: z.string().default(''),
   NEQUI_CHANNEL: z.string().default('PNP04-C001'),
+  // Plataforma GPS — servicio externo que ingesta las tarjetas GPS reales.
+  // Opcional: si no está configurado, el módulo de rastreo GPS de Caspete
+  // simplemente no encuentra localizadores (no rompe el arranque).
+  GPS_PLATFORM_API_URL: z.string().default('https://gps.bscomunicaciones.com/api/v1'),
+  GPS_PLATFORM_API_KEY: z.string().default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);

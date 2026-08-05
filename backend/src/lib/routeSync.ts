@@ -8,10 +8,10 @@
 import { prisma } from './prisma.js';
 import * as gpsPlatform from './gpsPlatform.js';
 
-// Más ancho que la geocerca del colegio — la ruta sigue calles, no una
-// línea recta perfecta, así que necesita margen para no marcar "desviado"
-// por el trazado normal de la vía.
-const ROUTE_CORRIDOR_METERS = 300;
+// La Plataforma GPS resuelve el trazado por calles reales (OpenRouteService)
+// cuando está configurada — con eso, un corredor angosto ya alcanza. Si no
+// está configurada, esto sigue funcionando como línea recta con más margen.
+const ROUTE_CORRIDOR_METERS = 150;
 
 export async function syncStudentRoute(studentId: string): Promise<void> {
   try {

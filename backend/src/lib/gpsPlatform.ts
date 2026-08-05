@@ -34,6 +34,30 @@ export interface PlatformPosition {
   created_at: string;
 }
 
+export interface PlatformGeofence {
+  id: string;
+  name: string;
+  latitude: string;
+  longitude: string;
+  radius_meters: number;
+  active: boolean;
+  created_at: string;
+}
+
+export interface PlatformEvent {
+  id: string;
+  tracker_id: string;
+  type:
+    | 'SOS' | 'OVERSPEED' | 'VIBRATION' | 'CHARGING_CONNECTED' | 'CHARGING_DISCONNECTED'
+    | 'CHARGING_COMPLETE' | 'LOW_BATTERY' | 'DEVICE_REMOVED' | 'DEVICE_WORN'
+    | 'GEOFENCE_ENTER' | 'GEOFENCE_EXIT' | 'ROUTE_DEVIATION' | 'ROUTE_RESTORED';
+  speed_kmh: number | null;
+  geofence_id: string | null;
+  route_id: string | null;
+  recorded_at: string;
+  created_at: string;
+}
+
 function isConfigured(): boolean {
   return !!env.GPS_PLATFORM_API_KEY;
 }
@@ -101,6 +125,45 @@ export async function getPositionHistory(
   return result.positions
     .filter((p) => new Date(p.recorded_at).getTime() >= since)
     .reverse(); // la API devuelve más reciente primero; el historial se dibuja en orden cronológico
+}
+
+/** Crea o actualiza la geocerca de un colegio en la Plataforma GPS. */
+export async function upsertGeofence(
+  existingGeofenceId: string | null,
+  name: string,
+  latitude: number,
+  longitude: number,
+  radiusMeters: number,
+): Promise<PlatformGeofence> {
+  if (existingGeofenceId) {
+    const updated = await request<PlatformGeofence>(`/geofences/${existingGeofenceId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name, latitude, longitude, radius_meters: radiusMeters }),
+    });
+    if (updated) return updated;
+    // si ya no existe en la Plataforma GPS (ej. se borró manualmente), se crea una nueva
+  }
+
+  const created = await request<PlatformGeofence>('/geofences', {
+    method: 'POST',
+    body: JSON.stringify({ name, latitude, longitude, radius_meters: radiusMeters }),
+  });
+  if (!created) throw new AppError('No se pudo crear la geocerca en la Plataforma GPS', 502);
+  return created;
+}
+
+export async function linkTrackerToGeofence(geofenceId: string, platformTrackerId: string): Promise<void> {
+  await request(`/geofences/${geofenceId}/trackers`, {
+    method: 'POST',
+    body: JSON.stringify({ tracker_id: platformTrackerId }),
+  });
+}
+
+/** Eventos de la cuenta (todas las tarjetas) desde `since` — usado por el poller de notificaciones. */
+export async function listEventsSince(since: Date | null): Promise<PlatformEvent[]> {
+  const query = since ? `?since=${encodeURIComponent(since.toISOString())}&limit=500` : '?limit=500';
+  const events = await request<PlatformEvent[]>(`/events${query}`);
+  return events ?? [];
 }
 
 export { isConfigured };

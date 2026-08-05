@@ -17,6 +17,8 @@ export const createSchoolSchema = z.object({
   monthly_fee: z.coerce.number().min(0).optional(),
   cost_per_meal: z.coerce.number().min(0).optional(),
   gps_tracking_enabled: z.boolean().default(false),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
 });
 
 export const updateSchoolSchema = z.object({
@@ -37,6 +39,8 @@ export const updateSchoolSchema = z.object({
   monthly_fee: z.coerce.number().min(0).optional(),
   cost_per_meal: z.coerce.number().min(0).optional(),
   gps_tracking_enabled: z.boolean().optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
 });
 
 export type CreateSchoolInput = z.infer<typeof createSchoolSchema>;

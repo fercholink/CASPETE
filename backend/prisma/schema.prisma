@@ -117,6 +117,9 @@ model School {
   attendance_qr_enabled Boolean @default(false) // el colegio habilita asistencia por QR
   school_start_time     String? @db.VarChar(5)  // "07:00" — inicio jornada
   school_end_time       String? @db.VarChar(5)  // "14:00" — fin jornada
+  latitude              Decimal? @db.Decimal(10, 7) // ubicación del colegio — habilita la geocerca "llegó/salió del colegio"
+  longitude             Decimal? @db.Decimal(10, 7)
+  gps_geofence_id       String?  @db.Uuid // id del Geofence correspondiente en la Plataforma GPS externa
 
   active     Boolean  @default(true)
   created_at DateTime @default(now())

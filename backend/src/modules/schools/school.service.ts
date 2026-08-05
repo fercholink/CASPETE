@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
+import * as gpsPlatform from '../../lib/gpsPlatform.js';
 import type { CreateSchoolInput, UpdateSchoolInput } from './school.schemas.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 
@@ -23,10 +24,36 @@ const schoolSelect = {
   monthly_fee: true,
   cost_per_meal: true,
   gps_tracking_enabled: true,
+  latitude: true,
+  longitude: true,
   active: true,
   created_at: true,
   _count: { select: { users: true, students: true, stores: true, lunch_orders: true } },
 } as const;
+
+// Radio de la geocerca "colegio" — suficientemente amplio para cubrir la zona
+// de parqueo/entrada sin marcar como "fuera" por imprecisión normal del GPS.
+const SCHOOL_GEOFENCE_RADIUS_METERS = 150;
+
+/** Crea o actualiza la geocerca del colegio en la Plataforma GPS (best-effort — no debe romper el guardado del colegio). */
+async function syncSchoolGeofence(
+  schoolId: string,
+  name: string,
+  latitude: number,
+  longitude: number,
+  existingGeofenceId: string | null,
+) {
+  try {
+    const geofence = await gpsPlatform.upsertGeofence(
+      existingGeofenceId, `Colegio: ${name}`, latitude, longitude, SCHOOL_GEOFENCE_RADIUS_METERS,
+    );
+    if (geofence.id !== existingGeofenceId) {
+      await prisma.school.update({ where: { id: schoolId }, data: { gps_geofence_id: geofence.id } });
+    }
+  } catch (err) {
+    console.error('[School] No se pudo sincronizar la geocerca en la Plataforma GPS:', err);
+  }
+}
 
 // ─── CRUD ───
 
@@ -35,7 +62,7 @@ export async function createSchool(input: CreateSchoolInput) {
     const existing = await prisma.school.findUnique({ where: { nit: input.nit } });
     if (existing) throw new AppError('Ya existe un colegio con ese NIT', 409);
   }
-  return prisma.school.create({
+  const school = await prisma.school.create({
     data: {
       name: input.name,
       city: input.city,
@@ -53,9 +80,17 @@ export async function createSchool(input: CreateSchoolInput) {
       monthly_fee: input.monthly_fee ?? null,
       cost_per_meal: input.cost_per_meal ?? null,
       gps_tracking_enabled: input.gps_tracking_enabled,
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
     },
     select: schoolSelect,
   });
+
+  if (input.latitude !== undefined && input.longitude !== undefined) {
+    await syncSchoolGeofence(school.id, school.name, input.latitude, input.longitude, null);
+  }
+
+  return school;
 }
 
 export async function listSchools(
@@ -115,7 +150,13 @@ export async function updateSchool(id: string, input: UpdateSchoolInput) {
     });
     if (conflict) throw new AppError('Ya existe un colegio con ese NIT', 409);
   }
-  return prisma.school.update({
+
+  const before = await prisma.school.findUniqueOrThrow({
+    where: { id },
+    select: { name: true, latitude: true, longitude: true, gps_geofence_id: true },
+  });
+
+  const school = await prisma.school.update({
     where: { id },
     data: {
       ...(input.name !== undefined && { name: input.name }),
@@ -135,9 +176,19 @@ export async function updateSchool(id: string, input: UpdateSchoolInput) {
       ...(input.monthly_fee !== undefined && { monthly_fee: input.monthly_fee }),
       ...(input.cost_per_meal !== undefined && { cost_per_meal: input.cost_per_meal }),
       ...(input.gps_tracking_enabled !== undefined && { gps_tracking_enabled: input.gps_tracking_enabled }),
+      ...(input.latitude !== undefined && { latitude: input.latitude }),
+      ...(input.longitude !== undefined && { longitude: input.longitude }),
     },
     select: schoolSelect,
   });
+
+  const finalLat = input.latitude ?? before.latitude?.toNumber();
+  const finalLon = input.longitude ?? before.longitude?.toNumber();
+  if ((input.latitude !== undefined || input.longitude !== undefined) && finalLat !== undefined && finalLon !== undefined) {
+    await syncSchoolGeofence(school.id, school.name, finalLat, finalLon, before.gps_geofence_id);
+  }
+
+  return school;
 }
 
 export async function listActiveSchools() {

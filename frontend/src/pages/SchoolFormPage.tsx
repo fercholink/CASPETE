@@ -19,6 +19,8 @@ interface SchoolData {
   commission_rate: string | null;
   monthly_fee: string | null;
   cost_per_meal: string | null;
+  latitude: string | null;
+  longitude: string | null;
   active: boolean;
 }
 
@@ -36,6 +38,7 @@ const emptyForm = {
   meal_payment_model: 'PER_ORDER' as 'PER_ORDER' | 'INCLUDED',
   acquisition_model: 'COMMISSION' as 'COMMISSION' | 'MONTHLY_FEE',
   commission_rate: '', monthly_fee: '', cost_per_meal: '',
+  latitude: '', longitude: '',
 };
 
 // plan y gps_tracking_enabled son resultado de la modalidad elegida, no una
@@ -91,6 +94,7 @@ export default function SchoolFormPage() {
           acquisition_model: s.acquisition_model ?? 'COMMISSION',
           commission_rate: s.commission_rate ?? '', monthly_fee: s.monthly_fee ?? '',
           cost_per_meal: s.cost_per_meal ?? '',
+          latitude: s.latitude ?? '', longitude: s.longitude ?? '',
         });
       })
       .catch(() => setError('No se pudo cargar el colegio'))
@@ -126,6 +130,8 @@ export default function SchoolFormPage() {
       country_code: form.country_code,
       ...(form.email ? { email: form.email } : {}),
       ...(form.logo_url ? { logo_url: form.logo_url } : {}),
+      ...(form.latitude ? { latitude: Number(form.latitude) } : {}),
+      ...(form.longitude ? { longitude: Number(form.longitude) } : {}),
     };
     try {
       if (isEdit) await apiClient.patch(`/schools/${id}`, payload);
@@ -275,6 +281,22 @@ export default function SchoolFormPage() {
               Dirección <span style={{ color: 'var(--color-placeholder)', fontWeight: 400 }}>(opcional)</span>
             </label>
             <input id="address" name="address" className="form-input" type="text" value={form.address} onChange={handleChange} placeholder="Cra 7 # 32-16" />
+          </div>
+
+          {/* Ubicación GPS — habilita la geocerca "llegó/salió del colegio" */}
+          <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, marginTop: 20, fontWeight: 600 }}>Ubicación GPS del colegio</p>
+          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--color-placeholder)' }}>
+            Opcional — habilita la alerta automática al padre cuando su hijo llega o sale del colegio. Consíguela haciendo clic derecho sobre el colegio en Google Maps.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="latitude">Latitud</label>
+              <input id="latitude" name="latitude" className="form-input" type="number" step="0.0000001" value={form.latitude} onChange={handleChange} placeholder="6.9740483" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="longitude">Longitud</label>
+              <input id="longitude" name="longitude" className="form-input" type="number" step="0.0000001" value={form.longitude} onChange={handleChange} placeholder="-73.0472561" />
+            </div>
           </div>
 
           {/* Contacto */}

@@ -66,7 +66,7 @@ async function assertParentOwnsStudent(studentId: string, actor: JwtPayload) {
 }
 
 export async function linkTracker(input: LinkTrackerInput, actor: JwtPayload) {
-  await assertParentOwnsStudent(input.student_id, actor);
+  const student = await assertParentOwnsStudent(input.student_id, actor);
 
   const existingForStudent = await prisma.gPSTracker.findUnique({
     where: { student_id: input.student_id },
@@ -90,6 +90,18 @@ export async function linkTracker(input: LinkTrackerInput, actor: JwtPayload) {
     },
     select: trackerSelect,
   });
+
+  // Si el colegio ya tiene geocerca configurada, vincula esta tarjeta para
+  // que empiece a recibir alertas de "llegó/salió del colegio" (best-effort).
+  const school = await prisma.school.findUnique({
+    where: { id: student.school_id },
+    select: { gps_geofence_id: true },
+  });
+  if (school?.gps_geofence_id) {
+    await gpsPlatform.linkTrackerToGeofence(school.gps_geofence_id, platformTracker.id).catch((err) => {
+      console.error('[GPS] No se pudo vincular la tarjeta a la geocerca del colegio:', err);
+    });
+  }
 
   return buildTrackerInfo(tracker, platformTracker);
 }

@@ -16,6 +16,7 @@ import cron from 'node-cron';
 import { runAnonymizeUsersJob } from './anonymize-users.job.js';
 import { runCleanupTokensJob } from './cleanup-tokens.job.js';
 import { runDatabaseBackupJob } from './backup-database.job.js';
+import { runPollGpsEventsJob } from './poll-gps-events.job.js';
 
 const TIMEZONE = 'America/Bogota';
 
@@ -48,6 +49,13 @@ export function initCronJobs(): void {
     timezone: TIMEZONE,
   });
   console.log('[CRON] ✅ db-backup          → todos los días a las 04:00 (Bogotá)');
+
+  // ── Job 4: Polling de eventos de geocerca de la Plataforma GPS ─────────
+  // Ejecuta cada 2 minutos — notifica al padre cuando su hijo llega/sale del colegio
+  cron.schedule('*/2 * * * *', async () => {
+    await runPollGpsEventsJob();
+  });
+  console.log('[CRON] ✅ poll-gps-events    → cada 2 minutos');
 
   console.log('[CRON] Scheduler activo. Todos los jobs programados correctamente.');
 }

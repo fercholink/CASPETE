@@ -73,23 +73,34 @@ export async function linkTracker(input: LinkTrackerInput, actor: JwtPayload) {
   });
   if (existingForStudent) throw new AppError('Este estudiante ya tiene un localizador vinculado', 409);
 
+  // Un IMEI ya registrado pero sin estudiante (huérfano, de una desvinculación
+  // previa) se reutiliza en vez de rechazarse — desvincular no libera la fila,
+  // solo la desengancha del estudiante anterior.
   const existingImei = await prisma.gPSTracker.findUnique({ where: { imei: input.imei } });
-  if (existingImei) throw new AppError('Este IMEI ya está registrado en otra tarjeta', 409);
+  if (existingImei?.student_id) throw new AppError('Este IMEI ya está registrado en otra tarjeta', 409);
 
   const platformTracker = await gpsPlatform.registerTracker(input.imei, input.student_id, input.device_name);
 
-  const qr_token = randomBytes(24).toString('hex');
-
-  const tracker = await prisma.gPSTracker.create({
-    data: {
-      imei: input.imei,
-      qr_token,
-      student_id: input.student_id,
-      device_name: input.device_name ?? null,
-      platform_tracker_id: platformTracker.id,
-    },
-    select: trackerSelect,
-  });
+  const tracker = existingImei
+    ? await prisma.gPSTracker.update({
+        where: { id: existingImei.id },
+        data: {
+          student_id: input.student_id,
+          device_name: input.device_name ?? existingImei.device_name,
+          platform_tracker_id: platformTracker.id,
+        },
+        select: trackerSelect,
+      })
+    : await prisma.gPSTracker.create({
+        data: {
+          imei: input.imei,
+          qr_token: randomBytes(24).toString('hex'),
+          student_id: input.student_id,
+          device_name: input.device_name ?? null,
+          platform_tracker_id: platformTracker.id,
+        },
+        select: trackerSelect,
+      });
 
   // Si el colegio ya tiene geocerca configurada, vincula esta tarjeta para
   // que empiece a recibir alertas de "llegó/salió del colegio" (best-effort).

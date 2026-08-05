@@ -33,3 +33,10 @@ export async function getHistory(req: Request, res: Response) {
   const result = await gpsService.getHistory(studentId, hours, req.user!, req);
   sendSuccess(res, result);
 }
+
+export async function saveRouteFromHistory(req: Request, res: Response) {
+  const studentId = req.params['studentId'] as string;
+  const { hours } = historyQuerySchema.parse(req.query);
+  const result = await gpsService.saveRouteFromHistory(studentId, hours, req.user!);
+  sendSuccess(res, result, 'Ruta normal guardada');
+}

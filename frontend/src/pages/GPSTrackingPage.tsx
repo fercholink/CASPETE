@@ -67,6 +67,8 @@ export default function GPSTrackingPage() {
   const [notLinked, setNotLinked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [savingRoute, setSavingRoute] = useState(false);
+  const [routeSaved, setRouteSaved] = useState(false);
 
   useEffect(() => {
     apiClient.get<{ data: { students: Student[] } }>('/students?limit=50')
@@ -103,10 +105,25 @@ export default function GPSTrackingPage() {
   useEffect(() => {
     if (!selectedId) return;
     hasCenteredRef.current = false;
+    setRouteSaved(false);
     fetchLocation(selectedId);
     const interval = setInterval(() => fetchLocation(selectedId), 20_000);
     return () => clearInterval(interval);
   }, [selectedId, fetchLocation]);
+
+  async function handleSaveRoute() {
+    if (!selectedId) return;
+    setSavingRoute(true);
+    setRouteSaved(false);
+    try {
+      await apiClient.post(`/gps/trackers/student/${selectedId}/save-route-from-history?hours=24`);
+      setRouteSaved(true);
+    } catch (err) {
+      setError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la ruta normal');
+    } finally {
+      setSavingRoute(false);
+    }
+  }
 
   // Callback ref (no useEffect+ref): el contenedor aparece condicionalmente
   // (recién después de que "loading" pasa a false), así que un efecto atado
@@ -263,6 +280,20 @@ export default function GPSTrackingPage() {
                 display: notLinked ? 'none' : 'block',
               }}
             />
+
+            {!notLinked && history.length >= 2 && (
+              <div style={{ marginTop: 12, textAlign: 'center' }}>
+                <button className="btn-ghost" disabled={savingRoute} onClick={handleSaveRoute}>
+                  {savingRoute ? 'Guardando...' : 'Guardar este recorrido como ruta normal'}
+                </button>
+                {routeSaved && (
+                  <p style={{ margin: '6px 0 0', fontSize: 12, color: '#059669', fontWeight: 600 }}>Ruta normal guardada ✓</p>
+                )}
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-placeholder)' }}>
+                  Úsalo solo si el camino de arriba fue el trayecto normal (sin vueltas ni desvíos) — reemplaza la ruta de referencia usada para avisarte si se desvía.
+                </p>
+              </div>
+            )}
           </>
         )}
       </main>

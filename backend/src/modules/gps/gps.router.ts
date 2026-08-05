@@ -15,5 +15,6 @@ router.delete('/trackers/:id', gpsRoles, gpsController.unlink);
 router.patch('/trackers/:id/emergency-contacts', gpsRoles, gpsController.setEmergencyContacts);
 router.get('/trackers/student/:studentId', gpsRoles, gpsController.getCurrentLocation);
 router.get('/trackers/student/:studentId/history', gpsRoles, gpsController.getHistory);
+router.post('/trackers/student/:studentId/save-route-from-history', gpsRoles, gpsController.saveRouteFromHistory);
 
 export default router;

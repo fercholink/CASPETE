@@ -209,6 +209,43 @@ export async function getHistory(studentId: string, hours: number, actor: JwtPay
   return positions.map(mapPosition);
 }
 
+// Reemplaza la línea recta casa→colegio (o la ruta guardada anteriormente) por
+// el recorrido real de las últimas `hours` — el padre lo confirma a mano
+// después de revisar en el mapa que ese día fue un trayecto normal.
+const RECORDED_ROUTE_CORRIDOR_METERS = 150;
+
+export async function saveRouteFromHistory(studentId: string, hours: number, actor: JwtPayload) {
+  const student = await assertParentOwnsStudent(studentId, actor);
+
+  const tracker = await prisma.gPSTracker.findUnique({
+    where: { student_id: studentId },
+    select: { id: true, platform_tracker_id: true, platform_route_id: true },
+  });
+  if (!tracker?.platform_tracker_id) throw new AppError('Este estudiante no tiene un localizador vinculado', 404);
+
+  const positions = await gpsPlatform.getPositionHistory(tracker.platform_tracker_id, hours);
+  if (positions.length < 2) {
+    throw new AppError('No hay suficiente recorrido guardado todavía para usarlo como ruta normal', 400);
+  }
+
+  const points = positions.map((p) => ({ lat: Number(p.latitude), lon: Number(p.longitude) }));
+  const studentRecord = await prisma.student.findUnique({ where: { id: student.id }, select: { full_name: true } });
+
+  const route = await gpsPlatform.upsertRoute(
+    tracker.platform_route_id,
+    `Casa-colegio: ${studentRecord?.full_name ?? ''} (recorrido real)`,
+    points,
+    RECORDED_ROUTE_CORRIDOR_METERS,
+  );
+
+  if (route.id !== tracker.platform_route_id) {
+    await prisma.gPSTracker.update({ where: { id: tracker.id }, data: { platform_route_id: route.id } });
+  }
+  await gpsPlatform.linkTrackerToRoute(route.id, tracker.platform_tracker_id);
+
+  return { route_id: route.id, points_saved: points.length };
+}
+
 // ── Resolución del QR de la tarjeta (asistencia TEACHER / identificación VENDOR) ──
 // El QR codifica solo qr_token (opaco, sin relación con el IMEI). Cualquier fallo de
 // validez o de autorización devuelve el mismo error genérico, para no confirmar por

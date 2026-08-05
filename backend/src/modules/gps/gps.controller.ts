@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import * as gpsService from './gps.service.js';
-import { linkTrackerSchema, historyQuerySchema } from './gps.schemas.js';
+import { linkTrackerSchema, historyQuerySchema, emergencyContactsSchema } from './gps.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
 export async function link(req: Request, res: Response) {
@@ -13,6 +13,12 @@ export async function unlink(req: Request, res: Response) {
   const id = req.params['id'] as string;
   await gpsService.unlinkTracker(id, req.user!);
   sendSuccess(res, null, 'Localizador desvinculado');
+}
+
+export async function setEmergencyContacts(req: Request, res: Response) {
+  const input = emergencyContactsSchema.parse(req.body);
+  const result = await gpsService.setEmergencyContacts(req.params['id'] as string, input, req.user!);
+  sendSuccess(res, result, 'Números de contacto actualizados');
 }
 
 export async function getCurrentLocation(req: Request, res: Response) {

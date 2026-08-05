@@ -4,7 +4,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import { logAudit } from '../../middleware/audit-log.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
-import type { LinkTrackerInput } from './gps.schemas.js';
+import type { LinkTrackerInput, EmergencyContactsInput } from './gps.schemas.js';
 import * as gpsPlatform from '../../lib/gpsPlatform.js';
 
 // qr_token solo se expone al dueño (padre) o SUPER_ADMIN vía estos endpoints —
@@ -116,6 +116,23 @@ export async function unlinkTracker(id: string, actor: JwtPayload) {
     throw new AppError('No tienes permiso para desvincular este localizador', 403);
   }
   await prisma.gPSTracker.update({ where: { id }, data: { student_id: null } });
+}
+
+// El dispositivo llama a estos números al presionar su botón físico de SOS.
+export async function setEmergencyContacts(id: string, input: EmergencyContactsInput, actor: JwtPayload) {
+  const tracker = await prisma.gPSTracker.findUnique({
+    where: { id },
+    select: { id: true, platform_tracker_id: true, student: { select: { parent_id: true } } },
+  });
+  if (!tracker) throw new AppError('Localizador no encontrado', 404);
+  if (actor.role !== 'SUPER_ADMIN' && tracker.student?.parent_id !== actor.sub) {
+    throw new AppError('No tienes permiso para configurar este localizador', 403);
+  }
+  if (!tracker.platform_tracker_id) {
+    throw new AppError('Este localizador todavía no está sincronizado con la Plataforma GPS', 409);
+  }
+
+  return gpsPlatform.setEmergencyContacts(tracker.platform_tracker_id, input);
 }
 
 export async function getCurrentLocation(studentId: string, actor: JwtPayload, req: Request) {

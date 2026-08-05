@@ -86,6 +86,14 @@ export default function StudentsPage() {
   const [linking, setLinking] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
 
+  // Números de contacto (SOS/papá/mamá) — el dispositivo llama a estos al presionar su botón físico de SOS
+  const [sosNumber, setSosNumber] = useState('');
+  const [dadNumber, setDadNumber] = useState('');
+  const [momNumber, setMomNumber] = useState('');
+  const [savingContacts, setSavingContacts] = useState(false);
+  const [contactsError, setContactsError] = useState('');
+  const [contactsSaved, setContactsSaved] = useState(false);
+
   const isParent = user?.role === 'PARENT';
   const isAdmin = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
@@ -233,6 +241,8 @@ export default function StudentsPage() {
     setGpsError('');
     setImei('');
     setDeviceName('');
+    setSosNumber(''); setDadNumber(''); setMomNumber('');
+    setContactsError(''); setContactsSaved(false);
     setGpsLoading(true);
     apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)
       .then((r) => setGpsTracker(r.data.data.tracker))
@@ -261,6 +271,26 @@ export default function StudentsPage() {
       setGpsError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al vincular el localizador');
     } finally {
       setLinking(false);
+    }
+  }
+
+  async function handleSaveContacts(e: React.FormEvent) {
+    e.preventDefault();
+    if (!gpsTracker) return;
+    setSavingContacts(true);
+    setContactsError('');
+    setContactsSaved(false);
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/emergency-contacts`, {
+        ...(sosNumber ? { sos_number: sosNumber } : {}),
+        ...(dadNumber ? { dad_number: dadNumber } : {}),
+        ...(momNumber ? { mom_number: momNumber } : {}),
+      });
+      setContactsSaved(true);
+    } catch (err) {
+      setContactsError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al guardar los números de contacto');
+    } finally {
+      setSavingContacts(false);
     }
   }
 
@@ -799,9 +829,25 @@ export default function StudentsPage() {
                   </div>
                 </div>
 
-                <Link to="/tracking" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', display: 'block', marginBottom: 10 }}>
+                <Link to="/tracking" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', display: 'block', marginBottom: 20 }}>
                   Ver ubicación en el mapa
                 </Link>
+
+                <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4, fontWeight: 600 }}>Botón de SOS de la tarjeta</p>
+                <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--color-placeholder)' }}>
+                  Al presionar el botón físico de la tarjeta, marca al Número 1. Si no contesta, puedes agregar un segundo y tercer número de respaldo.
+                </p>
+                <form onSubmit={handleSaveContacts} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                  <input className="form-input" type="tel" placeholder="Número 1 (SOS)" value={sosNumber} onChange={(e) => setSosNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} />
+                  <input className="form-input" type="tel" placeholder="Número 2" value={dadNumber} onChange={(e) => setDadNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} />
+                  <input className="form-input" type="tel" placeholder="Número 3" value={momNumber} onChange={(e) => setMomNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} />
+                  {contactsError && <p className="form-error" style={{ margin: 0 }}>{contactsError}</p>}
+                  {contactsSaved && <p style={{ margin: 0, fontSize: 12, color: '#059669', fontWeight: 600 }}>Números guardados ✓</p>}
+                  <button type="submit" className="btn-ghost" disabled={savingContacts || (!sosNumber && !dadNumber && !momNumber)}>
+                    {savingContacts ? 'Guardando...' : 'Guardar números de contacto'}
+                  </button>
+                </form>
+
                 <button className="btn-ghost" style={{ width: '100%', color: '#dc2626' }} disabled={unlinking} onClick={handleUnlinkTracker}>
                   {unlinking ? 'Desvinculando...' : 'Desvincular localizador'}
                 </button>

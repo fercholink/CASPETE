@@ -159,6 +159,24 @@ export async function linkTrackerToGeofence(geofenceId: string, platformTrackerI
   });
 }
 
+/**
+ * Guarda los números que el dispositivo llama al presionar su botón físico de
+ * SOS (protocolo 0x41/0x42/0x43). Si la tarjeta está conectada en ese momento
+ * se los envía de una vez; si no, la Plataforma GPS los reenvía sola en el
+ * próximo login del dispositivo.
+ */
+export async function setEmergencyContacts(
+  platformTrackerId: string,
+  contacts: { sos_number?: string | null | undefined; dad_number?: string | null | undefined; mom_number?: string | null | undefined },
+): Promise<{ tracker: PlatformTracker; delivered: Record<string, boolean> }> {
+  const result = await request<{ tracker: PlatformTracker; delivered: Record<string, boolean> }>(
+    `/trackers/${platformTrackerId}/emergency-contacts`,
+    { method: 'PATCH', body: JSON.stringify(contacts) },
+  );
+  if (!result) throw new AppError('No se pudieron guardar los números de contacto', 502);
+  return result;
+}
+
 /** Eventos de la cuenta (todas las tarjetas) desde `since` — usado por el poller de notificaciones. */
 export async function listEventsSince(since: Date | null): Promise<PlatformEvent[]> {
   const query = since ? `?since=${encodeURIComponent(since.toISOString())}&limit=500` : '?limit=500';

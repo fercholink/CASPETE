@@ -17,6 +17,7 @@ import { runAnonymizeUsersJob } from './anonymize-users.job.js';
 import { runCleanupTokensJob } from './cleanup-tokens.job.js';
 import { runDatabaseBackupJob } from './backup-database.job.js';
 import { runPollGpsEventsJob } from './poll-gps-events.job.js';
+import { runActivateRouteTrackingJob } from './activate-route-tracking.job.js';
 
 const TIMEZONE = 'America/Bogota';
 
@@ -56,6 +57,14 @@ export function initCronJobs(): void {
     await runPollGpsEventsJob();
   });
   console.log('[CRON] ✅ poll-gps-events    → cada 2 minutos');
+
+  // ── Job 5: Activación de la ventana de trayecto (georuta) ──────────────
+  // Ejecuta cada 5 minutos — renueva la evaluación de desviación de ruta
+  // mientras el estudiante esté en horario de trayecto (antes/después del colegio)
+  cron.schedule('*/5 * * * *', async () => {
+    await runActivateRouteTrackingJob();
+  });
+  console.log('[CRON] ✅ activate-route-tracking → cada 5 minutos');
 
   console.log('[CRON] Scheduler activo. Todos los jobs programados correctamente.');
 }

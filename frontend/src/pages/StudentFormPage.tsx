@@ -15,6 +15,8 @@ interface StudentData {
   grade: string | null;
   delivery_code: string | null;
   daily_spending_limit: string | number | null;
+  home_latitude: string | number | null;
+  home_longitude: string | number | null;
   school: ActiveSchool;
 }
 
@@ -26,6 +28,8 @@ const emptyForm: {
   photo_url: string;
   delivery_code: string;
   daily_spending_limit: string;
+  home_latitude: string;
+  home_longitude: string;
 } = {
   school_id: '',
   full_name: '',
@@ -34,6 +38,8 @@ const emptyForm: {
   photo_url: '',
   delivery_code: '',
   daily_spending_limit: '',
+  home_latitude: '',
+  home_longitude: '',
 };
 
 function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<string> {
@@ -99,6 +105,8 @@ export default function StudentFormPage() {
             grade: s.grade ?? '',
             delivery_code: s.delivery_code ?? '',
             daily_spending_limit: s.daily_spending_limit != null ? String(s.daily_spending_limit) : '',
+            home_latitude: s.home_latitude != null ? String(s.home_latitude) : '',
+            home_longitude: s.home_longitude != null ? String(s.home_longitude) : '',
             photo_url: (s as any).photo_url ?? '',
           });
         }),
@@ -140,6 +148,8 @@ export default function StudentFormPage() {
       ...(form.grade ? { grade: form.grade } : {}),
       ...(form.delivery_code ? { delivery_code: form.delivery_code } : {}),
       ...(isEdit && form.daily_spending_limit !== '' ? { daily_spending_limit: Number(form.daily_spending_limit) } : {}),
+      ...(isEdit && form.home_latitude !== '' ? { home_latitude: Number(form.home_latitude) } : {}),
+      ...(isEdit && form.home_longitude !== '' ? { home_longitude: Number(form.home_longitude) } : {}),
       ...(form.photo_url ? { photo_url: form.photo_url } : {}),
     };
 
@@ -332,6 +342,25 @@ export default function StudentFormPage() {
                 onChange={handleChange}
                 placeholder="15000"
               />
+            </div>
+          )}
+
+          {isEdit && (
+            <div style={{ marginTop: 14 }}>
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontWeight: 600 }}>Ubicación de casa</p>
+              <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--color-placeholder)' }}>
+                Opcional — con esto y la ubicación del colegio, Caspete arma el trayecto esperado y avisa si tu hijo se desvía camino a casa o al colegio. Consíguela con clic derecho en Google Maps.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="home_latitude">Latitud</label>
+                  <input id="home_latitude" name="home_latitude" className="form-input" type="number" step="0.0000001" value={form.home_latitude} onChange={handleChange} placeholder="6.9740483" />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="home_longitude">Longitud</label>
+                  <input id="home_longitude" name="home_longitude" className="form-input" type="number" step="0.0000001" value={form.home_longitude} onChange={handleChange} placeholder="-73.0472561" />
+                </div>
+              </div>
             </div>
           )}
 

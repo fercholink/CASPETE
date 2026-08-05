@@ -17,6 +17,8 @@ export const updateStudentSchema = z.object({
   active: z.boolean().optional(),
   delivery_code: z.string().length(6, 'El código debe ser de 6 caracteres').optional(),
   daily_spending_limit: z.number().min(0, 'El límite no puede ser negativo').max(1000000, 'Límite máximo: $1.000.000').optional(),
+  home_latitude: z.coerce.number().min(-90).max(90).optional(),
+  home_longitude: z.coerce.number().min(-180).max(180).optional(),
 });
 
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;

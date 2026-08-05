@@ -6,6 +6,7 @@ import { logAudit } from '../../middleware/audit-log.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { LinkTrackerInput, EmergencyContactsInput } from './gps.schemas.js';
 import * as gpsPlatform from '../../lib/gpsPlatform.js';
+import { syncStudentRoute } from '../../lib/routeSync.js';
 
 // qr_token solo se expone al dueño (padre) o SUPER_ADMIN vía estos endpoints —
 // necesario para poder mostrar/imprimir el QR físico de la tarjeta.
@@ -116,6 +117,9 @@ export async function linkTracker(input: LinkTrackerInput, actor: JwtPayload) {
       console.error('[GPS] No se pudo vincular la tarjeta a la geocerca del colegio:', err);
     });
   }
+
+  // Si el estudiante ya tenía ubicación de casa guardada, sincroniza la georuta ahora que hay tarjeta.
+  await syncStudentRoute(input.student_id);
 
   return buildTrackerInfo(tracker, platformTracker);
 }

@@ -47,6 +47,15 @@ export interface PlatformGeofence {
   created_at: string;
 }
 
+export interface PlatformRoute {
+  id: string;
+  name: string;
+  points: { lat: number; lon: number }[];
+  corridor_meters: number;
+  active: boolean;
+  created_at: string;
+}
+
 export interface PlatformEvent {
   id: string;
   tracker_id: string;
@@ -159,6 +168,44 @@ export async function linkTrackerToGeofence(geofenceId: string, platformTrackerI
   await request(`/geofences/${geofenceId}/trackers`, {
     method: 'POST',
     body: JSON.stringify({ tracker_id: platformTrackerId }),
+  });
+}
+
+/** Crea o actualiza el trayecto esperado (casa↔colegio) de un estudiante en la Plataforma GPS. */
+export async function upsertRoute(
+  existingRouteId: string | null,
+  name: string,
+  points: { lat: number; lon: number }[],
+  corridorMeters: number,
+): Promise<PlatformRoute> {
+  if (existingRouteId) {
+    const updated = await request<PlatformRoute>(`/routes/${existingRouteId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name, points, corridor_meters: corridorMeters }),
+    });
+    if (updated) return updated;
+  }
+
+  const created = await request<PlatformRoute>('/routes', {
+    method: 'POST',
+    body: JSON.stringify({ name, points, corridor_meters: corridorMeters }),
+  });
+  if (!created) throw new AppError('No se pudo crear la ruta en la Plataforma GPS', 502);
+  return created;
+}
+
+export async function linkTrackerToRoute(routeId: string, platformTrackerId: string): Promise<void> {
+  await request(`/routes/${routeId}/trackers`, {
+    method: 'POST',
+    body: JSON.stringify({ tracker_id: platformTrackerId }),
+  });
+}
+
+/** Activa la evaluación de desviación de ruta por `minutes` — se llama repetidamente durante la ventana de trayecto para renovarla. */
+export async function activateRouteTracking(routeId: string, platformTrackerId: string, minutes: number): Promise<void> {
+  await request(`/routes/${routeId}/trackers/${platformTrackerId}/activate`, {
+    method: 'PATCH',
+    body: JSON.stringify({ minutes }),
   });
 }
 

@@ -1,12 +1,14 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
+import { syncStudentRoute } from '../../lib/routeSync.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { CreateStudentInput, UpdateStudentInput } from './student.schemas.js';
 
 const studentSelect = {
   id: true, school_id: true, parent_id: true, national_id: true,
   full_name: true, grade: true, photo_url: true, balance: true,
-  delivery_code: true, daily_spending_limit: true, active: true, created_at: true,
+  delivery_code: true, daily_spending_limit: true,
+  home_latitude: true, home_longitude: true, active: true, created_at: true,
   school: { select: { id: true, name: true, city: true, meal_payment_model: true } },
   parent: { select: { id: true, full_name: true, email: true } },
   _count: { select: { lunch_orders: true, transactions: true } },
@@ -105,7 +107,7 @@ export async function updateStudent(id: string, input: UpdateStudentInput, actor
     if (!newSchool?.active) throw new AppError('El colegio destino no existe o está inactivo', 404);
   }
 
-  return prisma.student.update({
+  const updated = await prisma.student.update({
     where: { id },
     data: {
       ...(input.full_name !== undefined && { full_name: input.full_name }),
@@ -115,10 +117,18 @@ export async function updateStudent(id: string, input: UpdateStudentInput, actor
       ...(input.photo_url !== undefined && { photo_url: input.photo_url }),
       ...(input.delivery_code !== undefined && { delivery_code: input.delivery_code }),
       ...(input.daily_spending_limit !== undefined && { daily_spending_limit: input.daily_spending_limit }),
+      ...(input.home_latitude !== undefined && { home_latitude: input.home_latitude }),
+      ...(input.home_longitude !== undefined && { home_longitude: input.home_longitude }),
       ...(input.active !== undefined && { active: input.active }),
     },
     select: studentSelect,
   });
+
+  if (input.home_latitude !== undefined || input.home_longitude !== undefined) {
+    await syncStudentRoute(id);
+  }
+
+  return updated;
 }
 
 export async function deactivateStudent(id: string, actor: JwtPayload) {

@@ -19,6 +19,9 @@ export interface PlatformTracker {
   last_seen_at: string | null;
   active: boolean;
   created_at: string;
+  sos_number: string | null;
+  dad_number: string | null;
+  mom_number: string | null;
 }
 
 export interface PlatformPosition {

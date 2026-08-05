@@ -40,6 +40,9 @@ function buildTrackerInfo(local: LocalTracker, platform: gpsPlatform.PlatformTra
     last_seen_at: platform?.last_seen_at ?? null,
     extended_tracking_until: local.extended_tracking_until,
     active: local.active,
+    sos_number: platform?.sos_number ?? null,
+    dad_number: platform?.dad_number ?? null,
+    mom_number: platform?.mom_number ?? null,
   };
 }
 

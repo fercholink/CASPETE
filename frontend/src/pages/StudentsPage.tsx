@@ -41,6 +41,9 @@ interface TrackerData {
   last_seen_at: string | null;
   extended_tracking_until: string | null;
   active: boolean;
+  sos_number: string | null;
+  dad_number: string | null;
+  mom_number: string | null;
 }
 
 export default function StudentsPage() {
@@ -245,7 +248,13 @@ export default function StudentsPage() {
     setContactsError(''); setContactsSaved(false);
     setGpsLoading(true);
     apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)
-      .then((r) => setGpsTracker(r.data.data.tracker))
+      .then((r) => {
+        const tracker = r.data.data.tracker;
+        setGpsTracker(tracker);
+        setSosNumber(tracker.sos_number ?? '');
+        setDadNumber(tracker.dad_number ?? '');
+        setMomNumber(tracker.mom_number ?? '');
+      })
       .catch((err) => {
         if ((err as { response?: { status?: number } }).response?.status === 404) setGpsNotLinked(true);
         else setGpsError('No se pudo consultar el localizador');

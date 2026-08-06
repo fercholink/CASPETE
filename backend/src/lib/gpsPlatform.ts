@@ -226,6 +226,19 @@ export async function activateRouteTracking(routeId: string, platformTrackerId: 
 }
 
 /**
+ * Cambia el intervalo de reporte de posición del dispositivo (protocolo
+ * 0x97, 10-7200 segundos). Se usa para pedir reportes más frecuentes durante
+ * la ventana de trayecto y volver a un intervalo normal fuera de ella — la
+ * Plataforma GPS ya deduplica: si el valor no cambió, no reenvía el comando.
+ */
+export async function setReportInterval(platformTrackerId: string, seconds: number): Promise<void> {
+  await request(`/trackers/${platformTrackerId}/report-interval`, {
+    method: 'PATCH',
+    body: JSON.stringify({ seconds }),
+  });
+}
+
+/**
  * Guarda los números que el dispositivo llama al presionar su botón físico de
  * SOS (protocolo 0x41/0x42/0x43). Si la tarjeta está conectada en ese momento
  * se los envía de una vez; si no, la Plataforma GPS los reenvía sola en el

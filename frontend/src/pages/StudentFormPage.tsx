@@ -17,6 +17,10 @@ interface StudentData {
   daily_spending_limit: string | number | null;
   home_latitude: string | number | null;
   home_longitude: string | number | null;
+  route_morning_pickup: string | null;
+  route_morning_arrival: string | null;
+  route_afternoon_pickup: string | null;
+  route_afternoon_arrival: string | null;
   school: ActiveSchool;
 }
 
@@ -30,6 +34,10 @@ const emptyForm: {
   daily_spending_limit: string;
   home_latitude: string;
   home_longitude: string;
+  route_morning_pickup: string;
+  route_morning_arrival: string;
+  route_afternoon_pickup: string;
+  route_afternoon_arrival: string;
 } = {
   school_id: '',
   full_name: '',
@@ -40,6 +48,10 @@ const emptyForm: {
   daily_spending_limit: '',
   home_latitude: '',
   home_longitude: '',
+  route_morning_pickup: '',
+  route_morning_arrival: '',
+  route_afternoon_pickup: '',
+  route_afternoon_arrival: '',
 };
 
 function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<string> {
@@ -107,6 +119,10 @@ export default function StudentFormPage() {
             daily_spending_limit: s.daily_spending_limit != null ? String(s.daily_spending_limit) : '',
             home_latitude: s.home_latitude != null ? String(s.home_latitude) : '',
             home_longitude: s.home_longitude != null ? String(s.home_longitude) : '',
+            route_morning_pickup: s.route_morning_pickup ?? '',
+            route_morning_arrival: s.route_morning_arrival ?? '',
+            route_afternoon_pickup: s.route_afternoon_pickup ?? '',
+            route_afternoon_arrival: s.route_afternoon_arrival ?? '',
             photo_url: (s as any).photo_url ?? '',
           });
         }),
@@ -150,6 +166,10 @@ export default function StudentFormPage() {
       ...(isEdit && form.daily_spending_limit !== '' ? { daily_spending_limit: Number(form.daily_spending_limit) } : {}),
       ...(isEdit && form.home_latitude !== '' ? { home_latitude: Number(form.home_latitude) } : {}),
       ...(isEdit && form.home_longitude !== '' ? { home_longitude: Number(form.home_longitude) } : {}),
+      ...(isEdit && { route_morning_pickup: form.route_morning_pickup || null }),
+      ...(isEdit && { route_morning_arrival: form.route_morning_arrival || null }),
+      ...(isEdit && { route_afternoon_pickup: form.route_afternoon_pickup || null }),
+      ...(isEdit && { route_afternoon_arrival: form.route_afternoon_arrival || null }),
       ...(form.photo_url ? { photo_url: form.photo_url } : {}),
     };
 
@@ -359,6 +379,37 @@ export default function StudentFormPage() {
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" htmlFor="home_longitude">Longitud</label>
                   <input id="home_longitude" name="home_longitude" className="form-input" type="number" step="0.0000001" value={form.home_longitude} onChange={handleChange} placeholder="-73.0472561" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isEdit && (
+            <div style={{ marginTop: 14 }}>
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontWeight: 600 }}>Horario del trayecto</p>
+              <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--color-placeholder)' }}>
+                Opcional — si sabes la hora exacta a la que recogen a tu hijo y a la que llega, ponla aquí para un rastreo más preciso (reporta la ubicación cada 10 segundos durante ese tiempo). Si lo dejas vacío, Caspete usa automáticamente el horario del colegio ± 45 min.
+              </p>
+              <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600 }}>Camino al colegio</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="route_morning_pickup">Recogida</label>
+                  <input id="route_morning_pickup" name="route_morning_pickup" className="form-input" type="time" value={form.route_morning_pickup} onChange={handleChange} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="route_morning_arrival">Llegada</label>
+                  <input id="route_morning_arrival" name="route_morning_arrival" className="form-input" type="time" value={form.route_morning_arrival} onChange={handleChange} />
+                </div>
+              </div>
+              <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600 }}>Camino a casa</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="route_afternoon_pickup">Recogida</label>
+                  <input id="route_afternoon_pickup" name="route_afternoon_pickup" className="form-input" type="time" value={form.route_afternoon_pickup} onChange={handleChange} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="route_afternoon_arrival">Llegada</label>
+                  <input id="route_afternoon_arrival" name="route_afternoon_arrival" className="form-input" type="time" value={form.route_afternoon_arrival} onChange={handleChange} />
                 </div>
               </div>
             </div>

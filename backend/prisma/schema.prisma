@@ -217,6 +217,15 @@ model Student {
   daily_spending_limit Decimal @default(15000.00) @db.Decimal(10, 2)
   home_latitude  Decimal? @db.Decimal(10, 7) // ubicación de casa — habilita la "georuta" casa↔colegio con alerta de desviación
   home_longitude Decimal? @db.Decimal(10, 7)
+  // Horario exacto de recogida/llegada del trayecto ("HH:MM") — si el padre lo
+  // configura, reemplaza el margen automático de ±45 min alrededor del horario
+  // escolar para decidir cuándo activar el reporte GPS más frecuente y la
+  // evaluación de desviación de ruta. Si queda vacío, sigue el comportamiento
+  // automático de siempre.
+  route_morning_pickup    String? @db.VarChar(5)
+  route_morning_arrival   String? @db.VarChar(5)
+  route_afternoon_pickup  String? @db.VarChar(5)
+  route_afternoon_arrival String? @db.VarChar(5)
   active      Boolean  @default(true)
   created_at  DateTime @default(now())
 

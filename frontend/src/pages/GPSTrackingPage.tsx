@@ -35,6 +35,15 @@ interface LocationResponse {
   location: LocationPoint | null;
 }
 
+interface ExpectedRoute {
+  points: { lat: number; lon: number }[];
+}
+
+function todayInBogota(): string {
+  // Bogotá es UTC-5 fijo (sin horario de verano)
+  return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 function timeAgo(iso: string | null): string {
   if (!iso) return 'nunca';
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -58,17 +67,20 @@ export default function GPSTrackingPage() {
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const polylineRef = useRef<L.Polyline | null>(null);
+  const expectedRoutePolylineRef = useRef<L.Polyline | null>(null);
   const hasCenteredRef = useRef(false);
 
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [current, setCurrent] = useState<LocationResponse | null>(null);
   const [history, setHistory] = useState<LocationPoint[]>([]);
+  const [expectedRoute, setExpectedRoute] = useState<ExpectedRoute | null>(null);
   const [notLinked, setNotLinked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [savingRoute, setSavingRoute] = useState(false);
   const [routeSaved, setRouteSaved] = useState(false);
+  const [viewDate, setViewDate] = useState(''); // '' = en vivo (hoy); 'YYYY-MM-DD' = un día pasado
 
   useEffect(() => {
     apiClient.get<{ data: { students: Student[] } }>('/students?limit=50')
@@ -80,14 +92,20 @@ export default function GPSTrackingPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fetchLocation = useCallback(async (studentId: string) => {
+  const fetchLocation = useCallback(async (studentId: string, date: string) => {
     try {
-      const [curRes, histRes] = await Promise.all([
-        apiClient.get<{ data: LocationResponse }>(`/gps/trackers/student/${studentId}`),
-        apiClient.get<{ data: LocationPoint[] }>(`/gps/trackers/student/${studentId}/history?hours=24`),
-      ]);
-      setCurrent(curRes.data.data);
-      setHistory(histRes.data.data);
+      if (date) {
+        const histRes = await apiClient.get<{ data: LocationPoint[] }>(`/gps/trackers/student/${studentId}/history?date=${date}`);
+        setCurrent(null);
+        setHistory(histRes.data.data);
+      } else {
+        const [curRes, histRes] = await Promise.all([
+          apiClient.get<{ data: LocationResponse }>(`/gps/trackers/student/${studentId}`),
+          apiClient.get<{ data: LocationPoint[] }>(`/gps/trackers/student/${studentId}/history?hours=24`),
+        ]);
+        setCurrent(curRes.data.data);
+        setHistory(histRes.data.data);
+      }
       setNotLinked(false);
       setError('');
     } catch (err) {
@@ -106,17 +124,27 @@ export default function GPSTrackingPage() {
     if (!selectedId) return;
     hasCenteredRef.current = false;
     setRouteSaved(false);
-    fetchLocation(selectedId);
-    const interval = setInterval(() => fetchLocation(selectedId), 20_000);
+    fetchLocation(selectedId, viewDate);
+    if (viewDate) return; // día pasado: una sola consulta, sin refrescar en vivo
+    const interval = setInterval(() => fetchLocation(selectedId, ''), 20_000);
     return () => clearInterval(interval);
-  }, [selectedId, fetchLocation]);
+  }, [selectedId, viewDate, fetchLocation]);
+
+  // La ruta esperada casi no cambia — se consulta una vez por estudiante, no cada 20s.
+  useEffect(() => {
+    if (!selectedId) { setExpectedRoute(null); return; }
+    apiClient.get<{ data: ExpectedRoute | null }>(`/gps/trackers/student/${selectedId}/route`)
+      .then((r) => setExpectedRoute(r.data.data))
+      .catch(() => setExpectedRoute(null));
+  }, [selectedId]);
 
   async function handleSaveRoute() {
     if (!selectedId) return;
     setSavingRoute(true);
     setRouteSaved(false);
     try {
-      await apiClient.post(`/gps/trackers/student/${selectedId}/save-route-from-history?hours=24`);
+      const query = viewDate ? `date=${viewDate}` : 'hours=24';
+      await apiClient.post(`/gps/trackers/student/${selectedId}/save-route-from-history?${query}`);
       setRouteSaved(true);
     } catch (err) {
       setError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la ruta normal');
@@ -149,6 +177,12 @@ export default function GPSTrackingPage() {
 
     if (polylineRef.current) { map.removeLayer(polylineRef.current); polylineRef.current = null; }
     if (markerRef.current) { map.removeLayer(markerRef.current); markerRef.current = null; }
+    if (expectedRoutePolylineRef.current) { map.removeLayer(expectedRoutePolylineRef.current); expectedRoutePolylineRef.current = null; }
+
+    if (expectedRoute && expectedRoute.points.length > 1) {
+      const latlngs: [number, number][] = expectedRoute.points.map((p) => [p.lat, p.lon]);
+      expectedRoutePolylineRef.current = L.polyline(latlngs, { color: '#2563eb', weight: 3, opacity: 0.5, dashArray: '6 8' }).addTo(map);
+    }
 
     if (history.length > 1) {
       const latlngs: [number, number][] = history.map((p) => [parseFloat(p.latitude), parseFloat(p.longitude)]);
@@ -157,9 +191,15 @@ export default function GPSTrackingPage() {
 
     map.invalidateSize();
 
-    if (current?.location) {
-      const lat = parseFloat(current.location.latitude);
-      const lon = parseFloat(current.location.longitude);
+    // En vivo: posición actual del dispositivo. Día pasado: último punto registrado ese día.
+    const lastHistoryPoint = history[history.length - 1];
+    const markerPoint = current?.location
+      ? { lat: parseFloat(current.location.latitude), lon: parseFloat(current.location.longitude) }
+      : lastHistoryPoint
+        ? { lat: parseFloat(lastHistoryPoint.latitude), lon: parseFloat(lastHistoryPoint.longitude) }
+        : null;
+
+    if (markerPoint) {
       const student = students.find((s) => s.id === selectedId);
       const initial = student?.full_name.charAt(0) ?? '?';
       const icon = L.divIcon({
@@ -172,13 +212,17 @@ export default function GPSTrackingPage() {
         iconSize: [46, 46],
         iconAnchor: [23, 23],
       });
-      markerRef.current = L.marker([lat, lon], { icon }).addTo(map);
+      markerRef.current = L.marker([markerPoint.lat, markerPoint.lon], { icon }).addTo(map);
       if (!hasCenteredRef.current) {
-        map.setView([lat, lon], 16);
+        map.setView([markerPoint.lat, markerPoint.lon], 16);
         hasCenteredRef.current = true;
       }
+    } else if (expectedRoute && expectedRoute.points.length > 0 && !hasCenteredRef.current) {
+      const mid = expectedRoute.points[Math.floor(expectedRoute.points.length / 2)]!;
+      map.setView([mid.lat, mid.lon], 15);
+      hasCenteredRef.current = true;
     }
-  }, [current, history, students, selectedId]);
+  }, [current, history, expectedRoute, students, selectedId]);
 
   const selectedStudent = students.find((s) => s.id === selectedId);
 
@@ -244,6 +288,25 @@ export default function GPSTrackingPage() {
               <div className="roadmap-note">
                 {selectedStudent?.full_name} no tiene un localizador GPS vinculado todavía.{' '}
                 <Link to="/students" style={{ color: 'var(--color-brand-deep)', fontWeight: 500 }}>Vincular tarjeta →</Link>
+              </div>
+            )}
+
+            {!notLinked && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+                <label style={{ fontSize: 13, color: 'var(--color-text-muted)', fontWeight: 500 }}>Ver recorrido del:</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  style={{ width: 'auto', marginBottom: 0, padding: '6px 10px' }}
+                  max={todayInBogota()}
+                  value={viewDate}
+                  onChange={(e) => setViewDate(e.target.value)}
+                />
+                {viewDate && (
+                  <button className="btn-ghost" style={{ padding: '6px 14px', fontSize: 13 }} onClick={() => setViewDate('')}>
+                    ← Volver a en vivo
+                  </button>
+                )}
               </div>
             )}
 

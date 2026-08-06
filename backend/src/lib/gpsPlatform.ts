@@ -139,6 +139,22 @@ export async function getPositionHistory(
     .reverse(); // la API devuelve más reciente primero; el historial se dibuja en orden cronológico
 }
 
+/** Historial de un día calendario completo (hora Bogotá, UTC-5) — para el selector de fecha. */
+export async function getPositionHistoryForDay(platformTrackerId: string, date: string): Promise<PlatformPosition[]> {
+  const since = new Date(`${date}T00:00:00-05:00`);
+  const until = new Date(`${date}T23:59:59.999-05:00`);
+
+  const result = await request<{ positions: PlatformPosition[] }>(
+    `/trackers/${platformTrackerId}/positions?since=${encodeURIComponent(since.toISOString())}&until=${encodeURIComponent(until.toISOString())}&limit=2000`,
+  );
+  if (!result) return [];
+  return result.positions.slice().reverse(); // la API devuelve más reciente primero; se dibuja en orden cronológico
+}
+
+export async function getRoute(routeId: string): Promise<PlatformRoute | null> {
+  return request<PlatformRoute>(`/routes/${routeId}`);
+}
+
 /** Crea o actualiza la geocerca de un colegio en la Plataforma GPS. */
 export async function upsertGeofence(
   existingGeofenceId: string | null,

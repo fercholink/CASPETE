@@ -185,7 +185,12 @@ export async function getCurrentLocation(studentId: string, actor: JwtPayload, r
   return { tracker: trackerInfo, location: position ? mapPosition(position) : null };
 }
 
-export async function getHistory(studentId: string, hours: number, actor: JwtPayload, req: Request) {
+export async function getHistory(
+  studentId: string,
+  opts: { hours: number; date?: string },
+  actor: JwtPayload,
+  req: Request,
+) {
   await assertParentOwnsStudent(studentId, actor);
 
   if (actor.role === 'SUPER_ADMIN') {
@@ -205,8 +210,26 @@ export async function getHistory(studentId: string, hours: number, actor: JwtPay
   const allowed = await isTelemetryAllowed(tracker.id);
   if (!allowed || !tracker.platform_tracker_id) return [];
 
-  const positions = await gpsPlatform.getPositionHistory(tracker.platform_tracker_id, hours);
+  const positions = opts.date
+    ? await gpsPlatform.getPositionHistoryForDay(tracker.platform_tracker_id, opts.date)
+    : await gpsPlatform.getPositionHistory(tracker.platform_tracker_id, opts.hours);
   return positions.map(mapPosition);
+}
+
+// La ruta esperada (línea por calles o recorrido real guardado) — solo para
+// dibujarla en el mapa junto al recorrido real, no para las alertas (esas
+// las evalúa la Plataforma GPS sola).
+export async function getExpectedRoute(studentId: string, actor: JwtPayload) {
+  await assertParentOwnsStudent(studentId, actor);
+
+  const tracker = await prisma.gPSTracker.findUnique({
+    where: { student_id: studentId },
+    select: { platform_route_id: true },
+  });
+  if (!tracker?.platform_route_id) return null;
+
+  const route = await gpsPlatform.getRoute(tracker.platform_route_id);
+  return route ? { points: route.points } : null;
 }
 
 // Reemplaza la línea recta casa→colegio (o la ruta guardada anteriormente) por
@@ -214,7 +237,11 @@ export async function getHistory(studentId: string, hours: number, actor: JwtPay
 // después de revisar en el mapa que ese día fue un trayecto normal.
 const RECORDED_ROUTE_CORRIDOR_METERS = 150;
 
-export async function saveRouteFromHistory(studentId: string, hours: number, actor: JwtPayload) {
+export async function saveRouteFromHistory(
+  studentId: string,
+  opts: { hours: number; date?: string },
+  actor: JwtPayload,
+) {
   const student = await assertParentOwnsStudent(studentId, actor);
 
   const tracker = await prisma.gPSTracker.findUnique({
@@ -223,7 +250,9 @@ export async function saveRouteFromHistory(studentId: string, hours: number, act
   });
   if (!tracker?.platform_tracker_id) throw new AppError('Este estudiante no tiene un localizador vinculado', 404);
 
-  const positions = await gpsPlatform.getPositionHistory(tracker.platform_tracker_id, hours);
+  const positions = opts.date
+    ? await gpsPlatform.getPositionHistoryForDay(tracker.platform_tracker_id, opts.date)
+    : await gpsPlatform.getPositionHistory(tracker.platform_tracker_id, opts.hours);
   if (positions.length < 2) {
     throw new AppError('No hay suficiente recorrido guardado todavía para usarlo como ruta normal', 400);
   }

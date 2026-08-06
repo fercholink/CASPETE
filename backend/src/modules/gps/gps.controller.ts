@@ -29,14 +29,20 @@ export async function getCurrentLocation(req: Request, res: Response) {
 
 export async function getHistory(req: Request, res: Response) {
   const studentId = req.params['studentId'] as string;
-  const { hours } = historyQuerySchema.parse(req.query);
-  const result = await gpsService.getHistory(studentId, hours, req.user!, req);
+  const { hours, date } = historyQuerySchema.parse(req.query);
+  const result = await gpsService.getHistory(studentId, { hours, ...(date !== undefined && { date }) }, req.user!, req);
+  sendSuccess(res, result);
+}
+
+export async function getExpectedRoute(req: Request, res: Response) {
+  const studentId = req.params['studentId'] as string;
+  const result = await gpsService.getExpectedRoute(studentId, req.user!);
   sendSuccess(res, result);
 }
 
 export async function saveRouteFromHistory(req: Request, res: Response) {
   const studentId = req.params['studentId'] as string;
-  const { hours } = historyQuerySchema.parse(req.query);
-  const result = await gpsService.saveRouteFromHistory(studentId, hours, req.user!);
+  const { hours, date } = historyQuerySchema.parse(req.query);
+  const result = await gpsService.saveRouteFromHistory(studentId, { hours, ...(date !== undefined && { date }) }, req.user!);
   sendSuccess(res, result, 'Ruta normal guardada');
 }

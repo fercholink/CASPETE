@@ -30,6 +30,19 @@ type LocalTracker = {
   active: boolean;
 };
 
+// Umbral de "en línea" por antigüedad del dato. La Plataforma GPS marca
+// online:true en cada paquete y online:false solo al cerrar el socket TCP —
+// pero una conexión celular puede morir sin un cierre limpio, dejando la
+// bandera "pegada" en true indefinidamente. Por eso no confiamos solo en
+// esa bandera: si el último dato es más viejo que esto, se considera
+// desconectado sin importar lo que diga la bandera cruda.
+const ONLINE_STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutos
+
+function isRecentlySeen(lastSeenAt: string | null): boolean {
+  if (!lastSeenAt) return false;
+  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_STALE_THRESHOLD_MS;
+}
+
 function buildTrackerInfo(local: LocalTracker, platform: gpsPlatform.PlatformTracker | null) {
   return {
     id: local.id,
@@ -37,7 +50,7 @@ function buildTrackerInfo(local: LocalTracker, platform: gpsPlatform.PlatformTra
     device_name: local.device_name ?? platform?.device_name ?? null,
     battery_level: platform?.battery_level ?? null,
     signal_strength: platform?.signal_strength ?? null,
-    online: platform?.online ?? false,
+    online: Boolean(platform?.online) && isRecentlySeen(platform?.last_seen_at ?? null),
     last_seen_at: platform?.last_seen_at ?? null,
     extended_tracking_until: local.extended_tracking_until,
     active: local.active,

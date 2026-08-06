@@ -73,7 +73,7 @@ export default function LandingFooter() {
 
       {/* Small bottom text */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-emerald-950 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-[#cbdcd0] opacity-60">
-        <span>&copy; {new Date().getFullYear()} Caspete S.A.S. Todos los derechos reservados. Colombia.</span>
+        <span>&copy; {new Date().getFullYear()} Kidway (operado por Ferney Blanco, NIT 1093752731-1). Todos los derechos reservados. Colombia.</span>
         <div className="flex gap-4">
           <Link to="/privacy-policy" className="text-[#cbdcd0] hover:text-white text-decoration-none font-bold">Política de Privacidad</Link>
           <Link to="/condiciones" className="text-[#cbdcd0] hover:text-white text-decoration-none font-bold">Condiciones del Servicio</Link>

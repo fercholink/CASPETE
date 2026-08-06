@@ -73,7 +73,7 @@ export default function DataDeletionPage() {
             Eliminación de Datos del Usuario
           </h1>
           <p style={{ margin: 0, opacity: 0.85, fontSize: 14 }}>
-            Esta página explica cómo solicitar la eliminación definitiva de tu cuenta y todos tus datos personales en la plataforma Caspete.
+            Esta página explica cómo solicitar la eliminación definitiva de tu cuenta y todos tus datos personales en la plataforma Kidway.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export default function DataDeletionPage() {
         </div>
 
         <Section title="1. ¿Qué datos eliminamos?">
-          <p>Al ejercer tu derecho de supresión de datos, Caspete eliminará de forma definitiva, permanente e irreversible la siguiente información de nuestros servidores:</p>
+          <p>Al ejercer tu derecho de supresión de datos, Kidway eliminará de forma definitiva, permanente e irreversible la siguiente información de nuestros servidores:</p>
           <ul>
             <li><strong>Datos de Conexión de WhatsApp Business:</strong> Tokens de acceso, identificadores de canal webhooks, y configuraciones de envío de plantillas.</li>
             <li><strong>Eventos y Mensajes:</strong> Historial completo de mensajes transmitidos, estados de entrega y logs temporales del canal de chat.</li>
@@ -201,8 +201,8 @@ export default function DataDeletionPage() {
         {/* Footer */}
         <div style={{ background: '#f3f4f6', borderRadius: 10, padding: '16px 20px', marginTop: 32, fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
           <p style={{ margin: 0 }}>
-            Caspete.com — Versión 1.0 — Mayo 2026 ·{' '}
-            <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a> ·{' '}
+            Kidway (operado por Ferney Blanco, NIT 1093752731-1) — Versión 1.1 — Agosto 2026 ·{' '}
+            <a href="mailto:privacidad@kidway.co" style={{ color: '#1a4731' }}>privacidad@kidway.co</a> ·{' '}
             Supervisado por la <a href="https://www.sic.gov.co" target="_blank" rel="noreferrer" style={{ color: '#1a4731' }}>SIC</a>
           </p>
           <div style={{ marginTop: 10, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>

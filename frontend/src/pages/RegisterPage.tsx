@@ -230,9 +230,9 @@ export default function RegisterPage() {
                   🔒 Protección de datos — Ley 1581 de 2012
                 </p>
                 <p style={{ margin: '0 0 12px', fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>
-                  <strong>Responsable:</strong> Caspete.com · <strong>Finalidad:</strong> Gestión de loncheras escolares y seguridad alimentaria del menor.
+                  <strong>Responsable:</strong> Kidway (operado por Ferney Blanco, NIT 1093752731-1) · <strong>Finalidad:</strong> Gestión de loncheras escolares y seguridad alimentaria del menor.
                   Usted tiene derecho a conocer, actualizar y suprimir sus datos escribiendo a{' '}
-                  <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a>.{' '}
+                  <a href="mailto:privacidad@kidway.co" style={{ color: '#1a4731' }}>privacidad@kidway.co</a>.{' '}
                   <Link to="/privacidad" target="_blank" style={{ color: '#1a4731', fontWeight: 600 }}>Ver política completa →</Link>
                 </p>
 
@@ -247,7 +247,7 @@ export default function RegisterPage() {
                   <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
                     He leído y acepto la{' '}
                     <Link to="/privacidad" target="_blank" style={{ color: '#1a4731', fontWeight: 600 }}>Política de Tratamiento de la Información</Link>{' '}
-                    de caspete.com para el manejo de mis datos personales (nombre, contacto, pagos).
+                    de Kidway para el manejo de mis datos personales (nombre, contacto, pagos).
                   </span>
                 </label>
 

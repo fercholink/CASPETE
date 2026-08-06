@@ -25,24 +25,25 @@ export default function PrivacyPolicyPage() {
             Política de Tratamiento de la Información
           </h1>
           <p style={{ margin: 0, opacity: 0.85, fontSize: 14 }}>
-            Versión 1.0 — Mayo 2026 · Supervisado por la Superintendencia de Industria y Comercio (SIC)
+            Versión 1.1 — Agosto 2026 · Supervisado por la Superintendencia de Industria y Comercio (SIC)
           </p>
         </div>
 
         {/* Aviso crítico */}
         <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10, padding: '14px 18px', marginBottom: 28 }}>
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
-            ⚠️ <strong>Datos de menores de edad:</strong> Caspete.com maneja datos sensibles de salud (alergias, restricciones
+            ⚠️ <strong>Datos de menores de edad:</strong> Kidway maneja datos sensibles de salud (alergias, restricciones
             médicas) de menores de edad en una categoría de <strong>máxima protección</strong>. El tratamiento se realiza exclusivamente
             bajo autorización expresa del representante legal y bajo el principio del Interés Superior del Niño.
           </p>
         </div>
 
         <Section title="1. Responsable del Tratamiento">
-          <p><strong>Razón Social:</strong> Caspete.com (Ferney Blanco)</p>
+          <p><strong>Nombre comercial:</strong> Kidway</p>
+          <p><strong>Operado por:</strong> Ferney Blanco</p>
           <p><strong>NIT:</strong> 1093752731-1</p>
-          <p><strong>Correo:</strong> <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a></p>
-          <p><strong>Canal ARCO:</strong> <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a> | Plazo: 15 días hábiles</p>
+          <p><strong>Correo:</strong> <a href="mailto:privacidad@kidway.co" style={{ color: '#1a4731' }}>privacidad@kidway.co</a></p>
+          <p><strong>Canal ARCO:</strong> <a href="mailto:privacidad@kidway.co" style={{ color: '#1a4731' }}>privacidad@kidway.co</a> | Plazo: 15 días hábiles</p>
         </Section>
 
         <Section title="2. Datos que Recolectamos">
@@ -101,13 +102,13 @@ export default function PrivacyPolicyPage() {
           </table>
           <p style={{ marginTop: 14 }}>
             Ejerce tus derechos en la plataforma: <Link to="/mis-datos" style={{ color: '#1a4731', fontWeight: 600 }}>Mis Datos →</Link>{' '}
-            o escribiendo a <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a>
+            o escribiendo a <a href="mailto:privacidad@kidway.co" style={{ color: '#1a4731' }}>privacidad@kidway.co</a>
           </p>
         </Section>
 
         <Section title="5. Consentimiento para Datos Sensibles (Art. 7)">
           <p>
-            Por tratarse de datos sensibles de salud de menores de edad, Caspete.com obtiene{' '}
+            Por tratarse de datos sensibles de salud de menores de edad, Kidway obtiene{' '}
             <strong>consentimiento expreso, previo e informado</strong> en tres capas independientes durante el registro:
           </p>
           <ol>
@@ -119,7 +120,7 @@ export default function PrivacyPolicyPage() {
         </Section>
 
         <Section title="6. Transmisión de Datos a Terceros (Art. 25)">
-          <p>Caspete.com comparte datos únicamente con:</p>
+          <p>Kidway comparte datos únicamente con:</p>
           <ul>
             <li><strong>Pasarela de pagos (Wompi/PayU):</strong> Datos financieros del tutor. Certificación PCI DSS.</li>
             <li><strong>Proveedor de hosting:</strong> Todos los datos almacenados bajo contrato DPA.</li>
@@ -156,15 +157,15 @@ export default function PrivacyPolicyPage() {
           <p>
             Cualquier modificación sustancial será notificada al titular por correo electrónico con al menos
             15 días de anticipación. La versión vigente siempre estará disponible en{' '}
-            <strong>caspete.com/privacidad</strong>.
+            <strong>kidway.co/privacidad</strong>.
           </p>
         </Section>
 
         {/* Footer */}
         <div style={{ background: '#f3f4f6', borderRadius: 10, padding: '16px 20px', marginTop: 32, fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
           <p style={{ margin: 0 }}>
-            Caspete.com — Versión 1.0 — Mayo 2026 ·{' '}
-            <a href="mailto:privacidad@caspete.com" style={{ color: '#1a4731' }}>privacidad@caspete.com</a> ·{' '}
+            Kidway (operado por Ferney Blanco, NIT 1093752731-1) — Versión 1.1 — Agosto 2026 ·{' '}
+            <a href="mailto:privacidad@kidway.co" style={{ color: '#1a4731' }}>privacidad@kidway.co</a> ·{' '}
             Supervisado por la <a href="https://www.sic.gov.co" target="_blank" rel="noreferrer" style={{ color: '#1a4731' }}>SIC</a>
           </p>
           <div style={{ marginTop: 10, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>

@@ -179,7 +179,9 @@ export default function GPSTrackingPage() {
     if (markerRef.current) { map.removeLayer(markerRef.current); markerRef.current = null; }
     if (expectedRoutePolylineRef.current) { map.removeLayer(expectedRoutePolylineRef.current); expectedRoutePolylineRef.current = null; }
 
-    if (expectedRoute && expectedRoute.points.length > 1) {
+    // La ruta esperada (referencia) solo tiene sentido en vivo — al ver un día
+    // pasado se muestra únicamente lo que el dispositivo realmente recorrió ese día.
+    if (!viewDate && expectedRoute && expectedRoute.points.length > 1) {
       const latlngs: [number, number][] = expectedRoute.points.map((p) => [p.lat, p.lon]);
       expectedRoutePolylineRef.current = L.polyline(latlngs, { color: '#2563eb', weight: 3, opacity: 0.5, dashArray: '6 8' }).addTo(map);
     }
@@ -217,12 +219,12 @@ export default function GPSTrackingPage() {
         map.setView([markerPoint.lat, markerPoint.lon], 16);
         hasCenteredRef.current = true;
       }
-    } else if (expectedRoute && expectedRoute.points.length > 0 && !hasCenteredRef.current) {
+    } else if (!viewDate && expectedRoute && expectedRoute.points.length > 0 && !hasCenteredRef.current) {
       const mid = expectedRoute.points[Math.floor(expectedRoute.points.length / 2)]!;
       map.setView([mid.lat, mid.lon], 15);
       hasCenteredRef.current = true;
     }
-  }, [current, history, expectedRoute, students, selectedId]);
+  }, [current, history, expectedRoute, viewDate, students, selectedId]);
 
   const selectedStudent = students.find((s) => s.id === selectedId);
 
@@ -335,12 +337,18 @@ export default function GPSTrackingPage() {
               </div>
             )}
 
+            {viewDate && history.length === 0 && (
+              <div className="roadmap-note" style={{ marginBottom: 12 }}>
+                No hay recorrido registrado para el {viewDate.split('-').reverse().join('/')}.
+              </div>
+            )}
+
             <div
               ref={setMapContainer}
               style={{
                 width: '100%', height: 480, borderRadius: 16,
                 border: '1px solid var(--color-border)', overflow: 'hidden',
-                display: notLinked ? 'none' : 'block',
+                display: notLinked || (Boolean(viewDate) && history.length === 0) ? 'none' : 'block',
               }}
             />
 

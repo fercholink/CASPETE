@@ -24,7 +24,7 @@ router.get('/:id', allRoles, studentController.getOne);
 router.patch('/:id', requireRole('PARENT', 'SCHOOL_ADMIN', 'SUPER_ADMIN'), studentController.update);
 
 // PATCH  /api/students/:id/reactivate
-router.patch('/:id/reactivate', requireRole('SCHOOL_ADMIN', 'SUPER_ADMIN'), studentController.reactivate);
+router.patch('/:id/reactivate', requireRole('PARENT', 'SCHOOL_ADMIN', 'SUPER_ADMIN'), studentController.reactivate);
 
 // DELETE /api/students/:id — soft delete
 router.delete('/:id', requireRole('PARENT', 'SCHOOL_ADMIN', 'SUPER_ADMIN'), studentController.deactivate);

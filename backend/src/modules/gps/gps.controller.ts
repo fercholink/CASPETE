@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import * as gpsService from './gps.service.js';
-import { linkTrackerSchema, historyQuerySchema, emergencyContactsSchema } from './gps.schemas.js';
+import { linkTrackerSchema, historyQuerySchema, emergencyContactsSchema, findDeviceSchema } from './gps.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
 export async function link(req: Request, res: Response) {
@@ -19,6 +19,12 @@ export async function setEmergencyContacts(req: Request, res: Response) {
   const input = emergencyContactsSchema.parse(req.body);
   const result = await gpsService.setEmergencyContacts(req.params['id'] as string, input, req.user!);
   sendSuccess(res, result, 'Números de contacto actualizados');
+}
+
+export async function findDevice(req: Request, res: Response) {
+  const input = findDeviceSchema.parse(req.body);
+  await gpsService.findDevice(req.params['id'] as string, input.active, req.user!);
+  sendSuccess(res, null, input.active ? 'Buscando dispositivo' : 'Búsqueda detenida');
 }
 
 export async function getCurrentLocation(req: Request, res: Response) {

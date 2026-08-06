@@ -239,6 +239,18 @@ export async function setReportInterval(platformTrackerId: string, seconds: numb
 }
 
 /**
+ * Hace sonar (o detiene) el parlante del dispositivo, si tiene. Es una acción
+ * momentánea — si el dispositivo está desconectado, la Plataforma GPS
+ * responde con error en vez de guardar la intención para más tarde.
+ */
+export async function findDevice(platformTrackerId: string, active: boolean): Promise<void> {
+  await request(`/trackers/${platformTrackerId}/find`, {
+    method: 'PATCH',
+    body: JSON.stringify({ active }),
+  });
+}
+
+/**
  * Guarda los números que el dispositivo llama al presionar su botón físico de
  * SOS (protocolo 0x41/0x42/0x43). Si la tarjeta está conectada en ese momento
  * se los envía de una vez; si no, la Plataforma GPS los reenvía sola en el

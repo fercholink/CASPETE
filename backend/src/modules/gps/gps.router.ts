@@ -13,6 +13,7 @@ const gpsRoles = requireRole('PARENT', 'SUPER_ADMIN');
 router.post('/trackers', gpsRoles, gpsController.link);
 router.delete('/trackers/:id', gpsRoles, gpsController.unlink);
 router.patch('/trackers/:id/emergency-contacts', gpsRoles, gpsController.setEmergencyContacts);
+router.patch('/trackers/:id/find', gpsRoles, gpsController.findDevice);
 router.get('/trackers/student/:studentId', gpsRoles, gpsController.getCurrentLocation);
 router.get('/trackers/student/:studentId/history', gpsRoles, gpsController.getHistory);
 router.get('/trackers/student/:studentId/route', gpsRoles, gpsController.getExpectedRoute);

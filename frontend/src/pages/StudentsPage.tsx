@@ -88,6 +88,9 @@ export default function StudentsPage() {
   const [deviceName, setDeviceName] = useState('');
   const [linking, setLinking] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
+  const [findingDevice, setFindingDevice] = useState(false);
+  const [deviceSounding, setDeviceSounding] = useState(false);
+  const [findError, setFindError] = useState('');
 
   // Números de contacto (SOS/papá/mamá) — el dispositivo llama a estos al presionar su botón físico de SOS
   const [sosNumber, setSosNumber] = useState('');
@@ -246,6 +249,7 @@ export default function StudentsPage() {
     setDeviceName('');
     setSosNumber(''); setDadNumber(''); setMomNumber('');
     setContactsError(''); setContactsSaved(false);
+    setDeviceSounding(false); setFindError('');
     setGpsLoading(true);
     apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)
       .then((r) => {
@@ -300,6 +304,21 @@ export default function StudentsPage() {
       setContactsError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al guardar los números de contacto');
     } finally {
       setSavingContacts(false);
+    }
+  }
+
+  async function handleFindDevice() {
+    if (!gpsTracker) return;
+    const nextActive = !deviceSounding;
+    setFindingDevice(true);
+    setFindError('');
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/find`, { active: nextActive });
+      setDeviceSounding(nextActive);
+    } catch (err) {
+      setFindError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo contactar a la tarjeta');
+    } finally {
+      setFindingDevice(false);
     }
   }
 
@@ -837,6 +856,21 @@ export default function StudentsPage() {
                     <span style={{ fontWeight: 600 }}>{gpsTracker.battery_level ?? '—'}%</span>
                   </div>
                 </div>
+
+                <button
+                  className="btn-ghost"
+                  style={{ width: '100%', marginBottom: 10 }}
+                  disabled={findingDevice || !gpsTracker.online}
+                  onClick={handleFindDevice}
+                >
+                  {findingDevice ? 'Enviando...' : deviceSounding ? '🔇 Detener sonido' : '🔊 Buscar tarjeta (hacerla sonar)'}
+                </button>
+                {!gpsTracker.online && (
+                  <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--color-placeholder)', textAlign: 'center' }}>
+                    La tarjeta debe estar en línea para poder encontrarla.
+                  </p>
+                )}
+                {findError && <p className="form-error" style={{ marginTop: 0, marginBottom: 10, textAlign: 'center' }}>{findError}</p>}
 
                 <Link to="/tracking" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', display: 'block', marginBottom: 20 }}>
                   Ver ubicación en el mapa

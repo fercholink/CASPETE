@@ -21,3 +21,8 @@ export const emergencyContactsSchema = z.object({
   mom_number: contactNumberSchema,
 });
 export type EmergencyContactsInput = z.infer<typeof emergencyContactsSchema>;
+
+export const findDeviceSchema = z.object({
+  active: z.boolean(),
+});
+export type FindDeviceInput = z.infer<typeof findDeviceSchema>;

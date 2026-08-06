@@ -191,7 +191,7 @@ export async function anonymizeUser(userId: string) {
       where: { id: userId },
       data: {
         full_name: '[ELIMINADO]',
-        email: `deleted_${userId}@anonimizado.caspete`,
+        email: `deleted_${userId}@anonimizado.kidway`,
         phone: null,
         password_hash: null,
         google_id: null,
@@ -483,9 +483,9 @@ export async function generateSicReport() {
       to: now.toISOString(),
     },
     responsible_entity: {
-      name: 'Caspete.com',
+      name: 'Kidway (operado por Ferney Blanco, NIT 1093752731-1)',
       legal_framework: 'Ley 1581/2012 · Decreto 1377/2013',
-      contact_email: 'privacidad@caspete.com',
+      contact_email: 'privacidad@kidway.co',
     },
     consent_summary: {
       total_active_users: totalUsers,

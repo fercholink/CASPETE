@@ -155,7 +155,7 @@ export async function getOrderComplianceCertificate(orderId: string, actor: JwtP
       order_id:         order.id,
       issued_at:        new Date().toISOString(),
       legal_framework:  'Ley 2120 de 2021 — Resolución 2492 de 2022',
-      platform:         'CASPETE.COM',
+      platform:         'KIDWAY.CO',
     },
     order: {
       scheduled_date:      order.scheduled_date,

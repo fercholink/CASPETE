@@ -1,7 +1,7 @@
 /**
  * Cliente HTTP de la Plataforma GPS (servicio externo — gps.bscomunicaciones.com)
  *
- * Caspete ya no recibe la conexión TCP real de las tarjetas GPS: el dispositivo
+ * Kidway ya no recibe la conexión TCP real de las tarjetas GPS: el dispositivo
  * apunta a la Plataforma GPS, que es quien ingesta y guarda las posiciones.
  * Este cliente consulta esa plataforma vía su API HTTP (Authorization: Bearer <api_key>).
  */

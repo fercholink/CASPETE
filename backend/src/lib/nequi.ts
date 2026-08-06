@@ -82,7 +82,7 @@ export async function initiatePayment(opts: {
             value: String(opts.amount),
             reference1: opts.reference1,
             reference2: opts.reference2,
-            reference3: opts.reference3 ?? 'CASPETE',
+            reference3: opts.reference3 ?? 'KIDWAY',
           },
         },
       },

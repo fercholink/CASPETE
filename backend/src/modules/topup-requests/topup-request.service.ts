@@ -87,7 +87,7 @@ export async function createNequiTopupRequest(
       amount,
       reference1: request.id,
       reference2: student.full_name,
-      reference3: `CASPETE-TOPUP`,
+      reference3: `KIDWAY-TOPUP`,
     });
 
     await prisma.topupRequest.update({

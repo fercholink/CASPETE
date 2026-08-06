@@ -360,7 +360,7 @@ export async function resolveStudentByQrToken(
 }
 
 // ── Ventana de rastreo autorizada (horario escolar ± margen de trayecto, o extendido) ──
-// La Plataforma GPS guarda telemetría sin condición; Caspete decide en tiempo de
+// La Plataforma GPS guarda telemetría sin condición; Kidway decide en tiempo de
 // lectura si se la muestra al padre según esta ventana.
 const TRAYECTO_MARGIN_MIN = 45;
 const BOGOTA_UTC_OFFSET_HOURS = -5;

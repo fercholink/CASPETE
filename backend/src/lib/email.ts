@@ -17,16 +17,16 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
   }
 
   await resend.emails.send({
-    from: `Caspete <${env.EMAIL_FROM}>`,
+    from: `Kidway <${env.EMAIL_FROM}>`,
     to,
-    subject: '🔑 Recupera tu contraseña de Caspete',
+    subject: '🔑 Recupera tu contraseña de Kidway',
     html: `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Recuperar contraseña - Caspete</title>
+  <title>Recuperar contraseña - Kidway</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f0;padding:40px 0;">
@@ -36,7 +36,7 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
         <!-- Header -->
         <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
           <div style="font-size:36px;margin-bottom:8px;">🎒</div>
-          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">CASPETE</div>
+          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">KIDWAY</div>
           <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
         </td></tr>
 
@@ -44,7 +44,7 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
         <tr><td style="background:#ffffff;padding:40px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
           <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 8px;">Hola, ${name} 👋</h1>
           <p style="color:#6b7280;font-size:15px;line-height:1.6;margin:0 0 24px;">
-            Recibimos una solicitud para restablecer la contraseña de tu cuenta de Caspete.<br/>
+            Recibimos una solicitud para restablecer la contraseña de tu cuenta de Kidway.<br/>
             Si no fuiste tú, puedes ignorar este correo tranquilamente.
           </p>
 
@@ -71,8 +71,8 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
         <!-- Footer -->
         <tr><td style="padding:24px 0;text-align:center;">
           <p style="color:#9ca3af;font-size:12px;margin:0;">
-            © ${new Date().getFullYear()} Caspete · Loncheras Escolares Inteligentes<br/>
-            <a href="https://caspete.com" style="color:#1a4731;">caspete.com</a>
+            © ${new Date().getFullYear()} Kidway · Loncheras Escolares Inteligentes<br/>
+            <a href="https://kidway.co" style="color:#1a4731;">kidway.co</a>
           </p>
         </td></tr>
 
@@ -109,7 +109,7 @@ export async function sendTopupConfirmationEmail(
   };
 
   await resend.emails.send({
-    from: `Caspete <${env.EMAIL_FROM}>`,
+    from: `Kidway <${env.EMAIL_FROM}>`,
     to,
     subject: `✅ Recarga confirmada — ${fmtCOP(amount)} para ${studentName}`,
     html: `
@@ -118,7 +118,7 @@ export async function sendTopupConfirmationEmail(
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Recarga confirmada - Caspete</title>
+  <title>Recarga confirmada - Kidway</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f0;padding:40px 0;">
@@ -127,7 +127,7 @@ export async function sendTopupConfirmationEmail(
 
         <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
           <div style="font-size:36px;margin-bottom:8px;">🎒</div>
-          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">CASPETE</div>
+          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">KIDWAY</div>
           <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
         </td></tr>
 
@@ -156,14 +156,14 @@ export async function sendTopupConfirmationEmail(
           </table>
 
           <p style="color:#9ca3af;font-size:13px;line-height:1.6;margin:24px 0 0;">
-            Ya puedes realizar pedidos para tu hijo/a desde la plataforma Caspete.
+            Ya puedes realizar pedidos para tu hijo/a desde la plataforma Kidway.
           </p>
         </td></tr>
 
         <tr><td style="padding:24px 0;text-align:center;">
           <p style="color:#9ca3af;font-size:12px;margin:0;">
-            © ${new Date().getFullYear()} Caspete · Loncheras Escolares Inteligentes<br/>
-            <a href="https://caspete.com" style="color:#1a4731;">caspete.com</a>
+            © ${new Date().getFullYear()} Kidway · Loncheras Escolares Inteligentes<br/>
+            <a href="https://kidway.co" style="color:#1a4731;">kidway.co</a>
           </p>
         </td></tr>
 
@@ -191,7 +191,7 @@ export async function sendTopupRejectionEmail(
   }
 
   await resend.emails.send({
-    from: `Caspete <${env.EMAIL_FROM}>`,
+    from: `Kidway <${env.EMAIL_FROM}>`,
     to,
     subject: `❌ Solicitud de recarga no aprobada — ${fmtCOP(amount)} para ${studentName}`,
     html: `
@@ -200,7 +200,7 @@ export async function sendTopupRejectionEmail(
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Recarga no aprobada - Caspete</title>
+  <title>Recarga no aprobada - Kidway</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f0;padding:40px 0;">
@@ -209,7 +209,7 @@ export async function sendTopupRejectionEmail(
 
         <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
           <div style="font-size:36px;margin-bottom:8px;">🎒</div>
-          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">CASPETE</div>
+          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">KIDWAY</div>
           <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
         </td></tr>
 
@@ -221,19 +221,19 @@ export async function sendTopupRejectionEmail(
 
           <div style="background:#fff5f5;border-left:4px solid #e53e3e;border-radius:4px;padding:16px;margin:24px 0;">
             <p style="color:#742a2a;font-size:14px;margin:0;">
-              ⚠️ Si crees que esto es un error o tienes preguntas, por favor comunícate con la administración del colegio o escríbenos a <a href="mailto:info@caspete.com" style="color:#1a4731;">info@caspete.com</a>.
+              ⚠️ Si crees que esto es un error o tienes preguntas, por favor comunícate con la administración del colegio o escríbenos a <a href="mailto:info@kidway.co" style="color:#1a4731;">info@kidway.co</a>.
             </p>
           </div>
 
           <p style="color:#9ca3af;font-size:13px;line-height:1.6;margin:24px 0 0;">
-            Puedes realizar una nueva solicitud de recarga desde la plataforma Caspete cuando lo desees.
+            Puedes realizar una nueva solicitud de recarga desde la plataforma Kidway cuando lo desees.
           </p>
         </td></tr>
 
         <tr><td style="padding:24px 0;text-align:center;">
           <p style="color:#9ca3af;font-size:12px;margin:0;">
-            © ${new Date().getFullYear()} Caspete · Loncheras Escolares Inteligentes<br/>
-            <a href="https://caspete.com" style="color:#1a4731;">caspete.com</a>
+            © ${new Date().getFullYear()} Kidway · Loncheras Escolares Inteligentes<br/>
+            <a href="https://kidway.co" style="color:#1a4731;">kidway.co</a>
           </p>
         </td></tr>
 
@@ -256,16 +256,16 @@ export async function sendEmailVerificationEmail(to: string, name: string, verif
   }
 
   await resend.emails.send({
-    from: `Caspete <${env.EMAIL_FROM}>`,
+    from: `Kidway <${env.EMAIL_FROM}>`,
     to,
-    subject: '📧 Confirma tu correo electrónico en Caspete',
+    subject: '📧 Confirma tu correo electrónico en Kidway',
     html: `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Confirmar correo electrónico - Caspete</title>
+  <title>Confirmar correo electrónico - Kidway</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f0;padding:40px 0;">
@@ -275,7 +275,7 @@ export async function sendEmailVerificationEmail(to: string, name: string, verif
         <!-- Header -->
         <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
           <div style="font-size:36px;margin-bottom:8px;">🎒</div>
-          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">CASPETE</div>
+          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">KIDWAY</div>
           <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
         </td></tr>
 
@@ -283,7 +283,7 @@ export async function sendEmailVerificationEmail(to: string, name: string, verif
         <tr><td style="background:#ffffff;padding:40px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
           <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 8px;">¡Bienvenido/a, ${name}! 👋</h1>
           <p style="color:#6b7280;font-size:15px;line-height:1.6;margin:0 0 24px;">
-            Gracias por registrarte en Caspete. Para comenzar a programar las loncheras escolares de tus hijos de forma inteligente y segura, por favor confirma tu dirección de correo electrónico.
+            Gracias por registrarte en Kidway. Para comenzar a programar las loncheras escolares de tus hijos de forma inteligente y segura, por favor confirma tu dirección de correo electrónico.
           </p>
 
           <!-- Botón -->
@@ -309,8 +309,8 @@ export async function sendEmailVerificationEmail(to: string, name: string, verif
         <!-- Footer -->
         <tr><td style="padding:24px 0;text-align:center;">
           <p style="color:#9ca3af;font-size:12px;margin:0;">
-            © ${new Date().getFullYear()} Caspete · Loncheras Escolares Inteligentes<br/>
-            <a href="https://caspete.com" style="color:#1a4731;">caspete.com</a>
+            © ${new Date().getFullYear()} Kidway · Loncheras Escolares Inteligentes<br/>
+            <a href="https://kidway.co" style="color:#1a4731;">kidway.co</a>
           </p>
         </td></tr>
 

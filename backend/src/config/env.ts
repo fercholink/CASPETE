@@ -17,8 +17,8 @@ const envSchema = z.object({
   AWS_REGION: z.string().default('us-east-1'),
   S3_BACKUP_BUCKET: z.string().optional(),
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY es requerida'),
-  EMAIL_FROM: z.string().default('info@caspete.com'),
-  PAYMENT_EMAIL: z.string().default('pagos@caspete.com'),
+  EMAIL_FROM: z.string().default('info@kidway.co'),
+  PAYMENT_EMAIL: z.string().default('pagos@kidway.co'),
   GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID es requerida'),
   GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET es requerida'),
   GOOGLE_CALLBACK_URL: z.string().default('http://localhost:3001/api/auth/google/callback'),
@@ -29,7 +29,7 @@ const envSchema = z.object({
   NEQUI_API_KEY: z.string().default(''),
   NEQUI_CHANNEL: z.string().default('PNP04-C001'),
   // Plataforma GPS — servicio externo que ingesta las tarjetas GPS reales.
-  // Opcional: si no está configurado, el módulo de rastreo GPS de Caspete
+  // Opcional: si no está configurado, el módulo de rastreo GPS de Kidway
   // simplemente no encuentra localizadores (no rompe el arranque).
   GPS_PLATFORM_API_URL: z.string().default('https://gps.bscomunicaciones.com/api/v1'),
   GPS_PLATFORM_API_KEY: z.string().default(''),

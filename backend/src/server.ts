@@ -20,7 +20,7 @@ async function main() {
   }
 
   app.listen(env.PORT, () => {
-    console.log(`[Server] CASPETE API corriendo en http://localhost:${env.PORT}`);
+    console.log(`[Server] KIDWAY API corriendo en http://localhost:${env.PORT}`);
     console.log(`[Server] Entorno: ${env.NODE_ENV}`);
   });
 

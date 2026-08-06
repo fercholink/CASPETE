@@ -6,7 +6,7 @@ import { AppError } from '../../middleware/error.middleware.js';
 // Se leen del entorno (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_EMAIL)
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY  ?? '';
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY ?? '';
-const VAPID_EMAIL   = process.env.VAPID_EMAIL       ?? 'mailto:info@caspete.com';
+const VAPID_EMAIL   = process.env.VAPID_EMAIL       ?? 'mailto:info@kidway.co';
 
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);

@@ -1,5 +1,5 @@
 /**
- * CASPETE — Scheduler de tareas programadas (Cron Jobs)
+ * KIDWAY — Scheduler de tareas programadas (Cron Jobs)
  * ───────────────────────────────────────────────────────
  * Centraliza todos los jobs del sistema.
  * Se inicializa una sola vez al arrancar el servidor.

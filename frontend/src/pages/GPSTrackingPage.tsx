@@ -159,10 +159,17 @@ export default function GPSTrackingPage() {
   const setMapContainer = useCallback((node: HTMLDivElement | null) => {
     if (node && !mapRef.current) {
       const map = L.map(node).setView([4.6579, -74.0937], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+      const calles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
       }).addTo(map);
+      const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri',
+        maxZoom: 19,
+      });
+      L.control.layers({ 'Calles': calles, 'Satélite': satelite }).addTo(map);
+
       mapRef.current = map;
     } else if (!node && mapRef.current) {
       mapRef.current.remove();

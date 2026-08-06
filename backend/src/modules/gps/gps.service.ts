@@ -170,6 +170,40 @@ export async function findDevice(id: string, active: boolean, actor: JwtPayload)
   await gpsPlatform.findDevice(tracker.platform_tracker_id, active);
 }
 
+// Apaga la tarjeta — sin comando de vuelta, exige botón físico o cargador para reencenderla.
+export async function sendPowerAction(id: string, action: 'restart' | 'shutdown', actor: JwtPayload) {
+  const tracker = await prisma.gPSTracker.findUnique({
+    where: { id },
+    select: { platform_tracker_id: true, student: { select: { parent_id: true } } },
+  });
+  if (!tracker) throw new AppError('Localizador no encontrado', 404);
+  if (actor.role !== 'SUPER_ADMIN' && tracker.student?.parent_id !== actor.sub) {
+    throw new AppError('No tienes permiso para usar este localizador', 403);
+  }
+  if (!tracker.platform_tracker_id) {
+    throw new AppError('Este localizador todavía no está sincronizado con la Plataforma GPS', 409);
+  }
+
+  await gpsPlatform.sendPowerAction(tracker.platform_tracker_id, action);
+}
+
+// Alarma de despertador de la tarjeta (hasta 3 horarios).
+export async function setAlarmClock(id: string, alarms: gpsPlatform.AlarmClockEntry[], actor: JwtPayload) {
+  const tracker = await prisma.gPSTracker.findUnique({
+    where: { id },
+    select: { platform_tracker_id: true, student: { select: { parent_id: true } } },
+  });
+  if (!tracker) throw new AppError('Localizador no encontrado', 404);
+  if (actor.role !== 'SUPER_ADMIN' && tracker.student?.parent_id !== actor.sub) {
+    throw new AppError('No tienes permiso para usar este localizador', 403);
+  }
+  if (!tracker.platform_tracker_id) {
+    throw new AppError('Este localizador todavía no está sincronizado con la Plataforma GPS', 409);
+  }
+
+  await gpsPlatform.setAlarmClock(tracker.platform_tracker_id, alarms);
+}
+
 export async function getCurrentLocation(studentId: string, actor: JwtPayload, req: Request) {
   await assertParentOwnsStudent(studentId, actor);
 

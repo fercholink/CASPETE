@@ -91,6 +91,13 @@ export default function StudentsPage() {
   const [findingDevice, setFindingDevice] = useState(false);
   const [deviceSounding, setDeviceSounding] = useState(false);
   const [findError, setFindError] = useState('');
+  const [poweringOff, setPoweringOff] = useState(false);
+  const [powerError, setPowerError] = useState('');
+  const [alarmWeekdays, setAlarmWeekdays] = useState(0); // bitmask, bit0=lunes...bit6=domingo
+  const [alarmTime, setAlarmTime] = useState('');
+  const [savingAlarm, setSavingAlarm] = useState(false);
+  const [alarmSaved, setAlarmSaved] = useState(false);
+  const [alarmError, setAlarmError] = useState('');
 
   // Números de contacto (SOS/papá/mamá) — el dispositivo llama a estos al presionar su botón físico de SOS
   const [sosNumber, setSosNumber] = useState('');
@@ -250,6 +257,8 @@ export default function StudentsPage() {
     setSosNumber(''); setDadNumber(''); setMomNumber('');
     setContactsError(''); setContactsSaved(false);
     setDeviceSounding(false); setFindError('');
+    setPowerError('');
+    setAlarmWeekdays(0); setAlarmTime(''); setAlarmError(''); setAlarmSaved(false);
     setGpsLoading(true);
     apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)
       .then((r) => {
@@ -319,6 +328,43 @@ export default function StudentsPage() {
       setFindError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo contactar a la tarjeta');
     } finally {
       setFindingDevice(false);
+    }
+  }
+
+  async function handlePowerOff() {
+    if (!gpsTracker) return;
+    if (!confirm('¿Apagar la tarjeta? No hay forma de volver a encenderla desde la app — habrá que presionar su botón físico o conectarla al cargador.')) return;
+    setPoweringOff(true);
+    setPowerError('');
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/power`, { action: 'shutdown' });
+    } catch (err) {
+      setPowerError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo apagar la tarjeta');
+    } finally {
+      setPoweringOff(false);
+    }
+  }
+
+  function toggleAlarmWeekday(bit: number) {
+    setAlarmWeekdays((prev) => (prev & (1 << bit) ? prev & ~(1 << bit) : prev | (1 << bit)));
+  }
+
+  async function handleSaveAlarm(e: React.FormEvent) {
+    e.preventDefault();
+    if (!gpsTracker || !alarmTime) return;
+    const [hour, minute] = alarmTime.split(':').map(Number);
+    setSavingAlarm(true);
+    setAlarmError('');
+    setAlarmSaved(false);
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/alarm-clock`, {
+        alarms: [{ weekdays: alarmWeekdays, hour, minute }],
+      });
+      setAlarmSaved(true);
+    } catch (err) {
+      setAlarmError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la alarma');
+    } finally {
+      setSavingAlarm(false);
     }
   }
 
@@ -890,6 +936,44 @@ export default function StudentsPage() {
                     {savingContacts ? 'Guardando...' : 'Guardar números de contacto'}
                   </button>
                 </form>
+
+                <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4, fontWeight: 600 }}>Alarma de despertador</p>
+                <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--color-placeholder)' }}>
+                  Si la tarjeta tiene parlante, suena a la hora que elijas los días marcados.
+                </p>
+                <form onSubmit={handleSaveAlarm} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                  <div style={{ display: 'flex', gap: 4, justifyContent: 'space-between' }}>
+                    {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((label, bit) => (
+                      <button
+                        key={bit}
+                        type="button"
+                        onClick={() => toggleAlarmWeekday(bit)}
+                        style={{
+                          width: 32, height: 32, borderRadius: '50%', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                          border: `1.5px solid ${alarmWeekdays & (1 << bit) ? 'var(--color-brand-deep)' : 'var(--color-border)'}`,
+                          background: alarmWeekdays & (1 << bit) ? 'var(--color-brand-deep)' : 'transparent',
+                          color: alarmWeekdays & (1 << bit) ? '#fff' : 'var(--color-text-muted)',
+                        }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <input className="form-input" type="time" value={alarmTime} onChange={(e) => setAlarmTime(e.target.value)} />
+                  {alarmError && <p className="form-error" style={{ margin: 0 }}>{alarmError}</p>}
+                  {alarmSaved && <p style={{ margin: 0, fontSize: 12, color: '#059669', fontWeight: 600 }}>Alarma guardada ✓</p>}
+                  <button type="submit" className="btn-ghost" disabled={savingAlarm || !alarmTime || alarmWeekdays === 0}>
+                    {savingAlarm ? 'Guardando...' : 'Guardar alarma'}
+                  </button>
+                </form>
+
+                <button className="btn-ghost" style={{ width: '100%', color: '#dc2626', marginBottom: 10 }} disabled={poweringOff || !gpsTracker.online} onClick={handlePowerOff}>
+                  {poweringOff ? 'Apagando...' : '⏻ Apagar tarjeta'}
+                </button>
+                <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--color-placeholder)', textAlign: 'center' }}>
+                  No se puede volver a encender desde la app — solo con el botón físico o el cargador.
+                </p>
+                {powerError && <p className="form-error" style={{ marginTop: 0, marginBottom: 10, textAlign: 'center' }}>{powerError}</p>}
 
                 <button className="btn-ghost" style={{ width: '100%', color: '#dc2626' }} disabled={unlinking} onClick={handleUnlinkTracker}>
                   {unlinking ? 'Desvinculando...' : 'Desvincular localizador'}

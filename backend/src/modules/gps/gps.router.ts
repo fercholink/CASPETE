@@ -14,6 +14,8 @@ router.post('/trackers', gpsRoles, gpsController.link);
 router.delete('/trackers/:id', gpsRoles, gpsController.unlink);
 router.patch('/trackers/:id/emergency-contacts', gpsRoles, gpsController.setEmergencyContacts);
 router.patch('/trackers/:id/find', gpsRoles, gpsController.findDevice);
+router.patch('/trackers/:id/power', gpsRoles, gpsController.sendPowerAction);
+router.patch('/trackers/:id/alarm-clock', gpsRoles, gpsController.setAlarmClock);
 router.get('/trackers/student/:studentId', gpsRoles, gpsController.getCurrentLocation);
 router.get('/trackers/student/:studentId/history', gpsRoles, gpsController.getHistory);
 router.get('/trackers/student/:studentId/route', gpsRoles, gpsController.getExpectedRoute);

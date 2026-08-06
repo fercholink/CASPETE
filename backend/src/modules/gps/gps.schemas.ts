@@ -26,3 +26,18 @@ export const findDeviceSchema = z.object({
   active: z.boolean(),
 });
 export type FindDeviceInput = z.infer<typeof findDeviceSchema>;
+
+export const powerActionSchema = z.object({
+  action: z.enum(['restart', 'shutdown']),
+});
+export type PowerActionInput = z.infer<typeof powerActionSchema>;
+
+const alarmEntrySchema = z.object({
+  weekdays: z.coerce.number().int().min(0).max(127),
+  hour: z.coerce.number().int().min(0).max(23),
+  minute: z.coerce.number().int().min(0).max(59),
+});
+export const setAlarmClockSchema = z.object({
+  alarms: z.array(alarmEntrySchema).max(3),
+});
+export type SetAlarmClockInput = z.infer<typeof setAlarmClockSchema>;

@@ -1,6 +1,9 @@
 import type { Request, Response } from 'express';
 import * as gpsService from './gps.service.js';
-import { linkTrackerSchema, historyQuerySchema, emergencyContactsSchema, findDeviceSchema } from './gps.schemas.js';
+import {
+  linkTrackerSchema, historyQuerySchema, emergencyContactsSchema, findDeviceSchema,
+  powerActionSchema, setAlarmClockSchema,
+} from './gps.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
 export async function link(req: Request, res: Response) {
@@ -25,6 +28,18 @@ export async function findDevice(req: Request, res: Response) {
   const input = findDeviceSchema.parse(req.body);
   await gpsService.findDevice(req.params['id'] as string, input.active, req.user!);
   sendSuccess(res, null, input.active ? 'Buscando dispositivo' : 'Búsqueda detenida');
+}
+
+export async function sendPowerAction(req: Request, res: Response) {
+  const input = powerActionSchema.parse(req.body);
+  await gpsService.sendPowerAction(req.params['id'] as string, input.action, req.user!);
+  sendSuccess(res, null, input.action === 'shutdown' ? 'Apagando dispositivo' : 'Reiniciando dispositivo');
+}
+
+export async function setAlarmClock(req: Request, res: Response) {
+  const input = setAlarmClockSchema.parse(req.body);
+  await gpsService.setAlarmClock(req.params['id'] as string, input.alarms, req.user!);
+  sendSuccess(res, null, 'Alarma actualizada');
 }
 
 export async function getCurrentLocation(req: Request, res: Response) {

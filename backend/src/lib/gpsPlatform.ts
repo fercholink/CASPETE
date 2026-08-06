@@ -251,6 +251,31 @@ export async function findDevice(platformTrackerId: string, active: boolean): Pr
 }
 
 /**
+ * Apaga (o reinicia) el dispositivo. No existe comando para volver a
+ * encenderlo remotamente — requiere botón físico o conectarlo al cargador.
+ */
+export async function sendPowerAction(platformTrackerId: string, action: 'restart' | 'shutdown'): Promise<void> {
+  await request(`/trackers/${platformTrackerId}/power`, {
+    method: 'PATCH',
+    body: JSON.stringify({ action }),
+  });
+}
+
+export interface AlarmClockEntry {
+  weekdays: number; // bitmask 0-127, bit0=lunes ... bit6=domingo
+  hour: number;
+  minute: number;
+}
+
+/** Guarda y envía la alarma de despertador (hasta 3 entradas; [] la cancela). */
+export async function setAlarmClock(platformTrackerId: string, alarms: AlarmClockEntry[]): Promise<void> {
+  await request(`/trackers/${platformTrackerId}/alarm-clock`, {
+    method: 'PATCH',
+    body: JSON.stringify({ alarms }),
+  });
+}
+
+/**
  * Guarda los números que el dispositivo llama al presionar su botón físico de
  * SOS (protocolo 0x41/0x42/0x43). Si la tarjeta está conectada en ese momento
  * se los envía de una vez; si no, la Plataforma GPS los reenvía sola en el

@@ -19,7 +19,7 @@ import type { PlatformEvent } from '../lib/gpsPlatform.js';
 
 let lastPolledAt: Date = new Date();
 
-const NOTIFIABLE_TYPES = new Set(['GEOFENCE_ENTER', 'GEOFENCE_EXIT', 'ROUTE_DEVIATION', 'ROUTE_RESTORED']);
+const NOTIFIABLE_TYPES = new Set(['GEOFENCE_ENTER', 'GEOFENCE_EXIT', 'ROUTE_DEVIATION', 'ROUTE_RESTORED', 'LOW_BATTERY']);
 
 function buildTitle(type: PlatformEvent['type'], studentName: string): string | null {
   switch (type) {
@@ -27,8 +27,13 @@ function buildTitle(type: PlatformEvent['type'], studentName: string): string | 
     case 'GEOFENCE_EXIT': return `${studentName} salió del colegio`;
     case 'ROUTE_DEVIATION': return `${studentName} se desvió de la ruta esperada`;
     case 'ROUTE_RESTORED': return `${studentName} volvió a la ruta esperada`;
+    case 'LOW_BATTERY': return `🔋 Batería baja del localizador de ${studentName}`;
     default: return null;
   }
+}
+
+function buildTag(type: PlatformEvent['type']): string {
+  return type === 'LOW_BATTERY' ? 'gps-battery' : 'gps-geofence';
 }
 
 async function notifyEvent(event: PlatformEvent) {
@@ -45,7 +50,7 @@ async function notifyEvent(event: PlatformEvent) {
   await pushService.sendPushToUser(tracker.student.parent_id, {
     title,
     body: `Rastreo GPS · ${time}`,
-    tag: 'gps-geofence',
+    tag: buildTag(event.type),
   });
 }
 

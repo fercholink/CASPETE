@@ -14,7 +14,8 @@ interface AttendanceScannerProps {
   onClose: () => void;
 }
 
-const CARD_PREFIX = 'CASPETE:CARD:';
+// Acepta ambos prefijos: KIDWAY: para tarjetas nuevas, CASPETE: para tarjetas físicas ya impresas.
+const CARD_PREFIXES = ['KIDWAY:CARD:', 'CASPETE:CARD:'];
 
 export default function AttendanceScanner({ courseId, onClose }: AttendanceScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -33,14 +34,15 @@ export default function AttendanceScanner({ courseId, onClose }: AttendanceScann
       async (decodedText) => {
         if (processingRef.current) return;
 
-        if (!decodedText.startsWith(CARD_PREFIX)) {
-          setFeedback({ type: 'error', message: 'Este código no es de una tarjeta CASPETE' });
+        const matchedPrefix = CARD_PREFIXES.find((p) => decodedText.startsWith(p));
+        if (!matchedPrefix) {
+          setFeedback({ type: 'error', message: 'Este código no es de una tarjeta Kidway' });
           setTimeout(() => setFeedback(null), 1800);
           return;
         }
 
         processingRef.current = true;
-        const qrToken = decodedText.slice(CARD_PREFIX.length);
+        const qrToken = decodedText.slice(matchedPrefix.length);
         try {
           const r = await apiClient.post<{ data: { student: ScannedStudent } }>('/attendance/scan', {
             qr_token: qrToken,

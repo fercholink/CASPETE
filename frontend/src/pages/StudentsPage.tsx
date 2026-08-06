@@ -879,7 +879,7 @@ export default function StudentsPage() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
                   <div style={{ background: '#fff', padding: 16, borderRadius: 12, border: '1px solid var(--color-border)' }}>
-                    <QRCode value={`CASPETE:CARD:${gpsTracker.qr_token}`} size={160} />
+                    <QRCode value={`KIDWAY:CARD:${gpsTracker.qr_token}`} size={160} />
                   </div>
                 </div>
                 <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 20 }}>

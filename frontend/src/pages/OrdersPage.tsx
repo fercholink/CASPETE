@@ -156,7 +156,7 @@ export default function OrdersPage() {
   async function handleQRScan(decodedText: string) {
     setIsScanning(false);
 
-    if (decodedText.startsWith('CASPETE:ORDER:')) {
+    if (decodedText.startsWith('KIDWAY:ORDER:') || decodedText.startsWith('CASPETE:ORDER:')) {
       const parts = decodedText.split(':');
       if (parts.length < 4) { alert('Formato de QR incorrecto'); return; }
       const orderId = parts[2];
@@ -172,7 +172,7 @@ export default function OrdersPage() {
       return;
     }
 
-    if (decodedText.startsWith('CASPETE:STUDENT:')) {
+    if (decodedText.startsWith('KIDWAY:STUDENT:') || decodedText.startsWith('CASPETE:STUDENT:')) {
       const parts = decodedText.split(':');
       if (parts.length < 4) { alert('Formato de QR de estudiante incorrecto'); return; }
       const studentId = parts[2];

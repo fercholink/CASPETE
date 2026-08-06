@@ -58,8 +58,8 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
       async (decodedText) => {
         await html5QrCode.stop().catch(console.error);
 
-        // Formato CASPETE:STUDENT:studentId:deliveryCode → mostrar preview
-        if (decodedText.startsWith('CASPETE:STUDENT:')) {
+        // Formato KIDWAY:STUDENT:studentId:deliveryCode (o CASPETE: en tarjetas viejas) → mostrar preview
+        if (decodedText.startsWith('KIDWAY:STUDENT:') || decodedText.startsWith('CASPETE:STUDENT:')) {
           const parts = decodedText.split(':');
           if (parts.length >= 4) {
             const studentId   = parts[2];

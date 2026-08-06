@@ -273,8 +273,8 @@ export default function OrderDetailPage() {
     setIsScanning(false);
     setOtpError('');
 
-    // Formato: CASPETE:STUDENT:studentId:deliveryCode
-    if (decodedText.startsWith('CASPETE:STUDENT:')) {
+    // Formato: KIDWAY:STUDENT:studentId:deliveryCode (o CASPETE: en tarjetas viejas)
+    if (decodedText.startsWith('KIDWAY:STUDENT:') || decodedText.startsWith('CASPETE:STUDENT:')) {
       const parts = decodedText.split(':');
       if (parts.length < 4) { setOtpError('Formato de QR incorrecto'); return; }
       const studentId = parts[2];
@@ -297,8 +297,8 @@ export default function OrderDetailPage() {
       return;
     }
 
-    // Formato: CASPETE:ORDER:orderId:otpCode
-    if (decodedText.startsWith('CASPETE:ORDER:')) {
+    // Formato: KIDWAY:ORDER:orderId:otpCode (o CASPETE: en tarjetas viejas)
+    if (decodedText.startsWith('KIDWAY:ORDER:') || decodedText.startsWith('CASPETE:ORDER:')) {
       const parts = decodedText.split(':');
       if (parts.length < 4) { setOtpError('Formato de QR incorrecto'); return; }
       const otpCode = parts[3];
@@ -511,7 +511,7 @@ export default function OrderDetailPage() {
                   </p>
                   <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
                     <div style={{ padding: 10, background: '#fff', borderRadius: 10, border: '1px solid var(--color-border)', display: 'inline-block' }}>
-                      <QRCode value={`CASPETE:ORDER:${order.id}:${order.otp_code}`} size={100} />
+                      <QRCode value={`KIDWAY:ORDER:${order.id}:${order.otp_code}`} size={100} />
                     </div>
                   </div>
                 </div>
@@ -632,7 +632,7 @@ export default function OrderDetailPage() {
               {order.otp_code && (
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
                   <div style={{ padding: 12, background: '#fff', borderRadius: 12, border: '1px solid var(--color-border)', display: 'inline-block' }}>
-                    <QRCode value={`CASPETE:ORDER:${order.id}:${order.otp_code}`} size={120} />
+                    <QRCode value={`KIDWAY:ORDER:${order.id}:${order.otp_code}`} size={120} />
                   </div>
                 </div>
               )}
@@ -744,7 +744,7 @@ export default function OrderDetailPage() {
               id="qr-code-container"
               style={{ display: 'flex', justifyContent: 'center', background: '#fff', padding: 16, borderRadius: 16, border: '1px solid var(--color-border)', width: 'fit-content', margin: '0 auto 16px' }}
             >
-              <QRCode value={`CASPETE:STUDENT:${order.student.id}:${order.otp_code}`} size={160} />
+              <QRCode value={`KIDWAY:STUDENT:${order.student.id}:${order.otp_code}`} size={160} />
             </div>
 
             {/* Botón descargar QR */}

@@ -289,6 +289,10 @@ export default function GPSTrackingPage() {
                     </div>
                   )}
                   <span style={{ fontSize: 14, fontWeight: 500 }}>{s.full_name.split(' ')[0]}</span>
+                  {/* DEBUG TEMPORAL — quitar después de diagnosticar */}
+                  <span style={{ fontSize: 9, color: 'red', fontFamily: 'monospace' }}>
+                    [DBG photo_url={typeof s.photo_url}:{s.photo_url === null ? 'null' : s.photo_url === undefined ? 'undef' : s.photo_url === '' ? 'empty' : `len${s.photo_url.length}`}]
+                  </span>
                 </button>
               ))}
             </div>

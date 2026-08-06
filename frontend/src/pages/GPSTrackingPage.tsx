@@ -282,7 +282,13 @@ export default function GPSTrackingPage() {
                   }}
                 >
                   {s.photo_url ? (
-                    <img src={s.photo_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                    <img
+                      src={s.photo_url}
+                      alt=""
+                      style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid blue' }}
+                      onError={(e) => { e.currentTarget.style.border = '3px solid red'; e.currentTarget.style.background = 'yellow'; }}
+                      onLoad={(e) => { e.currentTarget.style.border = '3px solid limegreen'; }}
+                    />
                   ) : (
                     <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--color-gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>
                       {s.full_name.charAt(0)}
@@ -290,8 +296,8 @@ export default function GPSTrackingPage() {
                   )}
                   <span style={{ fontSize: 14, fontWeight: 500 }}>{s.full_name.split(' ')[0]}</span>
                   {/* DEBUG TEMPORAL — quitar después de diagnosticar */}
-                  <span style={{ fontSize: 9, color: 'red', fontFamily: 'monospace' }}>
-                    [DBG photo_url={typeof s.photo_url}:{s.photo_url === null ? 'null' : s.photo_url === undefined ? 'undef' : s.photo_url === '' ? 'empty' : `len${s.photo_url.length}`}]
+                  <span style={{ fontSize: 9, color: 'red', fontFamily: 'monospace', maxWidth: 120, overflowWrap: 'break-word' }}>
+                    [DBG prefix="{s.photo_url ? s.photo_url.slice(0, 30) : 'N/A'}"]
                   </span>
                 </button>
               ))}

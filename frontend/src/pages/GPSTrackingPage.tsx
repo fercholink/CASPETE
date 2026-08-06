@@ -33,6 +33,7 @@ interface LocationPoint {
 interface LocationResponse {
   tracker: TrackerInfo;
   location: LocationPoint | null;
+  is_live: boolean;
 }
 
 interface ExpectedRoute {
@@ -211,15 +212,24 @@ export default function GPSTrackingPage() {
     if (markerPoint) {
       const student = students.find((s) => s.id === selectedId);
       const initial = student?.full_name.charAt(0) ?? '?';
+      // Fuera de horario/en vivo mostramos igual la última posición conocida,
+      // pero en gris para distinguirla de una posición en vivo (verde).
+      const isLive = viewDate ? true : (current?.is_live ?? true);
+      const pinColor = isLive ? '#15803d' : '#9ca3af';
       const icon = L.divIcon({
         className: '',
-        html: `<div style="width:46px;height:46px;border-radius:50%;background:#15803d;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;overflow:hidden;">${
-          student?.photo_url
-            ? `<img src="${student.photo_url}" style="width:100%;height:100%;object-fit:cover;" />`
-            : `<span style="color:#fff;font-weight:700;font-size:17px;">${initial}</span>`
-        }</div>`,
-        iconSize: [46, 46],
-        iconAnchor: [23, 23],
+        html: `
+          <div style="position:relative;width:44px;height:58px;">
+            <div style="width:44px;height:44px;border-radius:50%;background:${pinColor};border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;overflow:hidden;">${
+              student?.photo_url
+                ? `<img src="${student.photo_url}" style="width:100%;height:100%;object-fit:cover;" />`
+                : `<span style="color:#fff;font-weight:700;font-size:17px;">${initial}</span>`
+            }</div>
+            <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:12px solid ${pinColor};"></div>
+            ${!isLive ? `<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#6b7280;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px;">⏱</div>` : ''}
+          </div>`,
+        iconSize: [44, 58],
+        iconAnchor: [22, 58],
       });
       markerRef.current = L.marker([markerPoint.lat, markerPoint.lon], { icon }).addTo(map);
       if (!hasCenteredRef.current) {
@@ -357,6 +367,12 @@ export default function GPSTrackingPage() {
             {viewDate && history.length === 0 && (
               <div className="roadmap-note" style={{ marginBottom: 12 }}>
                 No hay recorrido registrado para el {viewDate.split('-').reverse().join('/')}.
+              </div>
+            )}
+
+            {!viewDate && current && !current.is_live && current.location && (
+              <div className="roadmap-note" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                ⏱ Fuera del horario de rastreo — mostrando la última ubicación conocida ({timeAgo(current.location.recorded_at)}), no en vivo.
               </div>
             )}
 

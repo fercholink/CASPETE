@@ -228,12 +228,15 @@ export async function getCurrentLocation(studentId: string, actor: JwtPayload, r
 
   const trackerInfo = buildTrackerInfo(tracker, platformStatus);
 
-  if (!allowed || !tracker.platform_tracker_id) {
-    return { tracker: trackerInfo, location: null };
+  // Fuera del horario escolar seguimos mostrando la ÚLTIMA posición conocida
+  // (marcador "no en vivo"), en vez de ocultar la ubicación por completo —
+  // el bloqueo de horario solo restringe el rastreo continuo/en vivo.
+  if (!tracker.platform_tracker_id) {
+    return { tracker: trackerInfo, location: null, is_live: allowed };
   }
 
   const position = await gpsPlatform.getLatestPosition(tracker.platform_tracker_id);
-  return { tracker: trackerInfo, location: position ? mapPosition(position) : null };
+  return { tracker: trackerInfo, location: position ? mapPosition(position) : null, is_live: allowed };
 }
 
 export async function getHistory(

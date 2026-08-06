@@ -10,10 +10,10 @@ export default function LandingFooter() {
         <div className="space-y-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#fdf8f4] flex items-center justify-center p-1">
-              <img src="/favicon.svg" alt="Caspete" className="w-full h-full" />
+              <img src="/favicon.svg" alt="Kidway" className="w-full h-full" />
             </div>
             <span className="font-display font-black text-xl text-white tracking-tight">
-              Caspete<span>🥦</span>
+              Kidway<span>🥦</span>
             </span>
           </div>
           <p className="text-xs text-[#cbdcd0] opacity-80 leading-relaxed">

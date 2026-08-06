@@ -75,7 +75,7 @@ export default function BeneficiosPage() {
             Uniendo a la comunidad escolar con cariño y tecnología
           </h1>
           <p className="text-[#61494c] text-sm">
-            Caspete es un puente dulce e inteligente entre madres protectoras que cuidan el hogar, profesores comprometidos y administradores de la cafetería escolar.
+            Kidway es un puente dulce e inteligente entre madres protectoras que cuidan el hogar, profesores comprometidos y administradores de la cafetería escolar.
           </p>
         </div>
       </section>
@@ -218,7 +218,7 @@ export default function BeneficiosPage() {
               <span>PARA INSTITUCIONES EDUCATIVAS</span>
             </div>
             <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-[#4e2f33] leading-tight tracking-tight">
-              Todo lo que gana tu colegio con Caspete
+              Todo lo que gana tu colegio con Kidway
             </h2>
             <p className="text-[#61494c] text-sm">
               Una sola plataforma para seguridad, cumplimiento normativo, comunicación con las familias y control académico — sin reemplazar a la tienda escolar que ya tienen.

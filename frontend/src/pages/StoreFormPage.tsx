@@ -67,7 +67,7 @@ export default function StoreFormPage() {
           Volver a tiendas
         </Link>
 
-        <span className="brand-badge"><span className="brand-dot" />CASPETE</span>
+        <span className="brand-badge"><span className="brand-dot" />KIDWAY</span>
         <h1 className="auth-title">{isEdit ? 'Editar tienda' : 'Nueva tienda'}</h1>
 
         <form onSubmit={handleSubmit}>

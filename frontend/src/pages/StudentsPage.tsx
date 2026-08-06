@@ -21,7 +21,7 @@ interface Student {
   parent: { id: string; full_name: string; email: string };
 }
 
-// Datos de pago de CASPETE — ahora se cargan dinámicamente desde la API
+// Datos de pago de KIDWAY — ahora se cargan dinámicamente desde la API
 interface PaymentMethodField { label: string; value: string }
 interface PaymentMethodInfo {
   id: string; key: string; label: string; icon: string; color: string;
@@ -389,7 +389,7 @@ export default function StudentsPage() {
   return (
     <>
       <nav className="dashboard-nav">
-        <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
+        <span className="nav-logo"><span className="nav-logo-dot" />KIDWAY</span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>

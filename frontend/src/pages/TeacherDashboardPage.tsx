@@ -216,7 +216,7 @@ export default function TeacherDashboardPage() {
     <>
       <nav className="dashboard-nav">
         <span className="nav-logo" onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
-          <span className="nav-logo-dot" />CASPETE ACADÉMICO
+          <span className="nav-logo-dot" />KIDWAY ACADÉMICO
         </span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-ghost" onClick={() => navigate('/communications')}>

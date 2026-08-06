@@ -74,7 +74,7 @@ export default function SupplierFormPage() {
   return (
     <>
       <nav className="dashboard-nav">
-        <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
+        <span className="nav-logo"><span className="nav-logo-dot" />KIDWAY</span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-ghost" onClick={() => navigate('/suppliers')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -161,7 +161,7 @@ export default function SupplierFormPage() {
                 onChange={e => handleChange('listing_fee_monthly', e.target.value)}
               />
               <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>
-                Lo que este proveedor paga a CASPETE por listar sus productos para que los tenderos los ofrezcan. Déjalo en 0 si aún no hay tarifa acordada.
+                Lo que este proveedor paga a KIDWAY por listar sus productos para que los tenderos los ofrezcan. Déjalo en 0 si aún no hay tarifa acordada.
               </p>
             </div>
 

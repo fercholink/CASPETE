@@ -123,7 +123,7 @@ export default function StudentGradesPage() {
     <>
       <nav className="dashboard-nav">
         <span className="nav-logo" onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
-          <span className="nav-logo-dot" />CASPETE
+          <span className="nav-logo-dot" />KIDWAY
         </span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-ghost" onClick={() => navigate('/dashboard')}>

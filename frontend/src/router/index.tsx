@@ -387,7 +387,7 @@ export const router = createBrowserRouter([
         <div className="auth-card" style={{ textAlign: 'center' }}>
           <span className="brand-badge">
             <span className="brand-dot" />
-            CASPETE
+            KIDWAY
           </span>
           <h2 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 8px', letterSpacing: '-0.44px' }}>
             Acceso restringido

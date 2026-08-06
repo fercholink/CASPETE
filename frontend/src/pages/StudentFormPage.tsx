@@ -221,7 +221,7 @@ export default function StudentFormPage() {
 
         <span className="brand-badge">
           <span className="brand-dot" />
-          CASPETE
+          KIDWAY
         </span>
 
         <h1 className="auth-title">
@@ -369,7 +369,7 @@ export default function StudentFormPage() {
             <div style={{ marginTop: 14 }}>
               <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontWeight: 600 }}>Ubicación de casa</p>
               <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--color-placeholder)' }}>
-                Opcional — con esto y la ubicación del colegio, Caspete arma el trayecto esperado y avisa si tu hijo se desvía camino a casa o al colegio. Consíguela con clic derecho en Google Maps.
+                Opcional — con esto y la ubicación del colegio, Kidway arma el trayecto esperado y avisa si tu hijo se desvía camino a casa o al colegio. Consíguela con clic derecho en Google Maps.
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -388,7 +388,7 @@ export default function StudentFormPage() {
             <div style={{ marginTop: 14 }}>
               <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontWeight: 600 }}>Horario del trayecto</p>
               <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--color-placeholder)' }}>
-                Opcional — si sabes la hora exacta a la que recogen a tu hijo y a la que llega, ponla aquí para un rastreo más preciso (reporta la ubicación cada 10 segundos durante ese tiempo). Si lo dejas vacío, Caspete usa automáticamente el horario del colegio ± 45 min.
+                Opcional — si sabes la hora exacta a la que recogen a tu hijo y a la que llega, ponla aquí para un rastreo más preciso (reporta la ubicación cada 10 segundos durante ese tiempo). Si lo dejas vacío, Kidway usa automáticamente el horario del colegio ± 45 min.
               </p>
               <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600 }}>Camino al colegio</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>

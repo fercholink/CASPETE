@@ -25,7 +25,7 @@ export default function InicioPage() {
               </div>
 
               <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#4e2f33] leading-[1.05]">
-                Caspete: Loncheras <span className="text-emerald-600 underline decoration-emerald-200 decoration-wavy decoration-3">Felices</span>, <br />
+                Kidway: Loncheras <span className="text-emerald-600 underline decoration-emerald-200 decoration-wavy decoration-3">Felices</span>, <br />
                 Alimentación Escolar Saludable y Mamás Tranquilas 🍏🎒
               </h1>
 
@@ -108,7 +108,7 @@ export default function InicioPage() {
                   <div className="mt-4 flex justify-between items-center bg-emerald-50 p-3 rounded-2xl shadow-xs border border-emerald-200/50">
                     <div className="flex items-center gap-2">
                       <div className="w-9 h-9 rounded-full bg-white border border-emerald-500 flex items-center justify-center overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200" alt="Pantalla de aplicación móvil Caspete para programar loncheras escolares en Colombia" className="object-cover w-full h-full" />
+                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200" alt="Pantalla de aplicación móvil Kidway para programar loncheras escolares en Colombia" className="object-cover w-full h-full" />
                       </div>
                       <div>
                         <div className="font-black text-[#5c3a3e] text-[11px] flex items-center gap-1">
@@ -208,7 +208,7 @@ export default function InicioPage() {
               </div>
               <h3 className="font-display text-xl font-black text-[#4e2f33]">Nuestros Beneficios</h3>
               <p className="text-xs text-[#61494c] leading-relaxed">
-                Todo lo que ganan padres, tenderos y colegios al usar Caspete.
+                Todo lo que ganan padres, tenderos y colegios al usar Kidway.
               </p>
             </div>
             <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 group-hover:gap-2.5 transition-all">

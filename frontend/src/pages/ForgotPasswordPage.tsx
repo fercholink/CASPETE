@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
             <path d="M16 7V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V7M5 7H19C20.1046 7 21 7.89543 21 9V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V9C3 7.89543 3.89543 7 5 7Z" stroke="#1a4731" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M9 13H15M9 17H15" stroke="#1a4731" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span style={{ fontSize: 20, fontWeight: 800, color: '#1a4731', letterSpacing: '1px', marginTop: 4 }}>CASPETE</span>
+          <span style={{ fontSize: 20, fontWeight: 800, color: '#1a4731', letterSpacing: '1px', marginTop: 4 }}>KIDWAY</span>
           <span style={{ fontSize: 8, fontWeight: 500, color: '#1a4731', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Loncheras Escolares Inteligentes</span>
         </div>
 
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
             </div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', marginBottom: 8 }}>¡Revisa tu correo!</h2>
             <p style={{ color: 'var(--color-text-muted)', fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
-              Si <strong>{email}</strong> está registrado en Caspete, recibirás un correo con las instrucciones para restablecer tu contraseña en los próximos minutos.
+              Si <strong>{email}</strong> está registrado en Kidway, recibirás un correo con las instrucciones para restablecer tu contraseña en los próximos minutos.
             </p>
             <p style={{ color: 'var(--color-text-muted)', fontSize: 13, marginBottom: 24 }}>
               ¿No llegó el correo? Revisa tu carpeta de <em>spam</em> o{' '}

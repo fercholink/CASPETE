@@ -195,7 +195,7 @@ export default function ProductFormPage() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           Volver a productos
         </Link>
-        <span className="brand-badge"><span className="brand-dot" />CASPETE</span>
+        <span className="brand-badge"><span className="brand-dot" />KIDWAY</span>
         <h1 className="auth-title">{isEdit ? 'Editar producto' : 'Nuevo producto'}</h1>
         <p className="auth-subtitle">{isEdit ? 'Actualiza los datos del producto en el catálogo global' : 'Agrega un producto al catálogo global'}</p>
 

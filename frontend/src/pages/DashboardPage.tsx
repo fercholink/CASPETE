@@ -298,7 +298,7 @@ function SchoolAdminDashboard() {
       <div className="user-card" style={{ marginBottom: 20, padding: '20px 24px', background: 'var(--color-surface)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <span style={{ fontSize: 20 }}>💰</span>
-          <p className="dashboard-label" style={{ margin: 0, fontSize: 16 }}>Facturación de Caspete</p>
+          <p className="dashboard-label" style={{ margin: 0, fontSize: 16 }}>Facturación de Kidway</p>
         </div>
         
         {data.acquisition_model === 'COMMISSION' ? (
@@ -310,13 +310,13 @@ function SchoolAdminDashboard() {
               </p>
             </div>
             <div style={{ background: 'rgba(212,86,86,0.08)', padding: 16, borderRadius: 12 }}>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Descuento Caspete (Hoy)</p>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Descuento Kidway (Hoy)</p>
               <p style={{ margin: '4px 0 0', fontSize: 24, fontWeight: 700, color: '#dc2626' }}>
                 {fmt(data.revenue_today * ((data.commission_rate ?? 0) / 100))}
               </p>
             </div>
             <div style={{ background: 'rgba(5,150,105,0.08)', padding: 16, borderRadius: 12 }}>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Saldo a Consignar por Caspete (Hoy)</p>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Saldo a Consignar por Kidway (Hoy)</p>
               <p style={{ margin: '4px 0 0', fontSize: 24, fontWeight: 700, color: '#059669' }}>
                 {fmt(data.revenue_today - (data.revenue_today * ((data.commission_rate ?? 0) / 100)))}
               </p>
@@ -678,7 +678,7 @@ export default function DashboardPage() {
   return (
     <>
       <nav className="dashboard-nav">
-        <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
+        <span className="nav-logo"><span className="nav-logo-dot" />KIDWAY</span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-ghost" onClick={() => navigate('/profile')}>
             <span className="desktop-only">Mi perfil</span>

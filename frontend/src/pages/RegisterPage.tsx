@@ -99,7 +99,7 @@ export default function RegisterPage() {
             <path d="M9 13H15M9 17H15" stroke="#1a4731" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#1a4731', letterSpacing: '1px', lineHeight: 1 }}>CASPETE</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#1a4731', letterSpacing: '1px', lineHeight: 1 }}>KIDWAY</div>
             <div style={{ fontSize: 9, fontWeight: 500, color: '#4a7c59', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Loncheras Escolares Inteligentes</div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function RegisterPage() {
         ) : (
           <>
             <h1 style={{ fontSize: 26, fontWeight: 800, color: '#111827', marginBottom: 4, letterSpacing: '-0.5px' }}>Crear cuenta</h1>
-            <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 28 }}>Únete a la comunidad Caspete</p>
+            <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 28 }}>Únete a la comunidad Kidway</p>
 
             <form onSubmit={handleSubmit}>
               {/* Nombre y Apellido */}
@@ -347,7 +347,7 @@ export default function RegisterPage() {
             Loncheras sanas,<br />padres tranquilos.
           </h2>
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', lineHeight: 1.7, marginBottom: 40 }}>
-            Caspete conecta a padres, colegios y tenderos en un ecosistema digital para garantizar una alimentación saludable para tus hijos.
+            Kidway conecta a padres, colegios y tenderos en un ecosistema digital para garantizar una alimentación saludable para tus hijos.
           </p>
 
           {/* Beneficios */}

@@ -272,7 +272,7 @@ export default function NewOrderPage() {
           Volver a pedidos
         </Link>
 
-        <span className="brand-badge"><span className="brand-dot" />CASPETE</span>
+        <span className="brand-badge"><span className="brand-dot" />KIDWAY</span>
         <h1 className="auth-title">Nuevo pedido</h1>
         <p className="auth-subtitle">Elige el estudiante, la tienda y los productos</p>
 

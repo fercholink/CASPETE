@@ -6,7 +6,7 @@ export default function TermsOfServicePage() {
       {/* Nav */}
       <nav style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <span style={{ fontSize: 18, fontWeight: 800, color: '#1a4731', letterSpacing: '1px' }}>CASPETE</span>
+          <span style={{ fontSize: 18, fontWeight: 800, color: '#1a4731', letterSpacing: '1px' }}>KIDWAY</span>
         </Link>
         <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
           <Link to="/privacidad" style={{ color: '#6b7280' }}>Política de Privacidad</Link>

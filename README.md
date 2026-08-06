@@ -1,4 +1,4 @@
-# 🎒 CASPETE — Loncheras Escolares Inteligentes
+# 🎒 Kidway — Loncheras Escolares Inteligentes
 
 ![Estado: Producción](https://img.shields.io/badge/Estado-Producci%C3%B3n-brightgreen)
 ![Versión: 1.0.0](https://img.shields.io/badge/Versi%C3%B3n-1.0.0-blue)
@@ -9,7 +9,7 @@
 
 ## 📖 Visión General
 
-**Caspete** es una plataforma SaaS multi-tenant de producción para la gestión digital de loncheras escolares en Colombia. Conecta a padres de familia, colegios y tenderos en un ecosistema seguro, sin manejo de efectivo y con cumplimiento regulatorio completo.
+**Kidway** (antes Caspete) es una plataforma SaaS multi-tenant de producción para la gestión digital de loncheras escolares, rastreo GPS de seguridad y cumplimiento nutricional en Colombia. Conecta a padres de familia, colegios y tenderos en un ecosistema seguro, sin manejo de efectivo y con cumplimiento regulatorio completo.
 
 ### 💡 Propuesta de Valor
 | Actor | Beneficio |
@@ -150,7 +150,7 @@ pnpm dev             # App en http://localhost:5173
 
 ### Backend (`.env`)
 ```env
-DATABASE_URL=postgresql://user:pass@host:5432/caspete
+DATABASE_URL=postgresql://user:pass@host:5432/kidway
 JWT_SECRET=               # mín. 32 caracteres
 REFRESH_TOKEN_SECRET=     # mín. 32 caracteres
 JWT_EXPIRES_IN=15m
@@ -168,7 +168,7 @@ NEQUI_API_KEY=
 NEQUI_CHANNEL=PNP04-C001
 VAPID_PUBLIC_KEY=         # Web Push
 VAPID_PRIVATE_KEY=
-VAPID_SUBJECT=mailto:info@caspete.com
+VAPID_SUBJECT=mailto:info@kidway.co
 SENTRY_DSN=               # Monitoreo de errores (opcional — sin esto, Sentry queda desactivado)
 AWS_ACCESS_KEY_ID=        # Respaldo diario de la BD a S3 (opcional — sin esto, el job se omite)
 AWS_SECRET_ACCESS_KEY=
@@ -228,6 +228,6 @@ backend/src/
 
 ## 📞 Contacto y Soporte
 
-**Responsable del tratamiento de datos:** Caspete.com  
-**Email privacidad:** privacidad@caspete.com  
+**Responsable del tratamiento de datos:** Kidway (operado por Ferney Blanco, NIT 1093752731-1)  
+**Email privacidad:** privacidad@kidway.co  
 **Marco legal:** Ley 1581/2012 · Decreto 1377/2013 · Ley 2120/2021 · Resolución 2492/2022

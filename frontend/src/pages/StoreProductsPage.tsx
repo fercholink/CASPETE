@@ -217,7 +217,7 @@ export default function StoreProductsPage() {
     <>
       {/* ── Nav ─────────────────────────────────────────── */}
       <nav className="dashboard-nav">
-        <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
+        <span className="nav-logo"><span className="nav-logo-dot" />KIDWAY</span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             🏠 <span className="desktop-only">Inicio</span>

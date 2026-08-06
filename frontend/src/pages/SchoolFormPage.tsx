@@ -160,7 +160,7 @@ export default function SchoolFormPage() {
           Volver a colegios
         </Link>
 
-        <span className="brand-badge"><span className="brand-dot" />CASPETE</span>
+        <span className="brand-badge"><span className="brand-dot" />KIDWAY</span>
         <h1 className="auth-title">{isEdit ? 'Editar colegio' : 'Nuevo colegio'}</h1>
         <p className="auth-subtitle">{isEdit ? 'Actualiza los datos del colegio' : 'Registra un nuevo colegio en la plataforma'}</p>
 
@@ -255,7 +255,7 @@ export default function SchoolFormPage() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" htmlFor="acquisition_model">Caspete le cobra al colegio</label>
+                <label className="form-label" htmlFor="acquisition_model">Kidway le cobra al colegio</label>
                 <select id="acquisition_model" name="acquisition_model" className="form-select" value={form.acquisition_model} onChange={handleChange}>
                   <option value="COMMISSION">Comisión transaccional (incluye GPS)</option>
                   <option value="MONTHLY_FEE">Tarifa fija mensual</option>

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**CASPETE** is a multi-tenant SaaS platform for managing school lunch (loncheras) orders, payments, and nutrition compliance for Colombian schools. It connects parents, vendors (store managers), and school administrators with a digital wallet + QR delivery system.
+**Kidway** (formerly Caspete — some internal identifiers like `caspete_token` localStorage keys, `caspete-backend` deploy names, and DB names still reflect the old name) is a multi-tenant SaaS platform for managing school lunch (loncheras) orders, payments, GPS child-safety tracking, and nutrition compliance for Colombian schools. It connects parents, vendors (store managers), and school administrators with a digital wallet + QR delivery system.
 
 Roles: `PARENT`, `VENDOR`, `SCHOOL_ADMIN`, `SUPER_ADMIN`
 

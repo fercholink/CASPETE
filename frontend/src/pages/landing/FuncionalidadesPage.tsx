@@ -9,7 +9,7 @@ import type { FoodItem } from '../../data/landingMockData';
 
 const FAQS = [
   {
-    q: '💝 ¿Cómo se implementa Caspete en el colegio de mis hijos?',
+    q: '💝 ¿Cómo se implementa Kidway en el colegio de mis hijos?',
     a: '¡Es muy sencillo y con total acompañamiento! El colegio se registra en nuestra red, habilitamos el menú digital seguro supervisado por expertos y les damos a las mamás y papás acceso inmediato para recargar saldo cómodamente por Nequi para programar las loncheras con mucho amor de forma semanal.',
   },
   {
@@ -17,7 +17,7 @@ const FAQS = [
     a: '¡No te preocupes, no necesitan tecnología en sus manitas! Puedes imprimir un código QR tierno en un carné escolar, guardarlo en su cartuchera o utilizar una linda pulserita de silicona. El operario lo escanea con amor en la tablet del caspete, garantizando una entrega segura sin monedas sucias.',
   },
   {
-    q: '🥦 ¿Cómo ayuda Caspete con los Sellos de Advertencia (Ley 2120 de comida saludable)?',
+    q: '🥦 ¿Cómo ayuda Kidway con los Sellos de Advertencia (Ley 2120 de comida saludable)?',
     a: 'Al programar la comida semanal de tus pequeños, te mostraremos de forma muy intuitiva los octágonos de advertencia de alimentos procesados (como altos azúcares o sodio). Podrás descartarlos con un solo toque y elegir opciones mágicas y dulces como frutas frescas o arepitas saludables.',
   },
   {
@@ -46,13 +46,13 @@ export default function FuncionalidadesPage() {
         <div className="mx-auto max-w-3xl px-6 lg:px-8 text-center space-y-4">
           <div className="inline-flex items-center gap-1.5 bg-[#fef9c3] text-[#854d0e] px-3 py-1 rounded-full text-xs font-bold border border-yellow-250">
             <Star className="h-4 w-4 fill-current text-yellow-500 animate-spin" />
-            <span>Funcionalidades de Caspete</span>
+            <span>Funcionalidades de Kidway</span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-[#4e2f33] leading-tight tracking-tight">
             Aprende a cuidar a tus pequeños con nuestro semáforo de nutrición
           </h1>
           <p className="text-[#61494c] text-sm">
-            Caspete lee y previene de forma automática. <strong className="text-emerald-600">Haz la prueba haciendo clic en cualquier producto</strong> para ver cómo protegemos a tus hijos de ingredientes excesivos:
+            Kidway lee y previene de forma automática. <strong className="text-emerald-600">Haz la prueba haciendo clic en cualquier producto</strong> para ver cómo protegemos a tus hijos de ingredientes excesivos:
           </p>
         </div>
       </section>
@@ -106,7 +106,7 @@ export default function FuncionalidadesPage() {
               <div className="space-y-4 flex-1">
                 <div className="flex justify-between items-start gap-4">
                   <div>
-                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest font-mono">Lectura y Análisis Caspete</span>
+                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest font-mono">Lectura y Análisis Kidway</span>
                     <h3 className="font-display text-2xl font-black text-[#4e2f33] mt-1">{testFood.name}</h3>
                   </div>
                   <span className="text-4xl p-4 bg-emerald-50 rounded-2xl border border-emerald-100">{testFood.image}</span>
@@ -148,7 +148,7 @@ export default function FuncionalidadesPage() {
                 </div>
               </div>
 
-              {/* Caspete Recommendation Rule Box */}
+              {/* Kidway Recommendation Rule Box */}
               <div className={`p-4 rounded-2xl border ${
                 testFood.isHealthy
                   ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
@@ -184,7 +184,7 @@ export default function FuncionalidadesPage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center space-y-4">
             <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-[#4e2f33] leading-tight tracking-tight">
-              ¿Cómo funciona el ecosistema Caspete?
+              ¿Cómo funciona el ecosistema Kidway?
             </h2>
             <p className="text-[#61494c] text-sm">
               Transformamos la merienda en un proceso lúdico, rápido, amigable y lleno de cariño en 3 simples pasos.
@@ -239,7 +239,7 @@ export default function FuncionalidadesPage() {
               Elige la modalidad ideal para tu institución
             </h2>
             <p className="text-[#61494c] text-sm">
-              Dos formas sencillas de trabajar con Caspete. Ambas opciones incluyen la totalidad de las funciones de la plataforma.
+              Dos formas sencillas de trabajar con Kidway. Ambas opciones incluyen la totalidad de las funciones de la plataforma.
             </p>
           </div>
 
@@ -254,7 +254,7 @@ export default function FuncionalidadesPage() {
                 </div>
                 <h3 className="font-display text-2xl font-black text-[#4e2f33] mb-3">Modalidad por Comisión</h3>
                 <p className="text-[#61494c] text-xs leading-relaxed mb-6 font-semibold">
-                  Caspete solo cobra un pequeño porcentaje sobre lo que se transaccione en la tienda escolar. Si el colegio no vende, no paga nada — cero riesgo financiero para empezar.
+                  Kidway solo cobra un pequeño porcentaje sobre lo que se transaccione en la tienda escolar. Si el colegio no vende, no paga nada — cero riesgo financiero para empezar.
                 </p>
                 <ul className="space-y-3.5 text-xs text-[#61494c] font-bold">
                   <li className="flex items-center gap-x-2.5">
@@ -325,7 +325,7 @@ export default function FuncionalidadesPage() {
               Respuestas con Cariño (Preguntas Frecuentes)
             </h2>
             <p className="text-[#61494c] text-sm">
-              ¿Tienes dudas sobre cómo implementar Caspete o cómo cuidamos de tus pequeños? Aquí respondemos a todas tus inquietudes como madre.
+              ¿Tienes dudas sobre cómo implementar Kidway o cómo cuidamos de tus pequeños? Aquí respondemos a todas tus inquietudes como madre.
             </p>
           </div>
 
@@ -357,7 +357,7 @@ export default function FuncionalidadesPage() {
         <div className="absolute inset-0 bg-radial-gradient from-emerald-500/10 via-transparent to-transparent blur-3xl -z-10" />
         <div className="mx-auto max-w-5xl px-6 text-center space-y-8 relative z-10">
           <h2 className="font-display text-3xl sm:text-4xl font-black text-[#4e2f33] max-w-2xl mx-auto tracking-tight leading-tight">
-            ¿Lista para probar el Caspete favorito de las mamás colombianas?
+            ¿Lista para probar el Kidway favorito de las mamás colombianas?
           </h2>
           <p className="text-[#61494c] max-w-lg mx-auto text-sm leading-relaxed font-semibold">
             Te garantizamos un descanso escolar sano, rápido, lleno de trazabilidad y completamente libre de preocupaciones familiares.

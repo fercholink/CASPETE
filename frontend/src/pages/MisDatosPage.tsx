@@ -65,7 +65,7 @@ export default function MisDatosPage() {
   return (
     <>
       <nav className="dashboard-nav">
-        <span className="nav-logo"><span className="nav-logo-dot" />CASPETE</span>
+        <span className="nav-logo"><span className="nav-logo-dot" />KIDWAY</span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -137,7 +137,7 @@ export default function MisDatosPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, padding: '10px 12px', borderRadius: 8, background: 'var(--color-gray-50, #f9fafb)' }}>
             <div>
               <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>📣 Comunicaciones comerciales</p>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>Promociones y novedades de Caspete.</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>Promociones y novedades de Kidway.</p>
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input type="checkbox" checked={marketing} onChange={e => setMarketing(e.target.checked)} style={{ width: 18, height: 18, cursor: 'pointer' }} />

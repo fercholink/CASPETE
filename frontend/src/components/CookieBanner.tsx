@@ -134,7 +134,7 @@ export default function CookieBanner() {
               Usamos cookies — Ley 1581/2012
             </p>
             <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted, #6b7280)', lineHeight: 1.5 }}>
-              Caspete usa cookies necesarias para operar la plataforma. Puedes aceptar cookies analíticas
+              Kidway usa cookies necesarias para operar la plataforma. Puedes aceptar cookies analíticas
               para ayudarnos a mejorar el servicio.{' '}
               <strong>No usamos cookies publicitarias en perfiles de menores.</strong>{' '}
               <a href="/cookies" style={{ color: 'var(--color-brand, #1a4731)', fontWeight: 600 }}>

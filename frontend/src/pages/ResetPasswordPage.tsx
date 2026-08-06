@@ -76,7 +76,7 @@ export default function ResetPasswordPage() {
             <path d="M9 13H15M9 17H15" stroke="#1a4731" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#1a4731', letterSpacing: '1px', lineHeight: 1 }}>CASPETE</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#1a4731', letterSpacing: '1px', lineHeight: 1 }}>KIDWAY</div>
             <div style={{ fontSize: 9, color: '#4a7c59', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Loncheras Escolares Inteligentes</div>
           </div>
         </div>

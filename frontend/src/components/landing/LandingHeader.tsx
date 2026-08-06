@@ -26,15 +26,15 @@ export default function LandingHeader() {
       <header className="sticky top-0 z-40 bg-[#fffaf5]/95 backdrop-blur-md border-b border-[#faeae1] shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center text-left">
 
-          {/* Logo Brand Accent — mochila Caspete */}
+          {/* Logo Brand Accent — mochila Kidway */}
           <Link to="/" className="flex items-center gap-2.5 focus:outline-none cursor-pointer group text-decoration-none">
             <div className="w-11 h-11 flex items-center justify-center group-hover:scale-105 transition-all">
-              <img src="/favicon.svg" alt="Caspete" className="w-full h-full drop-shadow-sm" />
+              <img src="/favicon.svg" alt="Kidway" className="w-full h-full drop-shadow-sm" />
             </div>
             <div>
               <div className="flex items-center gap-1">
                 <span className="font-display font-black text-2xl tracking-tight text-emerald-600 group-hover:text-emerald-500 transition-colors">
-                  Caspete
+                  Kidway
                 </span>
                 <span className="text-2xl font-bold text-emerald-500">🥦</span>
               </div>

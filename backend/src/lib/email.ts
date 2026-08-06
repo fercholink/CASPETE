@@ -34,7 +34,7 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
         
         <!-- Header -->
-        <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
+        <tr><td style="background-color:#1a4731;background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
           <div style="font-size:36px;margin-bottom:8px;">🎒</div>
           <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">KIDWAY</div>
           <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
@@ -50,7 +50,7 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
 
           <!-- Botón -->
           <div style="text-align:center;margin:32px 0;">
-            <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#1a4731,#2d6a4f);color:#fff;font-size:16px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:0.3px;">
+            <a href="${resetUrl}" style="display:inline-block;background-color:#1a4731;background:linear-gradient(135deg,#1a4731,#2d6a4f);color:#fff;font-size:16px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:0.3px;">
               🔑 Restablecer mi contraseña
             </a>
           </div>
@@ -125,7 +125,7 @@ export async function sendTopupConfirmationEmail(
     <tr><td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
 
-        <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
+        <tr><td style="background-color:#1a4731;background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
           <div style="font-size:36px;margin-bottom:8px;">🎒</div>
           <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">KIDWAY</div>
           <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
@@ -207,7 +207,7 @@ export async function sendTopupRejectionEmail(
     <tr><td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
 
-        <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
+        <tr><td style="background-color:#1a4731;background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
           <div style="font-size:36px;margin-bottom:8px;">🎒</div>
           <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">KIDWAY</div>
           <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
@@ -273,7 +273,7 @@ export async function sendEmailVerificationEmail(to: string, name: string, verif
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
         
         <!-- Header -->
-        <tr><td style="background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
+        <tr><td style="background-color:#1a4731;background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
           <div style="font-size:36px;margin-bottom:8px;">🎒</div>
           <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">KIDWAY</div>
           <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
@@ -288,7 +288,7 @@ export async function sendEmailVerificationEmail(to: string, name: string, verif
 
           <!-- Botón -->
           <div style="text-align:center;margin:32px 0;">
-            <a href="${verificationUrl}" style="display:inline-block;background:linear-gradient(135deg,#1a4731,#2d6a4f);color:#fff;font-size:16px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:0.3px;">
+            <a href="${verificationUrl}" style="display:inline-block;background-color:#1a4731;background:linear-gradient(135deg,#1a4731,#2d6a4f);color:#fff;font-size:16px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:0.3px;">
               📧 Confirmar correo electrónico
             </a>
           </div>

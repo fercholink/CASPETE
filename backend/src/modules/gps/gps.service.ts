@@ -258,8 +258,14 @@ export async function getHistory(
   });
   if (!tracker) throw new AppError('Este estudiante no tiene un localizador vinculado', 404);
 
-  const allowed = await isTelemetryAllowed(tracker.id);
-  if (!allowed || !tracker.platform_tracker_id) return [];
+  // El horario de colegio solo restringe el rastreo EN VIVO (sin fecha específica).
+  // Revisar el historial de un día pasado es una consulta de auditoría del padre
+  // sobre datos ya recolectados, no debe depender de la hora actual.
+  if (!opts.date) {
+    const allowed = await isTelemetryAllowed(tracker.id);
+    if (!allowed) return [];
+  }
+  if (!tracker.platform_tracker_id) return [];
 
   const positions = opts.date
     ? await gpsPlatform.getPositionHistoryForDay(tracker.platform_tracker_id, opts.date)

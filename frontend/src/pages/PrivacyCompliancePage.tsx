@@ -182,7 +182,7 @@ export default function PrivacyCompliancePage() {
     let filename = '';
 
     if (tab === 'audit') {
-      filename = `caspete_audit_log_${now}.csv`;
+      filename = `kidway_audit_log_${now}.csv`;
       const headers = ['ID','Fecha','Acción','Entidad','Usuario','Email','Rol','IP','Campos','Justificación'];
       csv = headers.join(';') + '\n';
       csv += logs.map(l => [
@@ -198,7 +198,7 @@ export default function PrivacyCompliancePage() {
         (l.justification ?? '').replace(/;/g, ','),
       ].map(v => `"${String(v).replace(/"/g, '\'')}"`).join(';')).join('\n');
     } else {
-      filename = `caspete_arco_requests_${now}.csv`;
+      filename = `kidway_arco_requests_${now}.csv`;
       const headers = ['ID','Fecha','Tipo','Usuario','Email','Rol','Descripción','Estado','Fecha Resolución'];
       csv = headers.join(';') + '\n';
       csv += arcoList.map(r => [
@@ -240,7 +240,7 @@ export default function PrivacyCompliancePage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `caspete_reporte_sic_${now}.json`;
+      a.download = `kidway_reporte_sic_${now}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {

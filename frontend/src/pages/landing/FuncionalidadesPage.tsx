@@ -14,7 +14,7 @@ const FAQS = [
   },
   {
     q: '🎒 Mi hijo pequeño no tiene celular, ¿cómo compra su lonchera?',
-    a: '¡No te preocupes, no necesitan tecnología en sus manitas! Puedes imprimir un código QR tierno en un carné escolar, guardarlo en su cartuchera o utilizar una linda pulserita de silicona. El operario lo escanea con amor en la tablet del caspete, garantizando una entrega segura sin monedas sucias.',
+    a: '¡No te preocupes, no necesitan tecnología en sus manitas! Puedes imprimir un código QR tierno en un carné escolar, guardarlo en su cartuchera o utilizar una linda pulserita de silicona. El operario lo escanea con amor en la tablet de Kidway, garantizando una entrega segura sin monedas sucias.',
   },
   {
     q: '🥦 ¿Cómo ayuda Kidway con los Sellos de Advertencia (Ley 2120 de comida saludable)?',

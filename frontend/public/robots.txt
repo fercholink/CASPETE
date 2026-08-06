@@ -1,5 +1,5 @@
-# robots.txt — CASPETE
-# https://caspete.com/robots.txt
+# robots.txt — KIDWAY
+# https://kidway.co/robots.txt
 
 User-agent: *
 
@@ -24,4 +24,4 @@ Disallow: /profile
 Disallow: /no-autorizado
 
 # Sitemap
-Sitemap: https://caspete.com/sitemap.xml
+Sitemap: https://kidway.co/sitemap.xml

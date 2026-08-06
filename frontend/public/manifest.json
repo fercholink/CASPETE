@@ -1,6 +1,6 @@
 {
-  "name": "CASPETE — Loncheras Escolares",
-  "short_name": "Caspete",
+  "name": "KIDWAY — Loncheras Escolares",
+  "short_name": "Kidway",
   "description": "Plataforma de loncheras escolares para colegios y padres en Colombia.",
   "start_url": "/dashboard",
   "display": "standalone",

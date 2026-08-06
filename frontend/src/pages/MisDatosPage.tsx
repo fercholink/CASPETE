@@ -57,7 +57,7 @@ export default function MisDatosPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `mis-datos-caspete-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `mis-datos-kidway-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -173,7 +173,7 @@ export default function MisDatosPage() {
           <p style={{ margin: '0 0 6px', fontWeight: 700, fontSize: 14, color: '#1d4ed8' }}>📮 Canal oficial de derechos</p>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
             Para ejercer derechos de <strong>Rectificación</strong> de datos sensibles o consultas legales, escríbenos a{' '}
-            <a href="mailto:privacidad@caspete.com" style={{ color: '#1d4ed8', fontWeight: 600 }}>privacidad@caspete.com</a>.
+            <a href="mailto:privacidad@kidway.co" style={{ color: '#1d4ed8', fontWeight: 600 }}>privacidad@kidway.co</a>.
             Plazo de respuesta: máximo 15 días hábiles (Art. 14 Ley 1581/2012).
           </p>
         </div>

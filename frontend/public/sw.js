@@ -1,4 +1,4 @@
-// Service Worker para notificaciones push — CASPETE
+// Service Worker para notificaciones push — KIDWAY
 // Este archivo debe estar en /public/sw.js para que sea accesible en la raíz
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -11,16 +11,16 @@ self.addEventListener('push', (event) => {
   try {
     payload = event.data.json();
   } catch {
-    payload = { title: 'CASPETE', body: event.data.text() };
+    payload = { title: 'KIDWAY', body: event.data.text() };
   }
 
   const {
-    title = 'CASPETE',
+    title = 'KIDWAY',
     body  = 'Tienes una notificación nueva',
     icon  = '/favicon.png',
     badge = '/favicon.png',
     url   = '/',
-    tag   = 'caspete-push',
+    tag   = 'kidway-push',
   } = payload;
 
   event.waitUntil(

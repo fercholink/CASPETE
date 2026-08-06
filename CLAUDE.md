@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Kidway** (formerly Caspete — some internal identifiers like `caspete_token` localStorage keys, `caspete-backend` deploy names, and DB names still reflect the old name) is a multi-tenant SaaS platform for managing school lunch (loncheras) orders, payments, GPS child-safety tracking, and nutrition compliance for Colombian schools. It connects parents, vendors (store managers), and school administrators with a digital wallet + QR delivery system.
+**Kidway** (formerly Caspete — some internal identifiers like `caspete-backend` deploy names and DB names still reflect the old name; localStorage keys were renamed to `kidway_token`/`kidway_refresh_token`) is a multi-tenant SaaS platform for managing school lunch (loncheras) orders, payments, GPS child-safety tracking, and nutrition compliance for Colombian schools. It connects parents, vendors (store managers), and school administrators with a digital wallet + QR delivery system.
 
 Roles: `PARENT`, `VENDOR`, `SCHOOL_ADMIN`, `SUPER_ADMIN`
 
@@ -72,7 +72,7 @@ Feature-based module structure. Each module under `modules/` follows:
 ### Frontend (`frontend/src/`)
 
 - `api/client.ts` — Axios instance with JWT auto-attach and 401→refresh→retry interceptors
-- `context/AuthContext.tsx` — Global user state; tokens stored in `localStorage` as `caspete_token` / `caspete_refresh_token`
+- `context/AuthContext.tsx` — Global user state; tokens stored in `localStorage` as `kidway_token` / `kidway_refresh_token`
 - `hooks/useAuth.ts` — Consumes AuthContext
 - `pages/` — Route-level components
 - `components/` — Shared UI (`ProtectedRoute`, `QRScanner`)

@@ -8,7 +8,7 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('caspete_token');
+  const token = localStorage.getItem('kidway_token');
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
@@ -43,9 +43,9 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const refreshToken = localStorage.getItem('caspete_refresh_token');
+    const refreshToken = localStorage.getItem('kidway_refresh_token');
     if (!refreshToken) {
-      localStorage.removeItem('caspete_token');
+      localStorage.removeItem('kidway_token');
       window.location.href = '/login';
       return Promise.reject(error);
     }
@@ -68,14 +68,14 @@ apiClient.interceptors.response.use(
         { refresh_token: refreshToken },
       );
       const { token, refresh_token: newRefreshToken } = res.data.data;
-      localStorage.setItem('caspete_token', token);
-      localStorage.setItem('caspete_refresh_token', newRefreshToken);
+      localStorage.setItem('kidway_token', token);
+      localStorage.setItem('kidway_refresh_token', newRefreshToken);
       onTokenRefreshed(token);
       axiosError.config!.headers!['Authorization'] = `Bearer ${token}`;
       return apiClient(axiosError.config!);
     } catch {
-      localStorage.removeItem('caspete_token');
-      localStorage.removeItem('caspete_refresh_token');
+      localStorage.removeItem('kidway_token');
+      localStorage.removeItem('kidway_refresh_token');
       window.location.href = '/login';
       return Promise.reject(error);
     } finally {

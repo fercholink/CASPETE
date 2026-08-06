@@ -30,12 +30,12 @@ export const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
-    token: localStorage.getItem('caspete_token'),
+    token: localStorage.getItem('kidway_token'),
     isLoading: true,
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('caspete_token');
+    const token = localStorage.getItem('kidway_token');
     if (!token) {
       setState((prev) => ({ ...prev, isLoading: false }));
       return;
@@ -49,8 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => {
         // El interceptor de apiClient ya intenta el refresh automáticamente.
         // Si llega aquí es porque el refresh también falló.
-        localStorage.removeItem('caspete_token');
-        localStorage.removeItem('caspete_refresh_token');
+        localStorage.removeItem('kidway_token');
+        localStorage.removeItem('kidway_refresh_token');
         setState({ user: null, token: null, isLoading: false });
       });
   }, []);
@@ -61,19 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { user: AuthUser; token: string; refresh_token: string };
     }>('/auth/login', { email, password });
     const { user, token, refresh_token } = res.data.data;
-    localStorage.setItem('caspete_token', token);
-    localStorage.setItem('caspete_refresh_token', refresh_token);
+    localStorage.setItem('kidway_token', token);
+    localStorage.setItem('kidway_refresh_token', refresh_token);
     setState({ user, token, isLoading: false });
   }, []);
 
   const logout = useCallback(() => {
-    const refreshToken = localStorage.getItem('caspete_refresh_token');
+    const refreshToken = localStorage.getItem('kidway_refresh_token');
     if (refreshToken) {
       // Revocar en el servidor (best-effort)
       apiClient.post('/auth/logout', { refresh_token: refreshToken }).catch(() => undefined);
     }
-    localStorage.removeItem('caspete_token');
-    localStorage.removeItem('caspete_refresh_token');
+    localStorage.removeItem('kidway_token');
+    localStorage.removeItem('kidway_refresh_token');
     setState({ user: null, token: null, isLoading: false });
     window.location.href = '/login';
   }, []);
@@ -84,14 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Usado por el callback de Google OAuth para guardar tokens y cargar el usuario
   const setAuthFromTokens = useCallback(async (token: string, refreshToken: string): Promise<void> => {
-    localStorage.setItem('caspete_token', token);
-    localStorage.setItem('caspete_refresh_token', refreshToken);
+    localStorage.setItem('kidway_token', token);
+    localStorage.setItem('kidway_refresh_token', refreshToken);
     try {
       const res = await apiClient.get<{ success: true; data: AuthUser }>('/auth/me');
       setState({ user: res.data.data, token, isLoading: false });
     } catch {
-      localStorage.removeItem('caspete_token');
-      localStorage.removeItem('caspete_refresh_token');
+      localStorage.removeItem('kidway_token');
+      localStorage.removeItem('kidway_refresh_token');
       setState({ user: null, token: null, isLoading: false });
       throw new Error('No se pudo cargar el usuario');
     }

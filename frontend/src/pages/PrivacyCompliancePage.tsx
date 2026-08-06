@@ -100,7 +100,7 @@ export default function PrivacyCompliancePage() {
   const [filterAction, setFilterAction] = useState('');
   const [filterEntity, setFilterEntity] = useState('');
 
-  const token = localStorage.getItem('caspete_token');
+  const token = localStorage.getItem('kidway_token');
 
   const fetchAuditLogs = useCallback(async () => {
     setLoading(true);

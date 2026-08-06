@@ -6,16 +6,16 @@ interface CookiePreferences {
   marketing: boolean;  // opcionales (desactivadas por defecto para menores)
 }
 
-const STORAGE_KEY = 'caspete_cookie_consent';
-const SESSION_KEY = 'caspete_consent_shown';  // Guard de sesión: evita flash al navegar
+const STORAGE_KEY = 'kidway_cookie_consent';
+const SESSION_KEY = 'kidway_consent_shown';  // Guard de sesión: evita flash al navegar
 const CONSENT_VERSION = 'v1.0';
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 // Fire-and-forget: registra en backend para trazabilidad Ley 1581 (nunca bloquea la UI)
 function reportConsentToBackend(accepted: CookiePreferences) {
   try {
-    const token = localStorage.getItem('caspete_token');
-    const rawUser = localStorage.getItem('caspete_user');
+    const token = localStorage.getItem('kidway_token');
+    const rawUser = localStorage.getItem('kidway_user');
     const userId: string | undefined = rawUser
       ? (JSON.parse(rawUser) as { id?: string }).id
       : undefined;

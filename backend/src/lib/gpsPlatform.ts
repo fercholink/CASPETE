@@ -89,7 +89,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T | null> {
   if (res.status === 404) return null;
   if (!res.ok) {
     const body = await res.text();
-    throw new AppError(`Error de la Plataforma GPS (${res.status}): ${body}`, 502);
+    // 4xx de la Plataforma GPS son condiciones esperadas (ej. dispositivo
+    // desconectado) — se propagan tal cual para no dispararle a Sentry como
+    // si fueran una caída real del servicio (Sentry solo alerta >=500).
+    const statusCode = res.status >= 500 ? 502 : res.status;
+    throw new AppError(`Error de la Plataforma GPS (${res.status}): ${body}`, statusCode);
   }
 
   const json = (await res.json()) as { success: boolean; data: T };

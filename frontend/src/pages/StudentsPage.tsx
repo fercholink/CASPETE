@@ -47,6 +47,15 @@ interface TrackerData {
   mom_number: string | null;
 }
 
+interface GpsPlanStatus {
+  is_gps_only_plan: boolean;
+  device_purchased: boolean;
+  subscription_paid_until: string | null;
+  subscription_active: boolean;
+  device_price: number;
+  monthly_price: number;
+}
+
 export default function StudentsPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -88,6 +97,13 @@ export default function StudentsPage() {
   const [imei, setImei] = useState('');
   const [deviceName, setDeviceName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [gpsPlanStatus, setGpsPlanStatus] = useState<GpsPlanStatus | null>(null);
+  const [gpsPaymentType, setGpsPaymentType] = useState<'DEVICE' | 'MONTHLY_SUBSCRIPTION' | null>(null);
+  const [gpsPaymentScreenshot, setGpsPaymentScreenshot] = useState('');
+  const [gpsPaymentRef, setGpsPaymentRef] = useState('');
+  const [gpsPaymentLoading, setGpsPaymentLoading] = useState(false);
+  const [gpsPaymentError, setGpsPaymentError] = useState('');
+  const [gpsPaymentSubmitted, setGpsPaymentSubmitted] = useState(false);
   const [linking, setLinking] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
   const [findingDevice, setFindingDevice] = useState(false);
@@ -262,6 +278,8 @@ export default function StudentsPage() {
     setDeviceSounding(false); setFindError('');
     setPowerError('');
     setAlarmWeekdays(0); setAlarmTime(''); setAlarmError(''); setAlarmSaved(false);
+    setGpsPlanStatus(null); setGpsPaymentType(null); setGpsPaymentScreenshot('');
+    setGpsPaymentRef(''); setGpsPaymentError(''); setGpsPaymentSubmitted(false);
     setGpsLoading(true);
     apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)
       .then((r) => {
@@ -271,12 +289,52 @@ export default function StudentsPage() {
         setDadNumber(tracker.dad_number ?? '');
         setMomNumber(tracker.mom_number ?? '');
         setPhoneNumber(tracker.phone_number ?? '');
+        apiClient.get<{ data: GpsPlanStatus }>(`/gps-payments/trackers/${tracker.id}/status`)
+          .then((r2) => setGpsPlanStatus(r2.data.data))
+          .catch(() => {});
       })
       .catch((err) => {
         if ((err as { response?: { status?: number } }).response?.status === 404) setGpsNotLinked(true);
         else setGpsError('No se pudo consultar el localizador');
       })
       .finally(() => setGpsLoading(false));
+  }
+
+  async function handleSubmitGpsPayment() {
+    if (!gpsTracker || !gpsPaymentType) return;
+    if (!gpsPaymentScreenshot && !gpsPaymentRef.trim()) {
+      setGpsPaymentError('Debes subir el comprobante o ingresar el número de referencia');
+      return;
+    }
+    setGpsPaymentLoading(true);
+    setGpsPaymentError('');
+    try {
+      await apiClient.post('/gps-payments', {
+        trackerId: gpsTracker.id,
+        type: gpsPaymentType,
+        receiptUrl: gpsPaymentScreenshot,
+        paymentReference: gpsPaymentRef.trim() || undefined,
+      });
+      setGpsPaymentSubmitted(true);
+      setGpsPaymentType(null);
+      setGpsPaymentScreenshot('');
+      setGpsPaymentRef('');
+    } catch (err) {
+      setGpsPaymentError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al enviar el comprobante');
+    } finally {
+      setGpsPaymentLoading(false);
+    }
+  }
+
+  async function handleGpsPaymentScreenshotChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const base64 = await resizeImage(file, 800, 800);
+      setGpsPaymentScreenshot(base64);
+    } catch {
+      alert('Error al procesar la imagen del comprobante');
+    }
   }
 
   async function handleLinkTracker(e: React.FormEvent) {
@@ -938,6 +996,73 @@ export default function StudentsPage() {
                 <Link to="/tracking" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', display: 'block', marginBottom: 20 }}>
                   Ver ubicación en el mapa
                 </Link>
+
+                {gpsPlanStatus?.is_gps_only_plan && (
+                  <div style={{ marginBottom: 20, padding: 16, borderRadius: 12, background: gpsPlanStatus.subscription_active ? 'rgba(24,226,153,0.08)' : '#fef2f2', border: `1px solid ${gpsPlanStatus.subscription_active ? 'var(--color-brand-deep)' : '#fca5a5'}` }}>
+                    <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)' }}>
+                      Plan solo localizar y llamar
+                    </p>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+                      <span style={{ fontSize: 13 }}>
+                        Dispositivo — {gpsPlanStatus.device_purchased ? '✅ Comprado' : `$${gpsPlanStatus.device_price.toLocaleString('es-CO')} (pago único)`}
+                      </span>
+                      {!gpsPlanStatus.device_purchased && (
+                        <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px', flexShrink: 0 }} onClick={() => setGpsPaymentType('DEVICE')}>
+                          Pagar
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 13 }}>
+                        Mensualidad (${gpsPlanStatus.monthly_price.toLocaleString('es-CO')}/mes) —{' '}
+                        {gpsPlanStatus.subscription_active
+                          ? `✅ Al día hasta ${new Date(gpsPlanStatus.subscription_paid_until!).toLocaleDateString('es-CO')}`
+                          : gpsPlanStatus.subscription_paid_until
+                            ? '⚠️ Vencida'
+                            : '⚠️ Sin pagar'}
+                      </span>
+                      <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px', flexShrink: 0 }} onClick={() => setGpsPaymentType('MONTHLY_SUBSCRIPTION')}>
+                        {gpsPlanStatus.subscription_active ? 'Renovar' : 'Pagar'}
+                      </button>
+                    </div>
+
+                    {!gpsPlanStatus.subscription_active && (
+                      <p style={{ margin: '8px 0 0', fontSize: 11, color: '#991b1b' }}>
+                        El rastreo y las llamadas están en pausa hasta que se pague la mensualidad.
+                      </p>
+                    )}
+
+                    {gpsPaymentType && (
+                      <div style={{ marginTop: 12, padding: 12, background: '#fff', borderRadius: 10, border: '1px solid var(--color-border)' }}>
+                        <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 600 }}>
+                          Comprobante de pago — {gpsPaymentType === 'DEVICE'
+                            ? `Dispositivo ($${gpsPlanStatus.device_price.toLocaleString('es-CO')})`
+                            : `Mensualidad ($${gpsPlanStatus.monthly_price.toLocaleString('es-CO')})`}
+                        </p>
+                        <input type="file" accept="image/*" onChange={handleGpsPaymentScreenshotChange} style={{ marginBottom: 8, fontSize: 12, width: '100%' }} />
+                        <input
+                          className="form-input" placeholder="O ingresa el número de referencia"
+                          value={gpsPaymentRef} onChange={(e) => setGpsPaymentRef(e.target.value)}
+                          style={{ marginBottom: 8 }}
+                        />
+                        {gpsPaymentError && <p className="form-error" style={{ margin: '0 0 8px' }}>{gpsPaymentError}</p>}
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="btn-ghost" style={{ flex: 1 }} onClick={() => { setGpsPaymentType(null); setGpsPaymentError(''); }}>
+                            Cancelar
+                          </button>
+                          <button className="btn-primary" style={{ flex: 1 }} disabled={gpsPaymentLoading} onClick={handleSubmitGpsPayment}>
+                            {gpsPaymentLoading ? 'Enviando...' : 'Enviar comprobante'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {gpsPaymentSubmitted && (
+                      <p style={{ margin: '8px 0 0', fontSize: 12, color: '#059669', fontWeight: 600 }}>Comprobante enviado — será validado pronto ✓</p>
+                    )}
+                  </div>
+                )}
 
                 <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4, fontWeight: 600 }}>Botón de SOS de la tarjeta</p>
                 <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--color-placeholder)' }}>

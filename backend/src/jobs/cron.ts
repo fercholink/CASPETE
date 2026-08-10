@@ -18,6 +18,7 @@ import { runCleanupTokensJob } from './cleanup-tokens.job.js';
 import { runDatabaseBackupJob } from './backup-database.job.js';
 import { runPollGpsEventsJob } from './poll-gps-events.job.js';
 import { runActivateRouteTrackingJob } from './activate-route-tracking.job.js';
+import { runGpsSubscriptionReminderJob } from './gps-subscription-reminder.job.js';
 
 const TIMEZONE = 'America/Bogota';
 
@@ -65,6 +66,15 @@ export function initCronJobs(): void {
     await runActivateRouteTrackingJob();
   });
   console.log('[CRON] ✅ activate-route-tracking → cada 5 minutos');
+
+  // ── Job 6: Recordatorio de mensualidad del plan "solo localizar y llamar" ──
+  // Ejecuta cada día a las 09:00 AM hora Colombia
+  cron.schedule('0 9 * * *', async () => {
+    await runGpsSubscriptionReminderJob();
+  }, {
+    timezone: TIMEZONE,
+  });
+  console.log('[CRON] ✅ gps-subscription-reminder → todos los días a las 09:00 (Bogotá)');
 
   console.log('[CRON] Scheduler activo. Todos los jobs programados correctamente.');
 }

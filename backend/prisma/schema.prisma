@@ -185,6 +185,7 @@ model User {
   refresh_tokens   RefreshToken[]
   reset_tokens     PasswordResetToken[]
   topup_requests   TopupRequest[]
+  gps_payment_requests GPSPaymentRequest[]
   push_subscriptions PushSubscription[]
   audit_logs       AuditLog[]
   nutritional_audit_edits NutritionalAuditLog[] @relation("NutritionalAuditEditor")
@@ -825,8 +826,41 @@ model GPSTracker {
   created_at              DateTime  @default(now())
   updated_at              DateTime  @updatedAt
 
-  student   Student?       @relation(fields: [student_id], references: [id], onDelete: SetNull)
-  telemetry GPSTelemetry[]
+  // ── Plan "solo localizar y llamar" (School.is_gps_only) — pago único del
+  // dispositivo + suscripción mensual. Solo aplica cuando el estudiante no
+  // tiene colegio afiliado; si tiene colegio real, el rastreo va incluido.
+  device_purchased        Boolean   @default(false)
+  subscription_paid_until DateTime? // null = nunca ha pagado la mensualidad; con fecha = pagada hasta ese día
+
+  student        Student?            @relation(fields: [student_id], references: [id], onDelete: SetNull)
+  telemetry      GPSTelemetry[]
+  payment_requests GPSPaymentRequest[]
+}
+
+enum GPSPaymentType {
+  DEVICE               // pago único, $120.000 — compra del localizador
+  MONTHLY_SUBSCRIPTION // $25.000/mes — llamadas ilimitadas + geolocalización en tiempo real
+}
+
+// Comprobante de pago del dispositivo/suscripción "solo localizar y llamar"
+// (School.is_gps_only) — mismo flujo de transferencia manual + comprobante
+// que TopupRequest, pero sin tocar el saldo de loncheras.
+model GPSPaymentRequest {
+  id                String              @id @default(uuid()) @db.Uuid
+  tracker_id        String              @db.Uuid
+  parent_id         String              @db.Uuid
+  type              GPSPaymentType
+  amount            Decimal             @db.Decimal(10, 2)
+  receipt_url       String              @db.Text
+  payment_reference String?             @db.VarChar(100)
+  status            TopupRequestStatus  @default(PENDING)
+  // Para MONTHLY_SUBSCRIPTION: el mes que cubre este pago una vez aprobado.
+  period_end        DateTime?
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @updatedAt
+
+  tracker GPSTracker @relation(fields: [tracker_id], references: [id])
+  parent  User       @relation(fields: [parent_id], references: [id])
 }
 
 model GPSTelemetry {

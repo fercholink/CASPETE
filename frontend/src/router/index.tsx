@@ -27,6 +27,7 @@ import InicioPage from '../pages/landing/InicioPage';
 import BeneficiosPage from '../pages/landing/BeneficiosPage';
 import FuncionalidadesPage from '../pages/landing/FuncionalidadesPage';
 import TopupRequestsPage from '../pages/TopupRequestsPage';
+import GpsPaymentsPage from '../pages/GpsPaymentsPage';
 import PaymentMethodsPage from '../pages/PaymentMethodsPage';
 import Ley2120DashboardPage from '../pages/Ley2120DashboardPage';
 import SuppliersPage from '../pages/SuppliersPage';
@@ -306,6 +307,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']}>
         <TopupRequestsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/gps-payments',
+    element: (
+      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+        <GpsPaymentsPage />
       </ProtectedRoute>
     ),
   },

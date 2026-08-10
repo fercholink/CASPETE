@@ -124,6 +124,7 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/school-leads',    label: 'Solicitudes',          icon: '📥' },
     { to: '/orders',          label: 'Pedidos',              icon: '📋' },
     { to: '/topup-requests',  label: 'Recargas',             icon: '💰' },
+    { to: '/gps-payments',    label: 'Pagos GPS',            icon: '📍' },
     { to: '/transactions',    label: 'Transacciones',        icon: '📊' },
   ],
   SCHOOL_ADMIN: [

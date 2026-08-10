@@ -14,6 +14,7 @@ interface Student {
 interface TrackerInfo {
   id: string;
   device_name: string | null;
+  phone_number: string | null;
   battery_level: number | null;
   signal_strength: number | null;
   online: boolean;
@@ -327,6 +328,16 @@ export default function GPSTrackingPage() {
                   </button>
                 )}
               </div>
+            )}
+
+            {current?.tracker.phone_number && (
+              <a
+                href={`tel:${current.tracker.phone_number}`}
+                className="btn-primary"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', marginBottom: 16 }}
+              >
+                📞 Llamar a {selectedStudent?.full_name.split(' ')[0]} ({current.tracker.phone_number})
+              </a>
             )}
 
             {current && (

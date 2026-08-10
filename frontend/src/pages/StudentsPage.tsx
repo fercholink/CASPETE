@@ -35,6 +35,7 @@ interface TrackerData {
   id: string;
   qr_token: string;
   device_name: string | null;
+  phone_number: string | null;
   battery_level: number | null;
   signal_strength: number | null;
   online: boolean;
@@ -86,6 +87,7 @@ export default function StudentsPage() {
   const [gpsError, setGpsError] = useState('');
   const [imei, setImei] = useState('');
   const [deviceName, setDeviceName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [linking, setLinking] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
   const [findingDevice, setFindingDevice] = useState(false);
@@ -254,6 +256,7 @@ export default function StudentsPage() {
     setGpsError('');
     setImei('');
     setDeviceName('');
+    setPhoneNumber('');
     setSosNumber(''); setDadNumber(''); setMomNumber('');
     setContactsError(''); setContactsSaved(false);
     setDeviceSounding(false); setFindError('');
@@ -267,6 +270,7 @@ export default function StudentsPage() {
         setSosNumber(tracker.sos_number ?? '');
         setDadNumber(tracker.dad_number ?? '');
         setMomNumber(tracker.mom_number ?? '');
+        setPhoneNumber(tracker.phone_number ?? '');
       })
       .catch((err) => {
         if ((err as { response?: { status?: number } }).response?.status === 404) setGpsNotLinked(true);
@@ -286,6 +290,7 @@ export default function StudentsPage() {
         student_id: gpsStudentId,
         imei,
         device_name: deviceName || undefined,
+        phone_number: phoneNumber || undefined,
       });
       setGpsTracker(r.data.data);
       setGpsNotLinked(false);
@@ -308,6 +313,10 @@ export default function StudentsPage() {
         ...(dadNumber ? { dad_number: dadNumber } : {}),
         ...(momNumber ? { mom_number: momNumber } : {}),
       });
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/phone-number`, {
+        phone_number: phoneNumber || null,
+      });
+      setGpsTracker((prev) => prev ? { ...prev, phone_number: phoneNumber || null } : prev);
       setContactsSaved(true);
     } catch (err) {
       setContactsError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al guardar los números de contacto');
@@ -891,6 +900,14 @@ export default function StudentsPage() {
                     <span style={{ color: 'var(--color-text-muted)' }}>Dispositivo</span>
                     <span style={{ fontWeight: 600 }}>{gpsTracker.device_name ?? 'Sin nombre'}</span>
                   </div>
+                  {gpsTracker.phone_number && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Número de la SIM</span>
+                      <a href={`tel:${gpsTracker.phone_number}`} style={{ fontWeight: 600, color: 'var(--color-brand-deep)', textDecoration: 'none' }}>
+                        📞 {gpsTracker.phone_number}
+                      </a>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--color-text-muted)' }}>Estado</span>
                     <span style={{ fontWeight: 600, color: gpsTracker.online ? '#059669' : 'var(--color-text-muted)' }}>
@@ -927,13 +944,19 @@ export default function StudentsPage() {
                   Al presionar el botón físico de la tarjeta, marca al Número 1. Si no contesta, puedes agregar un segundo y tercer número de respaldo.
                 </p>
                 <form onSubmit={handleSaveContacts} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                  {gpsTracker?.phone_number !== undefined && (
+                    <input
+                      className="form-input" type="tel" placeholder="📞 Número de la SIM del dispositivo (llamadas)"
+                      value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    />
+                  )}
                   <input className="form-input" type="tel" placeholder="Número 1 (SOS)" value={sosNumber} onChange={(e) => setSosNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} />
                   <input className="form-input" type="tel" placeholder="Número 2" value={dadNumber} onChange={(e) => setDadNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} />
                   <input className="form-input" type="tel" placeholder="Número 3" value={momNumber} onChange={(e) => setMomNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} />
                   {contactsError && <p className="form-error" style={{ margin: 0 }}>{contactsError}</p>}
                   {contactsSaved && <p style={{ margin: 0, fontSize: 12, color: '#059669', fontWeight: 600 }}>Números guardados ✓</p>}
-                  <button type="submit" className="btn-ghost" disabled={savingContacts || (!sosNumber && !dadNumber && !momNumber)}>
-                    {savingContacts ? 'Guardando...' : 'Guardar números de contacto'}
+                  <button type="submit" className="btn-ghost" disabled={savingContacts || (!sosNumber && !dadNumber && !momNumber && !phoneNumber)}>
+                    {savingContacts ? 'Guardando...' : 'Guardar números'}
                   </button>
                 </form>
 
@@ -1001,6 +1024,14 @@ export default function StudentsPage() {
                     id="device-name" className="form-input" value={deviceName}
                     onChange={(e) => setDeviceName(e.target.value)}
                     placeholder="Ej: Mochila de Sofía" style={{ marginBottom: 0 }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="phone-number">Número de la SIM del dispositivo (opcional)</label>
+                  <input
+                    id="phone-number" className="form-input" value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="Solo si tu tarjeta tiene SIM con llamadas" style={{ marginBottom: 0 }}
                   />
                 </div>
 

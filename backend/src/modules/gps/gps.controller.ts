@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import * as gpsService from './gps.service.js';
 import {
   linkTrackerSchema, historyQuerySchema, emergencyContactsSchema, findDeviceSchema,
-  powerActionSchema, setAlarmClockSchema,
+  powerActionSchema, setAlarmClockSchema, setPhoneNumberSchema,
 } from './gps.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
@@ -22,6 +22,12 @@ export async function setEmergencyContacts(req: Request, res: Response) {
   const input = emergencyContactsSchema.parse(req.body);
   const result = await gpsService.setEmergencyContacts(req.params['id'] as string, input, req.user!);
   sendSuccess(res, result, 'Números de contacto actualizados');
+}
+
+export async function setPhoneNumber(req: Request, res: Response) {
+  const input = setPhoneNumberSchema.parse(req.body);
+  const result = await gpsService.setPhoneNumber(req.params['id'] as string, input, req.user!);
+  sendSuccess(res, result, 'Número de teléfono actualizado');
 }
 
 export async function findDevice(req: Request, res: Response) {

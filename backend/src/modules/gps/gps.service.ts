@@ -4,7 +4,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import { logAudit } from '../../middleware/audit-log.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
-import type { LinkTrackerInput, EmergencyContactsInput } from './gps.schemas.js';
+import type { LinkTrackerInput, EmergencyContactsInput, SetPhoneNumberInput } from './gps.schemas.js';
 import * as gpsPlatform from '../../lib/gpsPlatform.js';
 import { syncStudentRoute } from '../../lib/routeSync.js';
 
@@ -17,6 +17,7 @@ const trackerSelect = {
   id: true,
   qr_token: true,
   device_name: true,
+  phone_number: true,
   extended_tracking_until: true,
   active: true,
   platform_tracker_id: true,
@@ -26,6 +27,7 @@ type LocalTracker = {
   id: string;
   qr_token: string;
   device_name: string | null;
+  phone_number: string | null;
   extended_tracking_until: Date | null;
   active: boolean;
 };
@@ -48,6 +50,7 @@ function buildTrackerInfo(local: LocalTracker, platform: gpsPlatform.PlatformTra
     id: local.id,
     qr_token: local.qr_token,
     device_name: local.device_name ?? platform?.device_name ?? null,
+    phone_number: local.phone_number,
     battery_level: platform?.battery_level ?? null,
     signal_strength: platform?.signal_strength ?? null,
     online: Boolean(platform?.online) && isRecentlySeen(platform?.last_seen_at ?? null),
@@ -104,6 +107,7 @@ export async function linkTracker(input: LinkTrackerInput, actor: JwtPayload) {
         data: {
           student_id: input.student_id,
           device_name: input.device_name ?? existingImei.device_name,
+          phone_number: input.phone_number ?? existingImei.phone_number,
           platform_tracker_id: platformTracker.id,
         },
         select: trackerSelect,
@@ -114,6 +118,7 @@ export async function linkTracker(input: LinkTrackerInput, actor: JwtPayload) {
           qr_token: randomBytes(24).toString('hex'),
           student_id: input.student_id,
           device_name: input.device_name ?? null,
+          phone_number: input.phone_number ?? null,
           platform_tracker_id: platformTracker.id,
         },
         select: trackerSelect,
@@ -164,6 +169,26 @@ export async function setEmergencyContacts(id: string, input: EmergencyContactsI
   }
 
   return gpsPlatform.setEmergencyContacts(tracker.platform_tracker_id, input);
+}
+
+// Número de la SIM del dispositivo — solo se guarda localmente en Caspete,
+// no pasa por la Plataforma GPS (es una capacidad de voz de la SIM/operador,
+// independiente del protocolo TCP de datos/ubicación).
+export async function setPhoneNumber(id: string, input: SetPhoneNumberInput, actor: JwtPayload) {
+  const tracker = await prisma.gPSTracker.findUnique({
+    where: { id },
+    select: { id: true, student: { select: { parent_id: true } } },
+  });
+  if (!tracker) throw new AppError('Localizador no encontrado', 404);
+  if (actor.role !== 'SUPER_ADMIN' && tracker.student?.parent_id !== actor.sub) {
+    throw new AppError('No tienes permiso para configurar este localizador', 403);
+  }
+
+  return prisma.gPSTracker.update({
+    where: { id },
+    data: { phone_number: input.phone_number },
+    select: trackerSelect,
+  });
 }
 
 // Hace sonar el parlante de la tarjeta (si tiene) — para encontrarla si se extravió en casa.

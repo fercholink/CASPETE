@@ -13,6 +13,7 @@ const gpsRoles = requireRole('PARENT', 'SUPER_ADMIN');
 router.post('/trackers', gpsRoles, gpsController.link);
 router.delete('/trackers/:id', gpsRoles, gpsController.unlink);
 router.patch('/trackers/:id/emergency-contacts', gpsRoles, gpsController.setEmergencyContacts);
+router.patch('/trackers/:id/phone-number', gpsRoles, gpsController.setPhoneNumber);
 router.patch('/trackers/:id/find', gpsRoles, gpsController.findDevice);
 router.patch('/trackers/:id/power', gpsRoles, gpsController.sendPowerAction);
 router.patch('/trackers/:id/alarm-clock', gpsRoles, gpsController.setAlarmClock);

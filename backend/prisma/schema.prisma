@@ -807,6 +807,7 @@ model GPSTracker {
   qr_token                String    @unique @db.VarChar(64) // opaco — usado solo para asistencia/identificación de entrega, nunca para auth del dispositivo
   student_id              String?   @unique @db.Uuid
   device_name             String?   @db.VarChar(100)
+  phone_number            String?   @db.VarChar(20) // número de la SIM del dispositivo (llamadas de voz reales, fuera de nuestro protocolo TCP)
   battery_level           Int?      @default(100)
   signal_strength         Int?      @default(100)
   online                  Boolean   @default(false)

@@ -94,6 +94,7 @@ export default function StudentFormPage() {
   const isEdit = Boolean(id);
 
   const [form, setForm] = useState(emptyForm);
+  const [gpsOnly, setGpsOnly] = useState(false);
   const [schools, setSchools] = useState<ActiveSchool[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -159,7 +160,7 @@ export default function StudentFormPage() {
 
     const payload = {
       full_name: form.full_name,
-      school_id: form.school_id,
+      ...(!isEdit && gpsOnly ? { gps_only: true } : { school_id: form.school_id }),
       ...(form.national_id ? { national_id: form.national_id } : {}),
       ...(form.grade ? { grade: form.grade } : {}),
       ...(form.delivery_code ? { delivery_code: form.delivery_code } : {}),
@@ -250,36 +251,59 @@ export default function StudentFormPage() {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="school_id">
-              Colegio
-              {isEdit && (
-                <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, fontSize: 12, marginLeft: 6 }}>
-                  (puedes cambiarlo)
+          {!isEdit && (
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', padding: '10px 12px', borderRadius: 10, background: gpsOnly ? 'rgba(24,226,153,0.08)' : 'var(--color-gray-50)', border: `1px solid ${gpsOnly ? 'var(--color-brand-deep)' : 'var(--color-border)'}` }}>
+                <input
+                  type="checkbox"
+                  checked={gpsOnly}
+                  onChange={(e) => setGpsOnly(e.target.checked)}
+                  style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.5 }}>
+                  <strong>Mi colegio no está afiliado a Kidway todavía</strong> — solo quiero localizar y llamar a mi hijo por ahora.
                 </span>
+              </label>
+              {gpsOnly && (
+                <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                  Podrás usar el rastreo GPS y las llamadas normalmente. Las loncheras y el saldo digital no estarán disponibles hasta que tu colegio se afilie — puedes editarlo más adelante si eso cambia.
+                </p>
               )}
-            </label>
-            <select
-              id="school_id"
-              name="school_id"
-              className="form-select"
-              value={form.school_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Selecciona un colegio...</option>
-              {schools.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} — {s.city}
-                </option>
-              ))}
-            </select>
-            {schools.length === 0 && (
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
-                No hay colegios activos disponibles.
-              </p>
-            )}
-          </div>
+            </div>
+          )}
+
+          {!gpsOnly && (
+            <div className="form-group">
+              <label className="form-label" htmlFor="school_id">
+                Colegio
+                {isEdit && (
+                  <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, fontSize: 12, marginLeft: 6 }}>
+                    (puedes cambiarlo)
+                  </span>
+                )}
+              </label>
+              <select
+                id="school_id"
+                name="school_id"
+                className="form-select"
+                value={form.school_id}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Selecciona un colegio...</option>
+                {schools.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} — {s.city}
+                  </option>
+                ))}
+              </select>
+              {schools.length === 0 && (
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                  No hay colegios activos disponibles.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="grid-2-mobile-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>

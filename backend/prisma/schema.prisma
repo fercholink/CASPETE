@@ -112,6 +112,12 @@ model School {
   // el reporte de auditoría de Pensión Incluida (Fase 4): costo estimado = comidas × este valor.
   cost_per_meal      Decimal?         @db.Decimal(10, 2)
 
+  // Colegio "placeholder" para estudiantes registrados en modo "solo localizar
+  // y llamar" (su colegio real todavía no tiene convenio con Kidway). El
+  // rastreo GPS de estos estudiantes es siempre en vivo, sin depender de un
+  // horario escolar real — ver isTelemetryAllowed en gps.service.ts.
+  is_gps_only Boolean @default(false)
+
   // ── Rastreo GPS (tarjetas localizadoras) ─────────────────────────────────
   gps_tracking_enabled  Boolean @default(false) // el colegio habilita rastreo GPS
   attendance_qr_enabled Boolean @default(false) // el colegio habilita asistencia por QR

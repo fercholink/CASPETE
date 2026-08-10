@@ -33,20 +33,26 @@ function assertAccess(student: { school_id: string; parent_id: string }, actor: 
   throw new AppError('No tienes permiso para acceder a este estudiante', 403);
 }
 
+// Colegio placeholder para estudiantes "solo localizar y llamar" (su colegio
+// real todavía no tiene convenio con Kidway) — id fijo, sembrado por la
+// migración 20260806220000_add_school_is_gps_only.
+const GPS_ONLY_SCHOOL_ID = '00000000-0000-0000-0000-000000000001';
+
 export async function createStudent(input: CreateStudentInput, actor: JwtPayload) {
-  const school = await prisma.school.findUnique({ where: { id: input.school_id } });
+  const schoolId = input.gps_only ? GPS_ONLY_SCHOOL_ID : input.school_id!;
+  const school = await prisma.school.findUnique({ where: { id: schoolId } });
   if (!school?.active) throw new AppError('El colegio no existe o está inactivo', 404);
 
   if (input.national_id) {
     const dup = await prisma.student.findUnique({
-      where: { school_id_national_id: { school_id: input.school_id, national_id: input.national_id } },
+      where: { school_id_national_id: { school_id: schoolId, national_id: input.national_id } },
     });
     if (dup) throw new AppError('Ya hay un estudiante con ese documento en este colegio', 409);
   }
 
   return prisma.student.create({
     data: {
-      school_id: input.school_id, parent_id: actor.sub, full_name: input.full_name,
+      school_id: schoolId, parent_id: actor.sub, full_name: input.full_name,
       national_id: input.national_id ?? null, grade: input.grade ?? null,
       photo_url: input.photo_url ?? null,
       delivery_code: String(Math.floor(100000 + Math.random() * 900000)).substring(0, 6),

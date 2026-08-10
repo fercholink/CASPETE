@@ -436,7 +436,7 @@ export async function isTelemetryAllowed(trackerId: string, now: Date = new Date
       student: {
         select: {
           school: {
-            select: { gps_tracking_enabled: true, school_start_time: true, school_end_time: true },
+            select: { gps_tracking_enabled: true, school_start_time: true, school_end_time: true, is_gps_only: true },
           },
         },
       },
@@ -446,6 +446,9 @@ export async function isTelemetryAllowed(trackerId: string, now: Date = new Date
   if (tracker.extended_tracking_until && tracker.extended_tracking_until > now) return true;
 
   const school = tracker.student.school;
+  // Estudiante "solo localizar y llamar" (sin colegio real con convenio) —
+  // no hay horario escolar que referenciar, así que el rastreo es siempre en vivo.
+  if (school.is_gps_only) return true;
   if (!school.gps_tracking_enabled || !school.school_start_time || !school.school_end_time) return false;
 
   const bogotaMinutes = ((now.getUTCHours() + BOGOTA_UTC_OFFSET_HOURS + 24) % 24) * 60 + now.getUTCMinutes();

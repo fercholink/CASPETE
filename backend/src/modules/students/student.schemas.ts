@@ -1,11 +1,17 @@
 import { z } from 'zod';
 
 export const createStudentSchema = z.object({
-  school_id: z.string().uuid(),
+  // Si gps_only es true, school_id se ignora — el estudiante se asocia al
+  // colegio placeholder "solo GPS" (su colegio real no tiene convenio todavía).
+  school_id: z.string().uuid().optional(),
+  gps_only: z.boolean().optional(),
   full_name: z.string().min(2).max(200),
   national_id: z.string().max(20).optional(),
   grade: z.string().max(10).optional(),
   photo_url: z.string().optional(),
+}).refine((data) => data.gps_only || data.school_id, {
+  message: 'Debes seleccionar un colegio, o elegir la opción "solo localizar y llamar"',
+  path: ['school_id'],
 });
 
 export const updateStudentSchema = z.object({

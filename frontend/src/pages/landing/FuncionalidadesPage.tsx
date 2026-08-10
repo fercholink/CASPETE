@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles, UtensilsCrossed, AlertTriangle, Check, Star, Smile,
+  MapPin, Phone, Radio, BatteryCharging, Navigation, RefreshCw,
 } from 'lucide-react';
 import { useLeadModal } from '../../components/landing/LeadModalProvider';
 import { COLOMBIAN_FOOD_ITEMS } from '../../data/landingMockData';
@@ -28,6 +29,15 @@ const FAQS = [
     q: '🔒 ¿Están seguros los datos y la foto de mi hijo de acuerdo a la ley?',
     a: 'Totalmente. La privacidad de tus tesoros es sagrada. En conformidad con la Ley 1581 (Habeas Data de Colombia), toda la información, fotitos y alergias están blindadas y cifradas. Solo tú y el personal autorizado encargado de entregar el refrigerio pueden verlas.',
   },
+];
+
+const DEVICE_SPECS = [
+  { icon: Radio, label: 'Red 4G CAT-1 + 2G GSM', desc: 'Cobertura confiable en toda Colombia, incluso en zonas rurales.' },
+  { icon: MapPin, label: 'Ubicación por GPS + WiFi + Torres celulares', desc: 'Combina varias fuentes para ubicar al niño incluso sin señal GPS directa.' },
+  { icon: Phone, label: 'Llamadas de voz y botón SOS', desc: 'Micrófono y parlante integrados para hablar en tiempo real con tu hijo.' },
+  { icon: Navigation, label: 'Geocercas y recorrido histórico', desc: 'Define zonas seguras y revisa el camino que hizo tu hijo cualquier día.' },
+  { icon: BatteryCharging, label: 'Batería de 1500 mAh', desc: 'Varios días de uso normal con una sola carga.' },
+  { icon: RefreshCw, label: 'Actualización remota de firmware', desc: 'El dispositivo se mantiene al día sin que tengas que hacer nada.' },
 ];
 
 export default function FuncionalidadesPage() {
@@ -226,6 +236,79 @@ export default function FuncionalidadesPage() {
               </p>
             </div>
 
+          </div>
+        </div>
+      </section>
+
+      {/* Cómo funciona el localizador GPS */}
+      <section className="py-20 bg-white border-t border-[#faeae1]">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center space-y-4">
+            <div className="inline-flex items-center gap-x-2 text-xs font-bold text-emerald-805 bg-emerald-100/60 px-3.5 py-2 rounded-full border border-emerald-250">
+              <MapPin className="h-4 w-4" />
+              <span>UBICACIÓN Y LLAMADAS</span>
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-[#4e2f33] leading-tight tracking-tight">
+              ¿Cómo funciona el localizador GPS?
+            </h2>
+            <p className="text-[#61494c] text-sm">
+              El localizador captura su ubicación al aire libre y tú la ves al instante desde la app, sin que tu hijo necesite un celular propio.
+            </p>
+          </div>
+
+          <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-12 relative text-left max-w-4xl mx-auto">
+            <div className="flex flex-col items-start space-y-4">
+              <div className="w-14 h-14 rounded-full bg-emerald-100 border border-emerald-450 text-emerald-800 flex items-center justify-center font-display font-black text-xl shadow-xs">
+                <span>A</span>
+              </div>
+              <h3 className="font-display text-xl font-bold text-[#4e2f33]">📡 Captura la ubicación</h3>
+              <p className="text-xs text-[#61494c] font-medium leading-relaxed">
+                El localizador soporta múltiples métodos de ubicación y captura la señal GPS cuando está al aire libre, registrando la posición y el recorrido del trayecto.
+              </p>
+            </div>
+            <div className="flex flex-col items-start space-y-4">
+              <div className="w-14 h-14 rounded-full bg-[#dcfce7] border border-[#4ade80] text-[#15803d] flex items-center justify-center font-display font-black text-xl shadow-xs">
+                <span>B</span>
+              </div>
+              <h3 className="font-display text-xl font-bold text-[#4e2f33]">📲 Tú lo ves desde la app</h3>
+              <p className="text-xs text-[#61494c] font-medium leading-relaxed">
+                Como padre, ves la ubicación en tiempo real, el historial del recorrido y el estado del localizador directamente desde la app de Kidway — sin costos extra.
+              </p>
+            </div>
+          </div>
+
+          {/* Grid de especificaciones del dispositivo */}
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {DEVICE_SPECS.map((spec) => {
+              const Icon = spec.icon;
+              return (
+                <div
+                  key={spec.label}
+                  className="bg-[#fffcf9] p-6 rounded-[1.75rem] border border-[#f7e3d7] flex flex-col gap-3 text-left"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-display text-sm font-bold text-[#4e2f33] leading-snug">{spec.label}</h4>
+                    <p className="text-xs text-[#61494c] leading-relaxed">{spec.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Explicación del botón SOS */}
+          <div className="mt-14 max-w-3xl mx-auto bg-[#fef2f2] border border-red-200 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center gap-6 text-left">
+            <div className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md flex-shrink-0">
+              <span className="text-2xl">🆘</span>
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-black text-[#4e2f33] mb-1">Botón de SOS</h3>
+              <p className="text-xs text-[#61494c] leading-relaxed">
+                Tu hijo mantiene presionado el botón de SOS por 3 segundos para activar la llamada de pánico: el localizador marca automáticamente al número configurado en la app y se establece una llamada de voz en ambos sentidos, para que puedas escucharlo y hablarle de inmediato.
+              </p>
+            </div>
           </div>
         </div>
       </section>

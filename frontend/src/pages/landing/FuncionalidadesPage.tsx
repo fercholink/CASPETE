@@ -358,6 +358,14 @@ export default function FuncionalidadesPage() {
             <p className="text-center text-xs text-[#8c6d71] mt-6 max-w-xl mx-auto">
               No necesitas que tu colegio esté afiliado a Kidway para usar el localizador — regístrate como padre y elige "solo localizar y llamar" al agregar a tu hijo.
             </p>
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={() => openLeadModal('GPS')}
+                className="py-4 px-10 rounded-2xl text-white font-display font-black text-xs uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer text-center shadow-md shadow-emerald-500/25"
+              >
+                📍 Quiero el Localizador
+              </button>
+            </div>
           </div>
         </div>
       </section>

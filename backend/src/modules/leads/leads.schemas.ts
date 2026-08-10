@@ -8,7 +8,7 @@ export const CreateLeadSchema = z.object({
   contact_email:  z.string().email('El correo electrónico no es válido'),
   contact_phone:  z.string().max(20).regex(/^[0-9\s+-]*$/, 'El teléfono debe contener solo números y caracteres válidos').optional(),
   students_count: z.number().int().positive('El número de estudiantes debe ser un número positivo').optional(),
-  plan_interest:  z.enum(['COMMISSION', 'MONTHLY']),
+  plan_interest:  z.enum(['COMMISSION', 'MONTHLY', 'GPS']),
   message:        z.string().max(200, 'Las observaciones no pueden exceder los 200 caracteres').optional(),
   // ── Anti-spam (público, sin auth) — nunca los llena un usuario real ──────
   website:        z.string().max(200).optional(),      // honeypot: campo oculto, los bots lo autocompletan

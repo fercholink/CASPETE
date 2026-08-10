@@ -11,7 +11,7 @@ interface Lead {
   contact_email: string;
   contact_phone: string | null;
   students_count: number | null;
-  plan_interest: 'COMMISSION' | 'MONTHLY';
+  plan_interest: 'COMMISSION' | 'MONTHLY' | 'GPS';
   message: string | null;
   status: 'NEW' | 'CONTACTED' | 'DEMO' | 'CLOSED';
   notes: string | null;
@@ -32,7 +32,7 @@ const STATUS_COLOR: Record<string, React.CSSProperties> = {
   DEMO:      { background: 'rgba(168,85,247,0.1)', color: '#7c3aed' },
   CLOSED:    { background: 'rgba(107,114,128,0.1)', color: '#6b7280' },
 };
-const PLAN_LABEL: Record<string, string> = { COMMISSION: 'Por Comisión', MONTHLY: 'Mensual' };
+const PLAN_LABEL: Record<string, string> = { COMMISSION: 'Por Comisión', MONTHLY: 'Mensual', GPS: '📍 Localizador GPS' };
 
 function nowForInput() {
   const d = new Date();
@@ -146,7 +146,8 @@ export default function SchoolLeadsPage() {
       l.school_name.toLowerCase().includes(q) ||
       l.city.toLowerCase().includes(q) ||
       l.contact_name.toLowerCase().includes(q) ||
-      l.contact_email.toLowerCase().includes(q),
+      l.contact_email.toLowerCase().includes(q) ||
+      (l.message ?? '').toLowerCase().includes(q),
     );
   }, [leads, search]);
 
@@ -161,9 +162,9 @@ export default function SchoolLeadsPage() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, margin: '0 0 4px', letterSpacing: '-0.5px' }}>🏫 Colegios Interesados</h1>
+            <h1 style={{ fontSize: 26, fontWeight: 800, margin: '0 0 4px', letterSpacing: '-0.5px' }}>🏫📍 Solicitudes de la Landing</h1>
             <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-muted)' }}>
-              {total} solicitud{total !== 1 ? 'es' : ''} recibida{total !== 1 ? 's' : ''} desde la landing page
+              {total} solicitud{total !== 1 ? 'es' : ''} recibida{total !== 1 ? 's' : ''} — colegios interesados y padres que quieren el localizador GPS
             </p>
           </div>
           <button className="btn-primary" style={{ width: 'auto' }} onClick={() => { setForm(emptyForm()); setCreateError(''); setShowCreate(true); }}>
@@ -208,13 +209,14 @@ export default function SchoolLeadsPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 700, fontSize: 15 }}>{lead.school_name}</span>
+                      <span style={{ fontWeight: 700, fontSize: 15 }}>{lead.plan_interest === 'GPS' ? lead.contact_name : lead.school_name}</span>
                       <span className="role-badge" style={STATUS_COLOR[lead.status]}>{STATUS_LABEL[lead.status]}</span>
                       <span className="role-badge" style={{ background: 'rgba(26,71,49,0.08)', color: '#1a4731' }}>{PLAN_LABEL[lead.plan_interest]}</span>
                     </div>
                     <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
-                      {lead.city} · {lead.contact_name} · {lead.contact_email}
-                      {lead.students_count ? ` · ${lead.students_count} estudiantes` : ''}
+                      {lead.plan_interest === 'GPS'
+                        ? `${lead.city} · ${lead.contact_email}${lead.contact_phone ? ` · ${lead.contact_phone}` : ''}`
+                        : `${lead.city} · ${lead.contact_name} · ${lead.contact_email}${lead.students_count ? ` · ${lead.students_count} estudiantes` : ''}`}
                     </p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -256,18 +258,29 @@ export default function SchoolLeadsPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-              {([
-                ['Colegio', selected.school_name],
-                ['NIT', selected.nit ?? '—'],
-                ['Ciudad', selected.city],
-                ['Modalidad', PLAN_LABEL[selected.plan_interest]],
-                ['Contacto', selected.contact_name],
-                ['Email', selected.contact_email],
-                ['Teléfono', selected.contact_phone ?? '—'],
-                ['Estudiantes', selected.students_count?.toString() ?? '—'],
-                ['Recibido', fmtDate(selected.created_at)],
-                ['IP de origen', selected.ip_address ?? '— (registrado manualmente)'],
-              ] as [string, string][]).map(([label, val]) => (
+              {(selected.plan_interest === 'GPS'
+                ? [
+                    ['Padre/Acudiente', selected.contact_name],
+                    ['Ciudad', selected.city],
+                    ['Modalidad', PLAN_LABEL[selected.plan_interest]],
+                    ['Email', selected.contact_email],
+                    ['Teléfono', selected.contact_phone ?? '—'],
+                    ['Recibido', fmtDate(selected.created_at)],
+                    ['IP de origen', selected.ip_address ?? '— (registrado manualmente)'],
+                  ]
+                : [
+                    ['Colegio', selected.school_name],
+                    ['NIT', selected.nit ?? '—'],
+                    ['Ciudad', selected.city],
+                    ['Modalidad', PLAN_LABEL[selected.plan_interest]],
+                    ['Contacto', selected.contact_name],
+                    ['Email', selected.contact_email],
+                    ['Teléfono', selected.contact_phone ?? '—'],
+                    ['Estudiantes', selected.students_count?.toString() ?? '—'],
+                    ['Recibido', fmtDate(selected.created_at)],
+                    ['IP de origen', selected.ip_address ?? '— (registrado manualmente)'],
+                  ]
+              ).map(([label, val]) => (
                 <div key={label} style={{ display: 'flex', gap: 12, fontSize: 14 }}>
                   <span style={{ fontWeight: 600, minWidth: 90, color: 'var(--color-text-muted)' }}>{label}</span>
                   <span style={{ color: 'var(--color-text)' }}>{val}</span>

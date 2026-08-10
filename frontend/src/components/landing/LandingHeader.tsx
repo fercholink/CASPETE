@@ -36,7 +36,7 @@ export default function LandingHeader() {
                 <span className="font-display font-black text-2xl tracking-tight text-emerald-600 group-hover:text-emerald-500 transition-colors">
                   Kidway
                 </span>
-                <span className="text-2xl font-bold text-emerald-500">📱</span>
+                <span className="text-2xl font-bold text-emerald-500">📞</span>
               </div>
               <span className="text-[10px] text-[#8c6d71] font-bold block leading-none tracking-wide uppercase">GPS, Llamadas y Loncheras con Amor</span>
             </div>

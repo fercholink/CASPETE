@@ -310,6 +310,55 @@ export default function FuncionalidadesPage() {
               </p>
             </div>
           </div>
+
+          {/* Precio del localizador para padres */}
+          <div className="mt-16 max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <span className="text-emerald-700 text-xs font-extrabold tracking-widest uppercase block font-mono">Precio Claro para Padres</span>
+              <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[#4e2f33] leading-tight tracking-tight mt-2">
+                ¿Cuánto cuesta el localizador?
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Dispositivo — pago único */}
+              <div className="bg-white p-8 rounded-[2rem] border-2 border-[#f7e3d7] flex flex-col justify-between space-y-6 text-left">
+                <div>
+                  <span className="text-3xl">📦</span>
+                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Localizador GPS</h4>
+                  <p className="text-xs text-[#61494c] font-semibold mt-1">Pago único, es tuyo para siempre.</p>
+                  <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
+                    $120.000 <span className="text-sm font-bold text-[#61494c]">COP</span>
+                  </p>
+                </div>
+                <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Dispositivo con SIM 4G incluida</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Batería de 1500 mAh</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Botón físico de SOS</span></li>
+                </ul>
+              </div>
+
+              {/* Mensualidad — recomendado */}
+              <div className="bg-white p-8 rounded-[2.5rem] border-2 border-emerald-400 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-lg shadow-emerald-500/10 text-left">
+                <span className="absolute top-6 right-6 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Todo Incluido</span>
+                <div>
+                  <span className="text-3xl">📍</span>
+                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Plan Mensual</h4>
+                  <p className="text-xs text-[#61494c] font-semibold mt-1">Ubicación y llamadas, sin sorpresas.</p>
+                  <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
+                    $25.000 <span className="text-sm font-bold text-[#61494c]">COP / mes</span>
+                  </p>
+                </div>
+                <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Llamadas ilimitadas a todo destino</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Geolocalización en tiempo real</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Sin permanencia — pagas mes a mes</span></li>
+                </ul>
+              </div>
+            </div>
+            <p className="text-center text-xs text-[#8c6d71] mt-6 max-w-xl mx-auto">
+              No necesitas que tu colegio esté afiliado a Kidway para usar el localizador — regístrate como padre y elige "solo localizar y llamar" al agregar a tu hijo.
+            </p>
+          </div>
         </div>
       </section>
 

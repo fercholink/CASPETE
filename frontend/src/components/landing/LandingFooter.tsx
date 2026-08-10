@@ -13,7 +13,7 @@ export default function LandingFooter() {
               <img src="/favicon.svg" alt="Kidway" className="w-full h-full" />
             </div>
             <span className="font-display font-black text-xl text-white tracking-tight">
-              Kidway<span>🥦</span>
+              Kidway<span>📱</span>
             </span>
           </div>
           <p className="text-xs text-[#cbdcd0] opacity-80 leading-relaxed">

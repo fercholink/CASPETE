@@ -17,9 +17,9 @@ export default function LandingHeader() {
       {/* Dynamic Floating Global Notification Bar - Healthy Green / Sano theme */}
       <div className="bg-emerald-50 text-emerald-800 py-3 px-4 text-center text-xs font-bold flex items-center justify-center gap-2 select-none border-b border-emerald-200">
         <span className="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-black animate-pulse flex items-center gap-0.5">
-          <Heart className="h-2.5 w-2.5 fill-current text-white" /> AMOR ES SALUD
+          <Heart className="h-2.5 w-2.5 fill-current text-white" /> NUEVO
         </span>
-        <span>Cumplimos con la Ley de Alimentación Escolar (Ley 2120 de Colombia). ¡Diseña loncheras nutritivas y felices para tus pequeños! 🍎🥦</span>
+        <span>📍 Ubicación GPS en tiempo real y 📞 llamadas directas con tu hijo desde su localizador. ¡Y también sus loncheras, todo en una app! 🎒</span>
       </div>
 
       {/* Styled Responsive Navigation Header */}
@@ -38,7 +38,7 @@ export default function LandingHeader() {
                 </span>
                 <span className="text-2xl font-bold text-emerald-500">🥦</span>
               </div>
-              <span className="text-[10px] text-[#8c6d71] font-bold block leading-none tracking-wide uppercase">Loncheras con Amor y Trazabilidad</span>
+              <span className="text-[10px] text-[#8c6d71] font-bold block leading-none tracking-wide uppercase">GPS, Llamadas y Loncheras con Amor</span>
             </div>
           </Link>
 

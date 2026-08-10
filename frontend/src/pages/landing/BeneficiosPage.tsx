@@ -116,6 +116,10 @@ export default function BeneficiosPage() {
                   </li>
                   <li className="flex items-center gap-x-2">
                     <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                    <span>📞 Llamadas directas con tu hijo desde su localizador</span>
+                  </li>
+                  <li className="flex items-center gap-x-2">
+                    <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                     <span>📍 Batería, señal y última ubicación conocida en vivo</span>
                   </li>
                   <li className="flex items-center gap-x-2">

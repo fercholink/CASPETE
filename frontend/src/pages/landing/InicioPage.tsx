@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, ShieldCheck, Heart, ArrowRight, School, Award, Check, QrCode, ChevronRight, MapPin } from 'lucide-react';
+import { Sparkles, ShieldCheck, Heart, ArrowRight, School, Check, ChevronRight, MapPin } from 'lucide-react';
 import { useLeadModal } from '../../components/landing/LeadModalProvider';
 
 export default function InicioPage() {
@@ -21,27 +21,27 @@ export default function InicioPage() {
             <div className="lg:col-span-7 space-y-8 text-left">
               <div className="inline-flex items-center gap-x-2 rounded-full bg-emerald-50 border border-emerald-200 px-4 py-2 text-xs font-bold text-emerald-800">
                 <Sparkles className="h-4 w-4 text-emerald-500 animate-spin" />
-                <span>La Lonchera Escolar Más Saborera, Sana y Segura de Colombia</span>
+                <span>Ubicación en Tiempo Real y Llamadas Directas con tu Hijo</span>
               </div>
 
               <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#4e2f33] leading-[1.05]">
-                Kidway: Loncheras <span className="text-emerald-600 underline decoration-emerald-200 decoration-wavy decoration-3">Felices</span>, <br />
-                Alimentación Escolar Saludable y Mamás Tranquilas 🍏🎒
+                Kidway: Sabe dónde está tu hijo. <span className="text-emerald-600 underline decoration-emerald-200 decoration-wavy decoration-3">Escúchalo</span> <br />
+                cuando quieras 📍📞
               </h1>
 
               <p className="text-base text-[#61494c] max-w-xl font-medium leading-relaxed font-sans">
-                Establece límites diarios con amor, programa meriendas nutritivas semanales y mantente al tanto de la nutrición de tus pequeños. Súper ágil, sin efectivo, libre de comisionistas y protegido con <strong>Nequi</strong> y <strong>QR Infantil seguro</strong>. ¡Diles adiós a las preocupaciones!
+                Ubicación GPS en tiempo real y llamadas directas con tu hijo desde su localizador — sin que necesite un celular propio. Además, programa sus loncheras escolares y controla su alimentación, todo desde una sola app. Súper ágil, sin efectivo y protegido con <strong>Nequi</strong>.
               </p>
 
               {/* Badges of trust and certification */}
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-x-2 text-xs font-bold text-emerald-850 bg-emerald-50 px-3.5 py-2 rounded-full border border-emerald-150">
-                  <Award className="h-4 w-4 text-emerald-600" />
-                  <span>Aprobado por Nutricionistas</span>
+                  <MapPin className="h-4 w-4 text-emerald-600" />
+                  <span>Rastreo GPS en Tiempo Real</span>
                 </div>
                 <div className="flex items-center gap-x-2 text-xs font-bold text-[#854d0e] bg-[#fef9c3] px-3.5 py-2 rounded-full border border-[#fef08a]">
                   <Check className="h-3.5 w-3.5 bg-yellow-500 text-white rounded-full p-0.5" />
-                  <span>Ley 2120 de Entornos Saludables</span>
+                  <span>Llamadas Directas al Localizador</span>
                 </div>
               </div>
 
@@ -64,19 +64,19 @@ export default function InicioPage() {
                 </button>
               </div>
 
-              {/* School statistics indicators */}
+              {/* Indicadores clave para padres */}
               <div className="grid grid-cols-3 gap-6 pt-6 text-center sm:text-left border-t border-[#f7e3d7]">
                 <div>
-                  <div className="font-display text-3xl font-black text-emerald-500">🥬 100%</div>
-                  <div className="text-[10px] uppercase font-bold text-[#8c6d71] tracking-wider">Limpio y Libre de Monedas</div>
+                  <div className="font-display text-3xl font-black text-emerald-500">📍 GPS</div>
+                  <div className="text-[10px] uppercase font-bold text-[#8c6d71] tracking-wider">Ubicación en Tiempo Real</div>
                 </div>
                 <div>
-                  <div className="font-display text-3xl font-black text-purple-600 font-sans">💚 Nequi</div>
-                  <div className="text-[10px] uppercase font-bold text-[#8c6d71] tracking-wider">Ahorro y Recarga Familiar</div>
+                  <div className="font-display text-3xl font-black text-purple-600 font-sans">📞 Directas</div>
+                  <div className="text-[10px] uppercase font-bold text-[#8c6d71] tracking-wider">Llamadas al Localizador</div>
                 </div>
                 <div>
                   <div className="font-display text-3xl font-black text-[#7cd197]">🍎 +Salud</div>
-                  <div className="text-[10px] uppercase font-bold text-[#8c6d71] tracking-wider">Trazabilidad de Alergias</div>
+                  <div className="text-[10px] uppercase font-bold text-[#8c6d71] tracking-wider">Loncheras y Nutrición</div>
                 </div>
               </div>
             </div>
@@ -113,7 +113,9 @@ export default function InicioPage() {
                       <div>
                         <div className="font-black text-[#5c3a3e] text-[11px] flex items-center gap-1">
                           <span>Isabella G.</span>
-                          <span>🎒</span>
+                          <span className="inline-flex items-center gap-0.5 text-emerald-600 text-[8px] font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En línea
+                          </span>
                         </div>
                         <div className="text-[9px] text-[#8c6d71]">Saldo: <strong className="text-emerald-800 font-bold font-mono">$18.500 COP</strong></div>
                       </div>
@@ -123,46 +125,33 @@ export default function InicioPage() {
                     </div>
                   </div>
 
-                  {/* Lunchbox graphic slider */}
+                  {/* Location + call cards */}
                   <div className="my-3 flex-1 overflow-y-auto space-y-3 pr-1">
 
-                    {/* Active Lunchbox Card (Warm style) */}
+                    {/* Live location card */}
                     <div className="bg-[#f0fbf4] border border-emerald-200 p-3 rounded-2xl">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="font-extrabold text-emerald-700 text-[10px] uppercase tracking-wider block font-mono">🥗 Lonchera del Lunes</span>
-                        <span className="bg-emerald-100 text-emerald-850 px-2 py-0.5 rounded-full text-[9px] font-bold">¡Nutritiva!</span>
+                        <span className="font-extrabold text-emerald-700 text-[10px] uppercase tracking-wider block font-mono">📍 Ubicación en tiempo real</span>
+                        <span className="bg-emerald-100 text-emerald-850 px-2 py-0.5 rounded-full text-[9px] font-bold">Hace 2 min</span>
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-emerald-100 shadow-xs">
-                          <span className="text-xl">🍓</span>
-                          <div className="flex-1 text-left">
-                            <h4 className="font-bold text-[#5c3a3e] text-[9.5px]">Salpicón de Frutas</h4>
-                            <p className="text-[8px] text-emerald-600 font-medium">Libre de sellos de advertencia</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-emerald-100 shadow-xs">
-                          <span className="text-xl">🍪</span>
-                          <div className="flex-1 text-left">
-                            <h4 className="font-bold text-[#5c3a3e] text-[9.5px]">Galletas de Avena</h4>
-                            <p className="text-[8px] text-emerald-500 font-semibold">Arándanos & Miel Natural</p>
-                          </div>
+                      <div className="relative h-20 rounded-xl overflow-hidden border border-emerald-100 bg-[#e8f5ee]">
+                        <div className="absolute inset-0 opacity-40" style={{ backgroundImage: 'linear-gradient(#c9e9d6 1px, transparent 1px), linear-gradient(90deg, #c9e9d6 1px, transparent 1px)', backgroundSize: '14px 14px' }} />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full">
+                          <MapPin className="h-6 w-6 text-emerald-600 drop-shadow fill-emerald-100" />
                         </div>
                       </div>
+                      <p className="text-[8px] text-[#8c6d71] font-medium mt-1.5">Camino al colegio · Trayecto normal ✓</p>
                     </div>
 
-                    {/* QR Code Container (Cute child layout) */}
-                    <div className="bg-[#fff9f4] border border-[#f7e3d7] p-3 rounded-2xl flex flex-col items-center justify-center space-y-2 shadow-xs">
-                      <span className="text-[10px] text-[#5c3a3e] text-center font-bold flex items-center gap-1">
-                        <span>Código QR Escolar</span>
-                        <span>✨</span>
-                      </span>
-                      <div className="h-24 w-24 bg-white border-2 border-dashed border-emerald-500/40 rounded-xl p-2 flex items-center justify-center relative qr-glow">
-                        <QrCode className="h-full w-full text-emerald-600" />
-                        <div className="absolute bg-emerald-600 px-2 py-0.5 text-[8px] font-black text-white rounded-full shadow-md -bottom-1 whitespace-nowrap">
-                          Isabella G. 🧸
-                        </div>
+                    {/* Call card */}
+                    <div className="bg-[#fff9f4] border border-[#f7e3d7] p-3 rounded-2xl flex items-center justify-between gap-2 shadow-xs">
+                      <div className="text-left">
+                        <span className="text-[10px] text-[#5c3a3e] font-bold block">Llamar a Isabella 📞</span>
+                        <span className="text-[8px] text-[#8c6d71]">Desde su localizador — sin celular propio</span>
                       </div>
-                      <span className="text-[8px] text-[#8c6d71] text-center font-semibold">Trazabilidad de alergias activa</span>
+                      <div className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shrink-0">
+                        <span className="text-sm">📞</span>
+                      </div>
                     </div>
 
                   </div>
@@ -173,8 +162,8 @@ export default function InicioPage() {
                       <Check className="h-3 w-3 stroke-[3px]" />
                     </div>
                     <div className="text-left">
-                      <div className="font-bold text-[9px]">¡Merienda entregada con éxito!</div>
-                      <div className="text-[8.5px] text-[#7d5d61] leading-tight font-sans">Isabella retiró su canastita de merienda. ¡Te notificamos para tu tranquilidad!</div>
+                      <div className="font-bold text-[9px]">¡Isabella llegó al colegio!</div>
+                      <div className="text-[8.5px] text-[#7d5d61] leading-tight font-sans">Ubicación confirmada a las 7:05 AM. ¡Te notificamos para tu tranquilidad!</div>
                     </div>
                   </div>
 
@@ -183,11 +172,11 @@ export default function InicioPage() {
 
               {/* Floating cute accents */}
               <div className="absolute -top-4 -right-4 bg-[#ffd275] text-[#5c3a3e] px-4 py-2 rounded-2xl font-display font-black text-sm rotate-6 shadow-md border border-[#fef08a] animate-pulse">
-                ¡100% Amor! 🍓🍉
+                📍 En vivo
               </div>
               <div className="absolute -bottom-6 -left-4 bg-white text-[#7d5d61] px-4 py-3 rounded-2xl font-sans text-xs font-bold shadow-md border border-[#f7e3d7] flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
-                <span>Alérgenos protegidos por Mamá</span>
+                <span>Ubicación privada, solo tú la ves</span>
               </div>
             </div>
 

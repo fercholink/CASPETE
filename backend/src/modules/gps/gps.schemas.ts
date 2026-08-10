@@ -17,6 +17,9 @@ export const historyQuerySchema = z.object({
   hours: z.coerce.number().int().positive().max(72).default(24),
   // Si se pasa, tiene prioridad sobre `hours` — historial de ese día calendario completo (hora Bogotá).
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD)').optional(),
+  // Filtra el día a solo el tramo de la mañana (antes del mediodía, hora Bogotá) o la tarde (desde el mediodía) —
+  // útil para guardar el recorrido de ida y el de vuelta como rutas normales separadas.
+  segment: z.enum(['morning', 'afternoon']).optional(),
 });
 
 // El dispositivo llama a estos números al presionar su botón físico de SOS.

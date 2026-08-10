@@ -277,9 +277,23 @@ export async function getCurrentLocation(studentId: string, actor: JwtPayload, r
   return { tracker: trackerInfo, location: position ? mapPosition(position) : null, is_live: allowed };
 }
 
+// Divide el recorrido de un día en tramo de mañana (antes del mediodía, hora
+// Bogotá) y de tarde (desde el mediodía) — para pintarlos de colores distintos
+// en el mapa y poder guardar cada uno como ruta normal por separado (ida vs. vuelta).
+function filterPositionsBySegment<T extends { recorded_at: string }>(
+  positions: T[],
+  segment: 'morning' | 'afternoon' | undefined,
+): T[] {
+  if (!segment) return positions;
+  return positions.filter((p) => {
+    const bogotaHour = (new Date(p.recorded_at).getUTCHours() - 5 + 24) % 24;
+    return segment === 'morning' ? bogotaHour < 12 : bogotaHour >= 12;
+  });
+}
+
 export async function getHistory(
   studentId: string,
-  opts: { hours: number; date?: string },
+  opts: { hours: number; date?: string; segment?: 'morning' | 'afternoon' },
   actor: JwtPayload,
   req: Request,
 ) {
@@ -311,7 +325,7 @@ export async function getHistory(
   const positions = opts.date
     ? await gpsPlatform.getPositionHistoryForDay(tracker.platform_tracker_id, opts.date)
     : await gpsPlatform.getPositionHistory(tracker.platform_tracker_id, opts.hours);
-  return positions.map(mapPosition);
+  return filterPositionsBySegment(positions, opts.segment).map(mapPosition);
 }
 
 // La ruta esperada (línea por calles o recorrido real guardado) — solo para
@@ -337,7 +351,7 @@ const RECORDED_ROUTE_CORRIDOR_METERS = 150;
 
 export async function saveRouteFromHistory(
   studentId: string,
-  opts: { hours: number; date?: string },
+  opts: { hours: number; date?: string; segment?: 'morning' | 'afternoon' },
   actor: JwtPayload,
 ) {
   const student = await assertParentOwnsStudent(studentId, actor);
@@ -348,19 +362,21 @@ export async function saveRouteFromHistory(
   });
   if (!tracker?.platform_tracker_id) throw new AppError('Este estudiante no tiene un localizador vinculado', 404);
 
-  const positions = opts.date
+  const allPositions = opts.date
     ? await gpsPlatform.getPositionHistoryForDay(tracker.platform_tracker_id, opts.date)
     : await gpsPlatform.getPositionHistory(tracker.platform_tracker_id, opts.hours);
+  const positions = filterPositionsBySegment(allPositions, opts.segment);
   if (positions.length < 2) {
     throw new AppError('No hay suficiente recorrido guardado todavía para usarlo como ruta normal', 400);
   }
 
   const points = positions.map((p) => ({ lat: Number(p.latitude), lon: Number(p.longitude) }));
   const studentRecord = await prisma.student.findUnique({ where: { id: student.id }, select: { full_name: true } });
+  const segmentLabel = opts.segment === 'morning' ? 'mañana' : opts.segment === 'afternoon' ? 'tarde' : 'recorrido real';
 
   const route = await gpsPlatform.upsertRoute(
     tracker.platform_route_id,
-    `Casa-colegio: ${studentRecord?.full_name ?? ''} (recorrido real)`,
+    `Casa-colegio: ${studentRecord?.full_name ?? ''} (${segmentLabel})`,
     points,
     RECORDED_ROUTE_CORRIDOR_METERS,
   );

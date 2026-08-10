@@ -56,8 +56,13 @@ export async function getCurrentLocation(req: Request, res: Response) {
 
 export async function getHistory(req: Request, res: Response) {
   const studentId = req.params['studentId'] as string;
-  const { hours, date } = historyQuerySchema.parse(req.query);
-  const result = await gpsService.getHistory(studentId, { hours, ...(date !== undefined && { date }) }, req.user!, req);
+  const { hours, date, segment } = historyQuerySchema.parse(req.query);
+  const result = await gpsService.getHistory(
+    studentId,
+    { hours, ...(date !== undefined && { date }), ...(segment !== undefined && { segment }) },
+    req.user!,
+    req,
+  );
   sendSuccess(res, result);
 }
 
@@ -69,7 +74,11 @@ export async function getExpectedRoute(req: Request, res: Response) {
 
 export async function saveRouteFromHistory(req: Request, res: Response) {
   const studentId = req.params['studentId'] as string;
-  const { hours, date } = historyQuerySchema.parse(req.query);
-  const result = await gpsService.saveRouteFromHistory(studentId, { hours, ...(date !== undefined && { date }) }, req.user!);
+  const { hours, date, segment } = historyQuerySchema.parse(req.query);
+  const result = await gpsService.saveRouteFromHistory(
+    studentId,
+    { hours, ...(date !== undefined && { date }), ...(segment !== undefined && { segment }) },
+    req.user!,
+  );
   sendSuccess(res, result, 'Ruta normal guardada');
 }

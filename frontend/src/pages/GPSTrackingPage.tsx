@@ -46,6 +46,12 @@ function todayInBogota(): string {
   return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
+// Divide el recorrido del día en tramo de mañana/tarde por el mediodía hora Bogotá.
+function isMorning(recordedAt: string): boolean {
+  const bogotaHour = (new Date(recordedAt).getUTCHours() - 5 + 24) % 24;
+  return bogotaHour < 12;
+}
+
 function timeAgo(iso: string | null): string {
   if (!iso) return 'nunca';
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -69,6 +75,7 @@ export default function GPSTrackingPage() {
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const polylineRef = useRef<L.Polyline | null>(null);
+  const afternoonPolylineRef = useRef<L.Polyline | null>(null);
   const expectedRoutePolylineRef = useRef<L.Polyline | null>(null);
   const hasCenteredRef = useRef(false);
 
@@ -80,8 +87,8 @@ export default function GPSTrackingPage() {
   const [notLinked, setNotLinked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [savingRoute, setSavingRoute] = useState(false);
-  const [routeSaved, setRouteSaved] = useState(false);
+  const [savingRoute, setSavingRoute] = useState<'all' | 'morning' | 'afternoon' | null>(null);
+  const [routeSaved, setRouteSaved] = useState<'all' | 'morning' | 'afternoon' | null>(null);
   const [viewDate, setViewDate] = useState(''); // '' = en vivo (hoy); 'YYYY-MM-DD' = un día pasado
 
   useEffect(() => {
@@ -125,7 +132,7 @@ export default function GPSTrackingPage() {
   useEffect(() => {
     if (!selectedId) return;
     hasCenteredRef.current = false;
-    setRouteSaved(false);
+    setRouteSaved(null);
     fetchLocation(selectedId, viewDate);
     if (viewDate) return; // día pasado: una sola consulta, sin refrescar en vivo
     const interval = setInterval(() => fetchLocation(selectedId, ''), 20_000);
@@ -140,18 +147,19 @@ export default function GPSTrackingPage() {
       .catch(() => setExpectedRoute(null));
   }, [selectedId]);
 
-  async function handleSaveRoute() {
+  async function handleSaveRoute(segment?: 'morning' | 'afternoon') {
     if (!selectedId) return;
-    setSavingRoute(true);
-    setRouteSaved(false);
+    setSavingRoute(segment ?? 'all');
+    setRouteSaved(null);
     try {
-      const query = viewDate ? `date=${viewDate}` : 'hours=24';
+      const base = viewDate ? `date=${viewDate}` : 'hours=24';
+      const query = segment ? `${base}&segment=${segment}` : base;
       await apiClient.post(`/gps/trackers/student/${selectedId}/save-route-from-history?${query}`);
-      setRouteSaved(true);
+      setRouteSaved(segment ?? 'all');
     } catch (err) {
       setError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la ruta normal');
     } finally {
-      setSavingRoute(false);
+      setSavingRoute(null);
     }
   }
 
@@ -185,6 +193,7 @@ export default function GPSTrackingPage() {
     if (!map) return;
 
     if (polylineRef.current) { map.removeLayer(polylineRef.current); polylineRef.current = null; }
+    if (afternoonPolylineRef.current) { map.removeLayer(afternoonPolylineRef.current); afternoonPolylineRef.current = null; }
     if (markerRef.current) { map.removeLayer(markerRef.current); markerRef.current = null; }
     if (expectedRoutePolylineRef.current) { map.removeLayer(expectedRoutePolylineRef.current); expectedRoutePolylineRef.current = null; }
 
@@ -195,9 +204,18 @@ export default function GPSTrackingPage() {
       expectedRoutePolylineRef.current = L.polyline(latlngs, { color: '#2563eb', weight: 3, opacity: 0.5, dashArray: '6 8' }).addTo(map);
     }
 
-    if (history.length > 1) {
-      const latlngs: [number, number][] = history.map((p) => [parseFloat(p.latitude), parseFloat(p.longitude)]);
-      polylineRef.current = L.polyline(latlngs, { color: '#15803d', weight: 3, opacity: 0.55 }).addTo(map);
+    // El día puede tener dos trayectos (ida en la mañana, vuelta en la tarde) — se
+    // pintan de colores distintos para poder distinguirlos de un vistazo.
+    const morningPoints = history.filter((p) => isMorning(p.recorded_at));
+    const afternoonPoints = history.filter((p) => !isMorning(p.recorded_at));
+
+    if (morningPoints.length > 1) {
+      const latlngs: [number, number][] = morningPoints.map((p) => [parseFloat(p.latitude), parseFloat(p.longitude)]);
+      polylineRef.current = L.polyline(latlngs, { color: '#2563eb', weight: 3, opacity: 0.6 }).addTo(map);
+    }
+    if (afternoonPoints.length > 1) {
+      const latlngs: [number, number][] = afternoonPoints.map((p) => [parseFloat(p.latitude), parseFloat(p.longitude)]);
+      afternoonPolylineRef.current = L.polyline(latlngs, { color: '#ea580c', weight: 3, opacity: 0.6 }).addTo(map);
     }
 
     map.invalidateSize();
@@ -245,6 +263,8 @@ export default function GPSTrackingPage() {
   }, [current, history, expectedRoute, viewDate, students, selectedId]);
 
   const selectedStudent = students.find((s) => s.id === selectedId);
+  const morningCount = history.filter((p) => isMorning(p.recorded_at)).length;
+  const afternoonCount = history.length - morningCount;
 
   return (
     <>
@@ -386,16 +406,43 @@ export default function GPSTrackingPage() {
               }}
             />
 
+            {!notLinked && history.length >= 2 && morningCount > 1 && afternoonCount > 1 && (
+              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 10, fontSize: 12 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 14, height: 3, background: '#2563eb', display: 'inline-block', borderRadius: 2 }} />
+                  Mañana
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 14, height: 3, background: '#ea580c', display: 'inline-block', borderRadius: 2 }} />
+                  Tarde
+                </span>
+              </div>
+            )}
+
             {!notLinked && history.length >= 2 && (
               <div style={{ marginTop: 12, textAlign: 'center' }}>
-                <button className="btn-ghost" disabled={savingRoute} onClick={handleSaveRoute}>
-                  {savingRoute ? 'Guardando...' : 'Guardar este recorrido como ruta normal'}
-                </button>
+                {morningCount > 1 && afternoonCount > 1 ? (
+                  <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <button className="btn-ghost" disabled={savingRoute !== null} onClick={() => handleSaveRoute('morning')}>
+                      {savingRoute === 'morning' ? 'Guardando...' : 'Guardar recorrido de la mañana'}
+                    </button>
+                    <button className="btn-ghost" disabled={savingRoute !== null} onClick={() => handleSaveRoute('afternoon')}>
+                      {savingRoute === 'afternoon' ? 'Guardando...' : 'Guardar recorrido de la tarde'}
+                    </button>
+                  </div>
+                ) : (
+                  <button className="btn-ghost" disabled={savingRoute !== null} onClick={() => handleSaveRoute()}>
+                    {savingRoute ? 'Guardando...' : 'Guardar este recorrido como ruta normal'}
+                  </button>
+                )}
                 {routeSaved && (
-                  <p style={{ margin: '6px 0 0', fontSize: 12, color: '#059669', fontWeight: 600 }}>Ruta normal guardada ✓</p>
+                  <p style={{ margin: '6px 0 0', fontSize: 12, color: '#059669', fontWeight: 600 }}>
+                    Ruta normal guardada ✓ {routeSaved === 'morning' ? '(mañana)' : routeSaved === 'afternoon' ? '(tarde)' : ''}
+                  </p>
                 )}
                 <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-placeholder)' }}>
                   Úsalo solo si el camino de arriba fue el trayecto normal (sin vueltas ni desvíos) — reemplaza la ruta de referencia usada para avisarte si se desvía.
+                  {morningCount > 1 && afternoonCount > 1 && ' Si guardas los dos, el segundo reemplaza al primero (solo se guarda una ruta de referencia a la vez).'}
                 </p>
               </div>
             )}

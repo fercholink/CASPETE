@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
+import ImageCropper from '../components/ImageCropper';
 
 interface GalleryImage {
   id: string;
@@ -11,29 +12,14 @@ interface GalleryImage {
   sort_order: number;
 }
 
-function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<string> {
+// Mismo aspecto con el que se muestra la tarjeta en la galería (w-64 h-56 → 8:7)
+const CROP_ASPECT_W = 8;
+const CROP_ASPECT_H = 7;
+
+function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > height) {
-          if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
-        } else if (height > maxHeight) {
-          width = Math.round((width * maxHeight) / height); height = maxHeight;
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return reject('No canvas context');
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
-      };
-      img.onerror = reject;
-      img.src = e.target?.result as string;
-    };
+    reader.onload = (e) => resolve(e.target?.result as string);
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
@@ -57,6 +43,8 @@ export default function GpsGalleryPage() {
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   useEffect(() => { fetchImages(); }, []);
 
@@ -96,10 +84,11 @@ export default function GpsGalleryPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      setEditImageUrl(await resizeImage(file, 1280, 1280));
+      setCropSrc(await readFileAsDataUrl(file));
     } catch {
       setSaveError('No se pudo procesar la imagen');
     }
+    e.target.value = '';
   }
 
   async function handleSave() {
@@ -215,7 +204,17 @@ export default function GpsGalleryPage() {
               <label className="form-label">Imagen</label>
               <input type="file" accept="image/*" className="form-input" onChange={handleFileChange} />
               {editImageUrl && (
-                <img src={editImageUrl} alt="Vista previa" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 10, marginTop: 10 }} />
+                <>
+                  <img src={editImageUrl} alt="Vista previa" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 10, marginTop: 10 }} />
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    style={{ fontSize: 12, padding: '6px 12px', marginTop: 8 }}
+                    onClick={() => setCropSrc(editImageUrl)}
+                  >
+                    ✂️ Ajustar recorte / zoom
+                  </button>
+                </>
               )}
             </div>
 
@@ -263,6 +262,16 @@ export default function GpsGalleryPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {cropSrc && (
+        <ImageCropper
+          src={cropSrc}
+          aspectW={CROP_ASPECT_W}
+          aspectH={CROP_ASPECT_H}
+          onCancel={() => setCropSrc(null)}
+          onConfirm={(dataUrl) => { setEditImageUrl(dataUrl); setCropSrc(null); }}
+        />
       )}
     </>
   );

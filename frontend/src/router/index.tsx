@@ -30,6 +30,7 @@ import TopupRequestsPage from '../pages/TopupRequestsPage';
 import GpsPaymentsPage from '../pages/GpsPaymentsPage';
 import GpsDeviceOrdersPage from '../pages/GpsDeviceOrdersPage';
 import GpsGalleryPage from '../pages/GpsGalleryPage';
+import GpsGeofencesPage from '../pages/GpsGeofencesPage';
 import PaymentMethodsPage from '../pages/PaymentMethodsPage';
 import Ley2120DashboardPage from '../pages/Ley2120DashboardPage';
 import SuppliersPage from '../pages/SuppliersPage';
@@ -333,6 +334,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
         <GpsGalleryPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/gps-geofences',
+    element: (
+      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+        <GpsGeofencesPage />
       </ProtectedRoute>
     ),
   },

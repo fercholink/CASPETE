@@ -30,6 +30,7 @@ import { nutritionalAuditRouter } from './modules/products/nutritional-audit.rou
 import leadsRouter from './modules/leads/leads.router.js';
 import gpsDeviceOrderRouter from './modules/gps-device-orders/gps-device-order.router.js';
 import gpsGalleryRouter from './modules/gps-gallery/gps-gallery.router.js';
+import gpsGeofenceRouter from './modules/gps-geofences/gps-geofence.router.js';
 import courseRouter from './modules/courses/course.router.js';
 import gradeRouter from './modules/grades/grade.router.js';
 import communicationRouter from './modules/communications/communication.router.js';
@@ -90,6 +91,7 @@ app.use('/api/chat', chatRouter);   // Chat interno Tendero ↔ Padre
 app.use('/api/leads', leadsRouter); // Colegios interesados (landing)
 app.use('/api/gps-device-orders', gpsDeviceOrderRouter); // Compra del localizador antes de tener cuenta
 app.use('/api/gps-gallery', gpsGalleryRouter); // Galería de fotos del localizador en la landing
+app.use('/api/gps-geofences', gpsGeofenceRouter); // Geocercas adicionales (circulares o poligonales)
 app.use('/api/courses', courseRouter);
 app.use('/api/grades', gradeRouter);
 app.use('/api/communications', communicationRouter);

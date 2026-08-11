@@ -28,6 +28,7 @@ export const emergencyContactsSchema = z.object({
   sos_number: contactNumberSchema,
   dad_number: contactNumberSchema,
   mom_number: contactNumberSchema,
+  center_number: contactNumberSchema,
 });
 export type EmergencyContactsInput = z.infer<typeof emergencyContactsSchema>;
 
@@ -50,3 +51,15 @@ export const setAlarmClockSchema = z.object({
   alarms: z.array(alarmEntrySchema).max(3),
 });
 export type SetAlarmClockInput = z.infer<typeof setAlarmClockSchema>;
+
+// ── Configuración avanzada del dispositivo — solo SUPER_ADMIN ──────────────
+export const setLbsEnabledSchema = z.object({ enabled: z.boolean() });
+export type SetLbsEnabledInput = z.infer<typeof setLbsEnabledSchema>;
+
+export const setSpeedThresholdSchema = z.object({
+  speed_kmh: z.coerce.number().int().min(1).max(255),
+});
+export type SetSpeedThresholdInput = z.infer<typeof setSpeedThresholdSchema>;
+
+export const setVibrationAlarmSchema = z.object({ enabled: z.boolean() });
+export type SetVibrationAlarmInput = z.infer<typeof setVibrationAlarmSchema>;

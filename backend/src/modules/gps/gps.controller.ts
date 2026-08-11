@@ -3,6 +3,7 @@ import * as gpsService from './gps.service.js';
 import {
   linkTrackerSchema, historyQuerySchema, emergencyContactsSchema, findDeviceSchema,
   powerActionSchema, setAlarmClockSchema, setPhoneNumberSchema,
+  setLbsEnabledSchema, setSpeedThresholdSchema, setVibrationAlarmSchema,
 } from './gps.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
@@ -46,6 +47,29 @@ export async function setAlarmClock(req: Request, res: Response) {
   const input = setAlarmClockSchema.parse(req.body);
   await gpsService.setAlarmClock(req.params['id'] as string, input.alarms, req.user!);
   sendSuccess(res, null, 'Alarma actualizada');
+}
+
+export async function requestPosition(req: Request, res: Response) {
+  const result = await gpsService.requestPosition(req.params['id'] as string, req.user!);
+  sendSuccess(res, result, 'Posición solicitada');
+}
+
+export async function setLbsEnabled(req: Request, res: Response) {
+  const input = setLbsEnabledSchema.parse(req.body);
+  const result = await gpsService.setLbsEnabled(req.params['id'] as string, input.enabled, req.user!);
+  sendSuccess(res, result, 'Posicionamiento LBS actualizado');
+}
+
+export async function setSpeedThreshold(req: Request, res: Response) {
+  const input = setSpeedThresholdSchema.parse(req.body);
+  const result = await gpsService.setSpeedThreshold(req.params['id'] as string, input.speed_kmh, req.user!);
+  sendSuccess(res, result, 'Umbral de sobrevelocidad actualizado');
+}
+
+export async function setVibrationAlarm(req: Request, res: Response) {
+  const input = setVibrationAlarmSchema.parse(req.body);
+  const result = await gpsService.setVibrationAlarm(req.params['id'] as string, input.enabled, req.user!);
+  sendSuccess(res, result, 'Alarma de vibración actualizada');
 }
 
 export async function getCurrentLocation(req: Request, res: Response) {

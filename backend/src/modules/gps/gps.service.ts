@@ -60,7 +60,12 @@ function buildTrackerInfo(local: LocalTracker, platform: gpsPlatform.PlatformTra
     sos_number: platform?.sos_number ?? null,
     dad_number: platform?.dad_number ?? null,
     mom_number: platform?.mom_number ?? null,
+    center_number: platform?.center_number ?? null,
     alarm_clock_json: platform?.alarm_clock_json ?? null,
+    iccid: platform?.iccid ?? null,
+    lbs_enabled: platform?.lbs_enabled ?? null,
+    speed_threshold_kmh: platform?.speed_threshold_kmh ?? null,
+    vibration_alarm_enabled: platform?.vibration_alarm_enabled ?? null,
   };
 }
 
@@ -156,7 +161,14 @@ export async function unlinkTracker(id: string, actor: JwtPayload) {
 }
 
 // El dispositivo llama a estos números al presionar su botón físico de SOS.
+// center_number ("número de monitoreo") es configuración avanzada del equipo,
+// no algo de uso diario para un padre — solo SUPER_ADMIN puede tocarlo, aunque
+// comparta el mismo comando/endpoint que sos/dad/mom.
 export async function setEmergencyContacts(id: string, input: EmergencyContactsInput, actor: JwtPayload) {
+  if (input.center_number !== undefined && actor.role !== 'SUPER_ADMIN') {
+    throw new AppError('Solo el Super Administrador puede configurar el número de monitoreo', 403);
+  }
+
   const tracker = await prisma.gPSTracker.findUnique({
     where: { id },
     select: { id: true, platform_tracker_id: true, student: { select: { parent_id: true } } },
@@ -241,6 +253,55 @@ export async function setAlarmClock(id: string, alarms: gpsPlatform.AlarmClockEn
   }
 
   await gpsPlatform.setAlarmClock(tracker.platform_tracker_id, alarms);
+}
+
+// Pide al dispositivo que reporte su posición ya mismo, en vez de esperar el
+// próximo reporte automático — exige que esté conectado en este momento.
+export async function requestPosition(id: string, actor: JwtPayload) {
+  const tracker = await prisma.gPSTracker.findUnique({
+    where: { id },
+    select: { platform_tracker_id: true, student: { select: { parent_id: true } } },
+  });
+  if (!tracker) throw new AppError('Localizador no encontrado', 404);
+  if (actor.role !== 'SUPER_ADMIN' && tracker.student?.parent_id !== actor.sub) {
+    throw new AppError('No tienes permiso para usar este localizador', 403);
+  }
+  if (!tracker.platform_tracker_id) {
+    throw new AppError('Este localizador todavía no está sincronizado con la Plataforma GPS', 409);
+  }
+
+  return gpsPlatform.requestImmediatePosition(tracker.platform_tracker_id);
+}
+
+async function assertSuperAdminOwnsTracker(id: string) {
+  const tracker = await prisma.gPSTracker.findUnique({ where: { id }, select: { platform_tracker_id: true } });
+  if (!tracker) throw new AppError('Localizador no encontrado', 404);
+  if (!tracker.platform_tracker_id) {
+    throw new AppError('Este localizador todavía no está sincronizado con la Plataforma GPS', 409);
+  }
+  return tracker;
+}
+
+// ── Configuración avanzada del dispositivo — solo SUPER_ADMIN ──────────────
+// Son ajustes técnicos del equipo (no algo que un padre normalmente necesite
+// tocar), a diferencia de SOS/alarma de despertador que sí son de uso diario.
+
+export async function setLbsEnabled(id: string, enabled: boolean, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede configurar esto', 403);
+  const tracker = await assertSuperAdminOwnsTracker(id);
+  return gpsPlatform.setLbsEnabled(tracker.platform_tracker_id!, enabled);
+}
+
+export async function setSpeedThreshold(id: string, speedKmh: number, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede configurar esto', 403);
+  const tracker = await assertSuperAdminOwnsTracker(id);
+  return gpsPlatform.setSpeedThreshold(tracker.platform_tracker_id!, speedKmh);
+}
+
+export async function setVibrationAlarm(id: string, enabled: boolean, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede configurar esto', 403);
+  const tracker = await assertSuperAdminOwnsTracker(id);
+  return gpsPlatform.setVibrationAlarm(tracker.platform_tracker_id!, enabled);
 }
 
 export async function getCurrentLocation(studentId: string, actor: JwtPayload, req: Request) {

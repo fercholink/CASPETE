@@ -11,6 +11,7 @@ import { AppError } from '../middleware/error.middleware.js';
 export interface PlatformTracker {
   id: string;
   imei: string;
+  iccid: string | null;
   external_ref: string | null;
   device_name: string | null;
   battery_level: number | null;
@@ -22,7 +23,11 @@ export interface PlatformTracker {
   sos_number: string | null;
   dad_number: string | null;
   mom_number: string | null;
+  center_number: string | null;
   alarm_clock_json: AlarmClockEntry[] | null;
+  lbs_enabled: boolean | null;
+  speed_threshold_kmh: number | null;
+  vibration_alarm_enabled: boolean | null;
 }
 
 export interface PlatformPosition {
@@ -41,9 +46,11 @@ export interface PlatformPosition {
 export interface PlatformGeofence {
   id: string;
   name: string;
-  latitude: string;
-  longitude: string;
-  radius_meters: number;
+  shape: 'CIRCLE' | 'POLYGON';
+  latitude: string | null;
+  longitude: string | null;
+  radius_meters: number | null;
+  points: { lat: number; lon: number }[] | null;
   active: boolean;
   created_at: string;
 }
@@ -192,6 +199,42 @@ export async function linkTrackerToGeofence(geofenceId: string, platformTrackerI
   });
 }
 
+export async function unlinkTrackerFromGeofence(geofenceId: string, platformTrackerId: string): Promise<void> {
+  await request(`/geofences/${geofenceId}/trackers/${platformTrackerId}`, { method: 'DELETE' });
+}
+
+/**
+ * Crea una geocerca "libre" (no la automática ligada 1:1 a un colegio, ver
+ * `upsertGeofence`) — circular o poligonal, para zonas adicionales que un
+ * SUPER_ADMIN quiera definir a mano (ej. una ruta peligrosa, un parque).
+ */
+export async function createGeofence(input: {
+  name: string;
+  shape: 'CIRCLE' | 'POLYGON';
+  latitude?: number | undefined;
+  longitude?: number | undefined;
+  radius_meters?: number | undefined;
+  points?: { lat: number; lon: number }[] | undefined;
+}): Promise<PlatformGeofence> {
+  const created = await request<PlatformGeofence>('/geofences', { method: 'POST', body: JSON.stringify(input) });
+  if (!created) throw new AppError('No se pudo crear la geocerca en la Plataforma GPS', 502);
+  return created;
+}
+
+export async function listGeofences(): Promise<PlatformGeofence[]> {
+  const geofences = await request<PlatformGeofence[]>('/geofences');
+  return geofences ?? [];
+}
+
+export async function updateGeofenceMeta(
+  id: string,
+  input: { name?: string | undefined; active?: boolean | undefined },
+): Promise<PlatformGeofence> {
+  const updated = await request<PlatformGeofence>(`/geofences/${id}`, { method: 'PATCH', body: JSON.stringify(input) });
+  if (!updated) throw new AppError('Geocerca no encontrada', 404);
+  return updated;
+}
+
 /** Crea o actualiza el trayecto esperado (casa↔colegio) de un estudiante en la Plataforma GPS. */
 export async function upsertRoute(
   existingRouteId: string | null,
@@ -288,13 +331,69 @@ export async function setAlarmClock(platformTrackerId: string, alarms: AlarmCloc
  */
 export async function setEmergencyContacts(
   platformTrackerId: string,
-  contacts: { sos_number?: string | null | undefined; dad_number?: string | null | undefined; mom_number?: string | null | undefined },
+  contacts: {
+    sos_number?: string | null | undefined;
+    dad_number?: string | null | undefined;
+    mom_number?: string | null | undefined;
+    center_number?: string | null | undefined;
+  },
 ): Promise<{ tracker: PlatformTracker; delivered: Record<string, boolean> }> {
   const result = await request<{ tracker: PlatformTracker; delivered: Record<string, boolean> }>(
     `/trackers/${platformTrackerId}/emergency-contacts`,
     { method: 'PATCH', body: JSON.stringify(contacts) },
   );
   if (!result) throw new AppError('No se pudieron guardar los números de contacto', 502);
+  return result;
+}
+
+/**
+ * Pide al dispositivo que reporte su posición de inmediato (protocolo 0x80),
+ * en vez de esperar el próximo reporte automático. Exige que esté conectado
+ * ahora mismo — la Plataforma GPS responde 409 si no.
+ */
+export async function requestImmediatePosition(platformTrackerId: string): Promise<{ delivered: boolean }> {
+  const result = await request<{ delivered: boolean }>(`/trackers/${platformTrackerId}/request-position`, {
+    method: 'PATCH',
+  });
+  return result ?? { delivered: false };
+}
+
+/** Activa/desactiva el posicionamiento por celdas (protocolo 0x33) — respaldo cuando no hay señal GPS. */
+export async function setLbsEnabled(
+  platformTrackerId: string,
+  enabled: boolean,
+): Promise<{ tracker: PlatformTracker; delivered: boolean; changed: boolean }> {
+  const result = await request<{ tracker: PlatformTracker; delivered: boolean; changed: boolean }>(
+    `/trackers/${platformTrackerId}/lbs`,
+    { method: 'PATCH', body: JSON.stringify({ enabled }) },
+  );
+  if (!result) throw new AppError('No se pudo actualizar el posicionamiento LBS', 502);
+  return result;
+}
+
+/** Configura el umbral de sobrevelocidad en km/h (protocolo 0x86). */
+export async function setSpeedThreshold(
+  platformTrackerId: string,
+  speedKmh: number,
+): Promise<{ tracker: PlatformTracker; delivered: boolean; changed: boolean }> {
+  const result = await request<{ tracker: PlatformTracker; delivered: boolean; changed: boolean }>(
+    `/trackers/${platformTrackerId}/speed-threshold`,
+    { method: 'PATCH', body: JSON.stringify({ speed_kmh: speedKmh }) },
+  );
+  if (!result) throw new AppError('No se pudo actualizar el umbral de sobrevelocidad', 502);
+  return result;
+}
+
+/** Activa/desactiva la alarma de vibración (protocolo 0x92/0x93). */
+export async function setVibrationAlarm(
+  platformTrackerId: string,
+  enabled: boolean,
+): Promise<{ tracker: PlatformTracker; delivered: boolean; changed: boolean }> {
+  const result = await request<{ tracker: PlatformTracker; delivered: boolean; changed: boolean }>(
+    `/trackers/${platformTrackerId}/vibration-alarm`,
+    { method: 'PATCH', body: JSON.stringify({ enabled }) },
+  );
+  if (!result) throw new AppError('No se pudo actualizar la alarma de vibración', 502);
   return result;
 }
 

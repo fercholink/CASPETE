@@ -45,7 +45,12 @@ interface TrackerData {
   sos_number: string | null;
   dad_number: string | null;
   mom_number: string | null;
+  center_number: string | null;
   alarm_clock_json: { weekdays: number; hour: number; minute: number }[] | null;
+  iccid: string | null;
+  lbs_enabled: boolean | null;
+  speed_threshold_kmh: number | null;
+  vibration_alarm_enabled: boolean | null;
 }
 
 interface GpsPlanStatus {
@@ -125,6 +130,25 @@ export default function StudentsPage() {
   const [savingContacts, setSavingContacts] = useState(false);
   const [contactsError, setContactsError] = useState('');
   const [contactsSaved, setContactsSaved] = useState(false);
+
+  // Posición bajo demanda — pedirle al dispositivo que reporte ya mismo
+  const [requestingPosition, setRequestingPosition] = useState(false);
+  const [positionRequestMsg, setPositionRequestMsg] = useState('');
+
+  // Configuración avanzada del equipo — solo SUPER_ADMIN
+  const [centerNumber, setCenterNumber] = useState('');
+  const [lbsEnabled, setLbsEnabled] = useState(true);
+  const [speedThreshold, setSpeedThreshold] = useState('');
+  const [vibrationAlarmEnabled, setVibrationAlarmEnabled] = useState(false);
+  const [savingAdvanced, setSavingAdvanced] = useState(false);
+  const [advancedError, setAdvancedError] = useState('');
+  const [advancedSaved, setAdvancedSaved] = useState(false);
+
+  // Vincular a una geocerca adicional — solo SUPER_ADMIN
+  const [geofenceOptions, setGeofenceOptions] = useState<{ id: string; name: string }[]>([]);
+  const [selectedGeofenceId, setSelectedGeofenceId] = useState('');
+  const [linkingGeofence, setLinkingGeofence] = useState(false);
+  const [linkGeofenceMsg, setLinkGeofenceMsg] = useState('');
 
   const isParent = user?.role === 'PARENT';
   const isAdmin = user?.role === 'SCHOOL_ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -281,6 +305,15 @@ export default function StudentsPage() {
     setAlarmWeekdays(0); setAlarmTime(''); setAlarmError(''); setAlarmSaved(false);
     setGpsPlanStatus(null); setGpsPaymentType(null); setGpsPaymentScreenshot('');
     setGpsPaymentRef(''); setGpsPaymentError(''); setGpsPaymentSubmitted(false);
+    setPositionRequestMsg('');
+    setCenterNumber(''); setLbsEnabled(true); setSpeedThreshold(''); setVibrationAlarmEnabled(false);
+    setAdvancedError(''); setAdvancedSaved(false);
+    setSelectedGeofenceId(''); setLinkGeofenceMsg('');
+    if (isSuperAdmin) {
+      apiClient.get<{ data: { id: string; name: string }[] }>('/gps-geofences')
+        .then((r) => setGeofenceOptions(r.data.data))
+        .catch(() => {});
+    }
     setGpsLoading(true);
     apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)
       .then((r) => {
@@ -290,6 +323,10 @@ export default function StudentsPage() {
         setDadNumber(tracker.dad_number ?? '');
         setMomNumber(tracker.mom_number ?? '');
         setPhoneNumber(tracker.phone_number ?? '');
+        setCenterNumber(tracker.center_number ?? '');
+        setLbsEnabled(tracker.lbs_enabled ?? true);
+        setSpeedThreshold(tracker.speed_threshold_kmh ? String(tracker.speed_threshold_kmh) : '');
+        setVibrationAlarmEnabled(tracker.vibration_alarm_enabled ?? false);
         const savedAlarm = tracker.alarm_clock_json?.[0];
         setAlarmWeekdays(savedAlarm?.weekdays ?? 0);
         setAlarmTime(savedAlarm ? `${String(savedAlarm.hour).padStart(2, '0')}:${String(savedAlarm.minute).padStart(2, '0')}` : '');
@@ -387,6 +424,20 @@ export default function StudentsPage() {
     }
   }
 
+  async function handleRequestPosition() {
+    if (!gpsTracker) return;
+    setRequestingPosition(true);
+    setPositionRequestMsg('');
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/request-position`);
+      setPositionRequestMsg('Posición solicitada — puede tardar unos segundos en actualizarse en el mapa ✓');
+    } catch (err) {
+      setPositionRequestMsg((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo solicitar la posición');
+    } finally {
+      setRequestingPosition(false);
+    }
+  }
+
   async function handleFindDevice() {
     if (!gpsTracker) return;
     const nextActive = !deviceSounding;
@@ -436,6 +487,43 @@ export default function StudentsPage() {
       setAlarmError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la alarma');
     } finally {
       setSavingAlarm(false);
+    }
+  }
+
+  async function handleSaveAdvancedConfig(e: React.FormEvent) {
+    e.preventDefault();
+    if (!gpsTracker) return;
+    setSavingAdvanced(true);
+    setAdvancedError('');
+    setAdvancedSaved(false);
+    try {
+      await Promise.all([
+        apiClient.patch(`/gps/trackers/${gpsTracker.id}/emergency-contacts`, {
+          center_number: centerNumber || null,
+        }),
+        apiClient.patch(`/gps/trackers/${gpsTracker.id}/lbs`, { enabled: lbsEnabled }),
+        ...(speedThreshold ? [apiClient.patch(`/gps/trackers/${gpsTracker.id}/speed-threshold`, { speed_kmh: Number(speedThreshold) })] : []),
+        apiClient.patch(`/gps/trackers/${gpsTracker.id}/vibration-alarm`, { enabled: vibrationAlarmEnabled }),
+      ]);
+      setAdvancedSaved(true);
+    } catch (err) {
+      setAdvancedError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la configuración');
+    } finally {
+      setSavingAdvanced(false);
+    }
+  }
+
+  async function handleLinkGeofence() {
+    if (!gpsTracker || !selectedGeofenceId) return;
+    setLinkingGeofence(true);
+    setLinkGeofenceMsg('');
+    try {
+      await apiClient.post(`/gps-geofences/${selectedGeofenceId}/trackers`, { tracker_id: gpsTracker.id });
+      setLinkGeofenceMsg('Vinculado ✓');
+    } catch (err) {
+      setLinkGeofenceMsg((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo vincular');
+    } finally {
+      setLinkingGeofence(false);
     }
   }
 
@@ -980,6 +1068,12 @@ export default function StudentsPage() {
                     <span style={{ color: 'var(--color-text-muted)' }}>Batería</span>
                     <span style={{ fontWeight: 600 }}>{gpsTracker.battery_level ?? '—'}%</span>
                   </div>
+                  {isSuperAdmin && gpsTracker.iccid && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>ICCID de la SIM</span>
+                      <span style={{ fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 11 }}>{gpsTracker.iccid}</span>
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -996,6 +1090,20 @@ export default function StudentsPage() {
                   </p>
                 )}
                 {findError && <p className="form-error" style={{ marginTop: 0, marginBottom: 10, textAlign: 'center' }}>{findError}</p>}
+
+                <button
+                  className="btn-ghost"
+                  style={{ width: '100%', marginBottom: 10 }}
+                  disabled={requestingPosition || !gpsTracker.online}
+                  onClick={handleRequestPosition}
+                >
+                  {requestingPosition ? 'Solicitando...' : '📍 Actualizar ubicación ahora'}
+                </button>
+                {positionRequestMsg && (
+                  <p style={{ margin: '0 0 10px', fontSize: 11, color: positionRequestMsg.includes('✓') ? '#059669' : '#dc2626', textAlign: 'center' }}>
+                    {positionRequestMsg}
+                  </p>
+                )}
 
                 <Link to="/tracking" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', display: 'block', marginBottom: 20 }}>
                   Ver ubicación en el mapa
@@ -1118,6 +1226,60 @@ export default function StudentsPage() {
                     {savingAlarm ? 'Guardando...' : 'Guardar alarma'}
                   </button>
                 </form>
+
+                {isSuperAdmin && (
+                  <>
+                    <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4, fontWeight: 600 }}>
+                      ⚙️ Configuración avanzada (Admin)
+                    </p>
+                    <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--color-placeholder)' }}>
+                      Ajustes técnicos del equipo — no algo que un padre normalmente necesite tocar.
+                    </p>
+                    <form onSubmit={handleSaveAdvancedConfig} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                      <input
+                        className="form-input" type="tel" placeholder="Número de monitoreo (opcional)"
+                        value={centerNumber} onChange={(e) => setCenterNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={lbsEnabled} onChange={(e) => setLbsEnabled(e.target.checked)} />
+                        Posicionamiento por celdas/WiFi (LBS) — respaldo cuando no hay señal GPS
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={vibrationAlarmEnabled} onChange={(e) => setVibrationAlarmEnabled(e.target.checked)} />
+                        Alarma de vibración
+                      </label>
+                      <input
+                        className="form-input" type="number" min={1} max={255} placeholder="Umbral de sobrevelocidad (km/h)"
+                        value={speedThreshold} onChange={(e) => setSpeedThreshold(e.target.value)}
+                      />
+                      {advancedError && <p className="form-error" style={{ margin: 0 }}>{advancedError}</p>}
+                      {advancedSaved && <p style={{ margin: 0, fontSize: 12, color: '#059669', fontWeight: 600 }}>Configuración guardada ✓</p>}
+                      <button type="submit" className="btn-ghost" disabled={savingAdvanced}>
+                        {savingAdvanced ? 'Guardando...' : 'Guardar configuración avanzada'}
+                      </button>
+                    </form>
+
+                    {geofenceOptions.length > 0 && (
+                      <div style={{ marginBottom: 20 }}>
+                        <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8, fontWeight: 600 }}>
+                          Vincular a geocerca adicional
+                        </p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <select className="form-input" style={{ flex: 1, marginBottom: 0 }} value={selectedGeofenceId} onChange={(e) => setSelectedGeofenceId(e.target.value)}>
+                            <option value="">Elige una geocerca...</option>
+                            {geofenceOptions.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                          </select>
+                          <button className="btn-ghost" disabled={!selectedGeofenceId || linkingGeofence} onClick={handleLinkGeofence}>
+                            {linkingGeofence ? '...' : 'Vincular'}
+                          </button>
+                        </div>
+                        {linkGeofenceMsg && (
+                          <p style={{ margin: '6px 0 0', fontSize: 11, color: linkGeofenceMsg.includes('✓') ? '#059669' : '#dc2626' }}>{linkGeofenceMsg}</p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <button className="btn-ghost" style={{ width: '100%', color: '#dc2626', marginBottom: 10 }} disabled={poweringOff || !gpsTracker.online} onClick={handlePowerOff}>
                   {poweringOff ? 'Apagando...' : '⏻ Apagar tarjeta'}

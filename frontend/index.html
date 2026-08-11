@@ -274,5 +274,22 @@
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- ══ Chat en vivo (Chatwoot) ══════════════════════════════════════ -->
+    <script>
+      (function(d,t) {
+        var BASE_URL="https://bs-comunicaciones-integrales-chatwoot.6c26si.easypanel.host";
+        var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+        g.src=BASE_URL+"/packs/js/sdk.js";
+        g.async = true;
+        s.parentNode.insertBefore(g,s);
+        g.onload=function(){
+          window.chatwootSDK.run({
+            websiteToken: 'eaB8ifjqd92PkUPYv1q9fKn5',
+            baseUrl: BASE_URL
+          })
+        }
+      })(document,"script");
+    </script>
   </body>
 </html>

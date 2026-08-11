@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { to: '/', label: '🥦 Inicio' },
   { to: '/beneficios', label: 'Nuestros Beneficios' },
   { to: '/funcionalidades', label: 'Funcionalidades' },
+  { to: '/funcionalidades#precios', label: 'Precios' },
 ];
 
 export default function LandingHeader() {
@@ -24,7 +25,7 @@ export default function LandingHeader() {
 
       {/* Styled Responsive Navigation Header */}
       <header className="sticky top-0 z-40 bg-[#fffaf5]/95 backdrop-blur-md border-b border-[#faeae1] shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center text-left">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex justify-between items-center text-left">
 
           {/* Logo Brand Accent — mochila Kidway */}
           <Link to="/" className="flex items-center gap-2.5 focus:outline-none cursor-pointer group text-decoration-none">
@@ -43,14 +44,15 @@ export default function LandingHeader() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-2 bg-emerald-50/75 p-1.5 rounded-2xl border border-emerald-150">
+          <nav className="hidden md:flex items-center gap-3 bg-emerald-50/75 p-2 rounded-2xl border border-emerald-150">
             {NAV_LINKS.map((link) => {
-              const active = location.pathname === link.to;
+              const linkPath = link.to.split('#')[0];
+              const active = location.pathname === linkPath && !location.hash;
               return (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all text-decoration-none ${
+                  className={`px-6 py-3.5 rounded-xl text-sm font-extrabold transition-all text-decoration-none ${
                     active
                       ? 'text-white bg-emerald-500 shadow-md shadow-emerald-500/20'
                       : 'text-[#7d5d61] hover:text-emerald-755 hover:bg-white/50'
@@ -87,7 +89,8 @@ export default function LandingHeader() {
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#fffaf7] border-b border-emerald-250 p-4 space-y-3 animate-fade-in text-left">
             {NAV_LINKS.map((link) => {
-              const active = location.pathname === link.to;
+              const linkPath = link.to.split('#')[0];
+              const active = location.pathname === linkPath && !location.hash;
               return (
                 <Link
                   key={link.to}

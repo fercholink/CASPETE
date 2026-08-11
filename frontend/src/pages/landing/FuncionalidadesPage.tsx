@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Sparkles, UtensilsCrossed, AlertTriangle, Check, Star, Smile,
   MapPin, Phone, Radio, BatteryCharging, Navigation, RefreshCw,
@@ -44,8 +44,16 @@ const DEVICE_SPECS = [
 export default function FuncionalidadesPage() {
   const { openLeadModal } = useLeadModal();
   const { openGpsOrderModal } = useGpsOrderModal();
+  const location = useLocation();
   const [testFood, setTestFood] = useState<FoodItem>(COLOMBIAN_FOOD_ITEMS[0]); // default Salpicon (healthy & delicious)
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Ancla directa desde el menú ("Precios") — baja suave hasta la sección al cargar
+  useEffect(() => {
+    if (location.hash === '#precios') {
+      document.getElementById('precios')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [location.hash]);
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -314,7 +322,7 @@ export default function FuncionalidadesPage() {
           </div>
 
           {/* Precio del localizador para padres */}
-          <div className="mt-16 max-w-4xl mx-auto">
+          <div id="precios" className="mt-16 max-w-4xl mx-auto scroll-mt-28">
             <div className="text-center mb-8">
               <span className="text-emerald-700 text-xs font-extrabold tracking-widest uppercase block font-mono">Precio Claro para Padres</span>
               <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[#4e2f33] leading-tight tracking-tight mt-2">

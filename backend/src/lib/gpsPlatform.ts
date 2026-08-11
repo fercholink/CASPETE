@@ -22,6 +22,7 @@ export interface PlatformTracker {
   sos_number: string | null;
   dad_number: string | null;
   mom_number: string | null;
+  alarm_clock_json: AlarmClockEntry[] | null;
 }
 
 export interface PlatformPosition {

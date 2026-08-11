@@ -60,6 +60,7 @@ function buildTrackerInfo(local: LocalTracker, platform: gpsPlatform.PlatformTra
     sos_number: platform?.sos_number ?? null,
     dad_number: platform?.dad_number ?? null,
     mom_number: platform?.mom_number ?? null,
+    alarm_clock_json: platform?.alarm_clock_json ?? null,
   };
 }
 

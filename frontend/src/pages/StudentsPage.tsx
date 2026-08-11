@@ -45,6 +45,7 @@ interface TrackerData {
   sos_number: string | null;
   dad_number: string | null;
   mom_number: string | null;
+  alarm_clock_json: { weekdays: number; hour: number; minute: number }[] | null;
 }
 
 interface GpsPlanStatus {
@@ -289,6 +290,9 @@ export default function StudentsPage() {
         setDadNumber(tracker.dad_number ?? '');
         setMomNumber(tracker.mom_number ?? '');
         setPhoneNumber(tracker.phone_number ?? '');
+        const savedAlarm = tracker.alarm_clock_json?.[0];
+        setAlarmWeekdays(savedAlarm?.weekdays ?? 0);
+        setAlarmTime(savedAlarm ? `${String(savedAlarm.hour).padStart(2, '0')}:${String(savedAlarm.minute).padStart(2, '0')}` : '');
         apiClient.get<{ data: GpsPlanStatus }>(`/gps-payments/trackers/${tracker.id}/status`)
           .then((r2) => setGpsPlanStatus(r2.data.data))
           .catch(() => {});

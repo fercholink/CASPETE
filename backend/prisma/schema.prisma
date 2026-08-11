@@ -863,6 +863,43 @@ model GPSPaymentRequest {
   parent  User       @relation(fields: [parent_id], references: [id])
 }
 
+enum GpsDeviceOrderStatus {
+  PENDING        // comprobante recién subido, sin revisar
+  PAID_CONFIRMED // admin verificó el pago, pendiente de despacho físico
+  SHIPPED        // se asignó IMEI real + guía y se envió al padre
+  REJECTED       // comprobante inválido/no encontrado
+}
+
+// Compra del localizador ANTES de que el padre tenga cuenta en Kidway —
+// paga primero para que se le pueda enviar el dispositivo. Al despachar
+// (SHIPPED), se crea un GPSTracker "huérfano" (sin student_id) con
+// device_purchased=true bajo el IMEI real asignado; cuando el padre se
+// registra y vincula ese mismo IMEI, linkTracker() reutiliza la fila y
+// el estado de "comprado" se conserva (ver gps.service.ts:linkTracker).
+model GpsDeviceOrder {
+  id                String               @id @default(uuid()) @db.Uuid
+  contact_name      String               @db.VarChar(200)
+  contact_email     String               @db.VarChar(255)
+  contact_phone     String               @db.VarChar(20)
+  city              String               @db.VarChar(100)
+  address           String               @db.Text
+  student_name      String?              @db.VarChar(200)
+  receipt_url       String               @db.Text
+  payment_reference String?              @db.VarChar(100)
+  amount            Decimal              @db.Decimal(10, 2)
+  status            GpsDeviceOrderStatus @default(PENDING)
+  imei              String?              @db.VarChar(20)
+  tracking_number   String?              @db.VarChar(100)
+  tracker_id        String?              @db.Uuid // GPSTracker creado al despachar (referencia informativa, sin FK)
+  notes             String?              @db.Text
+  ip_address        String?              @db.VarChar(45)
+  created_at        DateTime             @default(now())
+  updated_at        DateTime             @updatedAt
+
+  @@index([status])
+  @@index([created_at])
+}
+
 model GPSTelemetry {
   id              String         @id @default(uuid()) @db.Uuid
   tracker_id      String         @db.Uuid

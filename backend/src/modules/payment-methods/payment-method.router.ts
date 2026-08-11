@@ -4,6 +4,11 @@ import { authenticate } from '../../middleware/auth.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
 
 const router = Router();
+
+// Público (sin auth) — para el checkout del localizador GPS, donde el padre
+// todavía no tiene cuenta. Devuelve solo métodos activos, igual que /.
+router.get('/public', pmController.listActive);
+
 router.use(authenticate);
 
 // Público (autenticado) — devuelve solo activos

@@ -5,6 +5,7 @@ import {
   MapPin, Phone, Radio, BatteryCharging, Navigation, RefreshCw,
 } from 'lucide-react';
 import { useLeadModal } from '../../components/landing/LeadModalProvider';
+import { useGpsOrderModal } from '../../components/landing/GpsOrderModalProvider';
 import { COLOMBIAN_FOOD_ITEMS } from '../../data/landingMockData';
 import type { FoodItem } from '../../data/landingMockData';
 
@@ -42,6 +43,7 @@ const DEVICE_SPECS = [
 
 export default function FuncionalidadesPage() {
   const { openLeadModal } = useLeadModal();
+  const { openGpsOrderModal } = useGpsOrderModal();
   const [testFood, setTestFood] = useState<FoodItem>(COLOMBIAN_FOOD_ITEMS[0]); // default Salpicon (healthy & delicious)
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -360,10 +362,10 @@ export default function FuncionalidadesPage() {
             </p>
             <div className="flex justify-center mt-8">
               <button
-                onClick={() => openLeadModal('GPS')}
+                onClick={() => openGpsOrderModal()}
                 className="py-4 px-10 rounded-2xl text-white font-display font-black text-xs uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer text-center shadow-md shadow-emerald-500/25"
               >
-                📍 Quiero el Localizador
+                📍 Comprar el Localizador
               </button>
             </div>
           </div>

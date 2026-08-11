@@ -309,9 +309,16 @@ export default function FuncionalidadesPage() {
           </div>
 
           {/* Explicación del botón SOS */}
-          <div className="mt-14 max-w-3xl mx-auto bg-[#fef2f2] border border-red-200 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center gap-6 text-left">
-            <div className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md flex-shrink-0">
-              <span className="text-2xl">🆘</span>
+          <div className="mt-14 max-w-3xl mx-auto bg-[#fef2f2] border border-red-200 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center gap-8 text-left">
+            <div className="relative flex-shrink-0">
+              <img
+                src="/gps-sos.jpg"
+                alt="Botón de SOS del localizador GPS Kidway"
+                className="w-40 sm:w-48 rounded-2xl shadow-md border border-red-100"
+              />
+              <div className="absolute -top-3 -left-3 w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md">
+                <span className="text-xl">🆘</span>
+              </div>
             </div>
             <div>
               <h3 className="font-display text-lg font-black text-[#4e2f33] mb-1">Botón de SOS</h3>

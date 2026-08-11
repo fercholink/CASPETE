@@ -61,6 +61,143 @@ export default function FuncionalidadesPage() {
 
   return (
     <>
+      {/* Cómo funciona el localizador GPS */}
+      <section className="pt-16 pb-20 bg-white">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center space-y-4">
+            <div className="inline-flex items-center gap-x-2 text-xs font-bold text-emerald-805 bg-emerald-100/60 px-3.5 py-2 rounded-full border border-emerald-250">
+              <MapPin className="h-4 w-4" />
+              <span>UBICACIÓN Y LLAMADAS</span>
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-[#4e2f33] leading-tight tracking-tight">
+              ¿Cómo funciona el localizador GPS?
+            </h2>
+            <p className="text-[#61494c] text-sm">
+              El localizador captura su ubicación al aire libre y tú la ves al instante desde la app, sin que tu hijo necesite un celular propio.
+            </p>
+          </div>
+
+          <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-12 relative text-left max-w-4xl mx-auto">
+            <div className="flex flex-col items-start space-y-4">
+              <div className="w-14 h-14 rounded-full bg-emerald-100 border border-emerald-450 text-emerald-800 flex items-center justify-center font-display font-black text-xl shadow-xs">
+                <span>A</span>
+              </div>
+              <h3 className="font-display text-xl font-bold text-[#4e2f33]">📡 Captura la ubicación</h3>
+              <p className="text-xs text-[#61494c] font-medium leading-relaxed">
+                El localizador soporta múltiples métodos de ubicación y captura la señal GPS cuando está al aire libre, registrando la posición y el recorrido del trayecto.
+              </p>
+            </div>
+            <div className="flex flex-col items-start space-y-4">
+              <div className="w-14 h-14 rounded-full bg-[#dcfce7] border border-[#4ade80] text-[#15803d] flex items-center justify-center font-display font-black text-xl shadow-xs">
+                <span>B</span>
+              </div>
+              <h3 className="font-display text-xl font-bold text-[#4e2f33]">📲 Tú lo ves desde la app</h3>
+              <p className="text-xs text-[#61494c] font-medium leading-relaxed">
+                Como padre, ves la ubicación en tiempo real, el historial del recorrido y el estado del localizador directamente desde la app de Kidway — sin costos extra.
+              </p>
+            </div>
+          </div>
+
+          {/* Grid de especificaciones del dispositivo */}
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {DEVICE_SPECS.map((spec) => {
+              const Icon = spec.icon;
+              return (
+                <div
+                  key={spec.label}
+                  className="bg-[#fffcf9] p-6 rounded-[1.75rem] border border-[#f7e3d7] flex flex-col gap-3 text-left"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-display text-sm font-bold text-[#4e2f33] leading-snug">{spec.label}</h4>
+                    <p className="text-xs text-[#61494c] leading-relaxed">{spec.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Explicación del botón SOS */}
+          <div className="mt-14 max-w-3xl mx-auto bg-[#fef2f2] border border-red-200 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center gap-8 text-left">
+            <div className="relative flex-shrink-0">
+              <img
+                src="/gps-sos.jpg"
+                alt="Botón de SOS del localizador GPS Kidway"
+                className="w-40 sm:w-48 rounded-2xl shadow-md border border-red-100"
+              />
+              <div className="absolute -top-3 -left-3 w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md">
+                <span className="text-xl">🆘</span>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-black text-[#4e2f33] mb-1">Botón de SOS</h3>
+              <p className="text-xs text-[#61494c] leading-relaxed">
+                Tu hijo mantiene presionado el botón de SOS por 3 segundos para activar la llamada de pánico: el localizador marca automáticamente al número configurado en la app y se establece una llamada de voz en ambos sentidos, para que puedas escucharlo y hablarle de inmediato.
+              </p>
+            </div>
+          </div>
+
+          {/* Precio del localizador para padres */}
+          <div id="precios" className="mt-16 max-w-4xl mx-auto scroll-mt-28">
+            <div className="text-center mb-8">
+              <span className="text-emerald-700 text-xs font-extrabold tracking-widest uppercase block font-mono">Precio Claro para Padres</span>
+              <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[#4e2f33] leading-tight tracking-tight mt-2">
+                ¿Cuánto cuesta el localizador?
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Dispositivo — pago único */}
+              <div className="bg-white p-8 rounded-[2rem] border-2 border-[#f7e3d7] flex flex-col justify-between space-y-6 text-left">
+                <div>
+                  <span className="text-3xl">📦</span>
+                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Localizador GPS</h4>
+                  <p className="text-xs text-[#61494c] font-semibold mt-1">Pago único, es tuyo para siempre.</p>
+                  <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
+                    $120.000 <span className="text-sm font-bold text-[#61494c]">COP</span>
+                  </p>
+                </div>
+                <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Dispositivo con SIM 4G incluida</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Batería de 1500 mAh</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Botón físico de SOS</span></li>
+                </ul>
+              </div>
+
+              {/* Mensualidad — recomendado */}
+              <div className="bg-white p-8 rounded-[2.5rem] border-2 border-emerald-400 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-lg shadow-emerald-500/10 text-left">
+                <span className="absolute top-6 right-6 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Todo Incluido</span>
+                <div>
+                  <span className="text-3xl">📍</span>
+                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Plan Mensual</h4>
+                  <p className="text-xs text-[#61494c] font-semibold mt-1">Ubicación y llamadas, sin sorpresas.</p>
+                  <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
+                    $25.000 <span className="text-sm font-bold text-[#61494c]">COP / mes</span>
+                  </p>
+                </div>
+                <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Llamadas ilimitadas a todo destino</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Geolocalización en tiempo real</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Sin permanencia — pagas mes a mes</span></li>
+                </ul>
+              </div>
+            </div>
+            <p className="text-center text-xs text-[#8c6d71] mt-6 max-w-xl mx-auto">
+              No necesitas que tu colegio esté afiliado a Kidway para usar el localizador — regístrate como padre y elige "solo localizar y llamar" al agregar a tu hijo.
+            </p>
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={() => openGpsOrderModal()}
+                className="py-4 px-10 rounded-2xl text-white font-display font-black text-xs uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer text-center shadow-md shadow-emerald-500/25"
+              >
+                📍 Comprar el Localizador
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Page intro */}
       <section className="pt-16 pb-4">
         <div className="mx-auto max-w-3xl px-6 lg:px-8 text-center space-y-4">
@@ -246,143 +383,6 @@ export default function FuncionalidadesPage() {
               </p>
             </div>
 
-          </div>
-        </div>
-      </section>
-
-      {/* Cómo funciona el localizador GPS */}
-      <section className="py-20 bg-white border-t border-[#faeae1]">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center space-y-4">
-            <div className="inline-flex items-center gap-x-2 text-xs font-bold text-emerald-805 bg-emerald-100/60 px-3.5 py-2 rounded-full border border-emerald-250">
-              <MapPin className="h-4 w-4" />
-              <span>UBICACIÓN Y LLAMADAS</span>
-            </div>
-            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-[#4e2f33] leading-tight tracking-tight">
-              ¿Cómo funciona el localizador GPS?
-            </h2>
-            <p className="text-[#61494c] text-sm">
-              El localizador captura su ubicación al aire libre y tú la ves al instante desde la app, sin que tu hijo necesite un celular propio.
-            </p>
-          </div>
-
-          <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-12 relative text-left max-w-4xl mx-auto">
-            <div className="flex flex-col items-start space-y-4">
-              <div className="w-14 h-14 rounded-full bg-emerald-100 border border-emerald-450 text-emerald-800 flex items-center justify-center font-display font-black text-xl shadow-xs">
-                <span>A</span>
-              </div>
-              <h3 className="font-display text-xl font-bold text-[#4e2f33]">📡 Captura la ubicación</h3>
-              <p className="text-xs text-[#61494c] font-medium leading-relaxed">
-                El localizador soporta múltiples métodos de ubicación y captura la señal GPS cuando está al aire libre, registrando la posición y el recorrido del trayecto.
-              </p>
-            </div>
-            <div className="flex flex-col items-start space-y-4">
-              <div className="w-14 h-14 rounded-full bg-[#dcfce7] border border-[#4ade80] text-[#15803d] flex items-center justify-center font-display font-black text-xl shadow-xs">
-                <span>B</span>
-              </div>
-              <h3 className="font-display text-xl font-bold text-[#4e2f33]">📲 Tú lo ves desde la app</h3>
-              <p className="text-xs text-[#61494c] font-medium leading-relaxed">
-                Como padre, ves la ubicación en tiempo real, el historial del recorrido y el estado del localizador directamente desde la app de Kidway — sin costos extra.
-              </p>
-            </div>
-          </div>
-
-          {/* Grid de especificaciones del dispositivo */}
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {DEVICE_SPECS.map((spec) => {
-              const Icon = spec.icon;
-              return (
-                <div
-                  key={spec.label}
-                  className="bg-[#fffcf9] p-6 rounded-[1.75rem] border border-[#f7e3d7] flex flex-col gap-3 text-left"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center flex-shrink-0">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="font-display text-sm font-bold text-[#4e2f33] leading-snug">{spec.label}</h4>
-                    <p className="text-xs text-[#61494c] leading-relaxed">{spec.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Explicación del botón SOS */}
-          <div className="mt-14 max-w-3xl mx-auto bg-[#fef2f2] border border-red-200 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center gap-8 text-left">
-            <div className="relative flex-shrink-0">
-              <img
-                src="/gps-sos.jpg"
-                alt="Botón de SOS del localizador GPS Kidway"
-                className="w-40 sm:w-48 rounded-2xl shadow-md border border-red-100"
-              />
-              <div className="absolute -top-3 -left-3 w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md">
-                <span className="text-xl">🆘</span>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-display text-lg font-black text-[#4e2f33] mb-1">Botón de SOS</h3>
-              <p className="text-xs text-[#61494c] leading-relaxed">
-                Tu hijo mantiene presionado el botón de SOS por 3 segundos para activar la llamada de pánico: el localizador marca automáticamente al número configurado en la app y se establece una llamada de voz en ambos sentidos, para que puedas escucharlo y hablarle de inmediato.
-              </p>
-            </div>
-          </div>
-
-          {/* Precio del localizador para padres */}
-          <div id="precios" className="mt-16 max-w-4xl mx-auto scroll-mt-28">
-            <div className="text-center mb-8">
-              <span className="text-emerald-700 text-xs font-extrabold tracking-widest uppercase block font-mono">Precio Claro para Padres</span>
-              <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[#4e2f33] leading-tight tracking-tight mt-2">
-                ¿Cuánto cuesta el localizador?
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Dispositivo — pago único */}
-              <div className="bg-white p-8 rounded-[2rem] border-2 border-[#f7e3d7] flex flex-col justify-between space-y-6 text-left">
-                <div>
-                  <span className="text-3xl">📦</span>
-                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Localizador GPS</h4>
-                  <p className="text-xs text-[#61494c] font-semibold mt-1">Pago único, es tuyo para siempre.</p>
-                  <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
-                    $120.000 <span className="text-sm font-bold text-[#61494c]">COP</span>
-                  </p>
-                </div>
-                <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Dispositivo con SIM 4G incluida</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Batería de 1500 mAh</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Botón físico de SOS</span></li>
-                </ul>
-              </div>
-
-              {/* Mensualidad — recomendado */}
-              <div className="bg-white p-8 rounded-[2.5rem] border-2 border-emerald-400 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-lg shadow-emerald-500/10 text-left">
-                <span className="absolute top-6 right-6 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Todo Incluido</span>
-                <div>
-                  <span className="text-3xl">📍</span>
-                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Plan Mensual</h4>
-                  <p className="text-xs text-[#61494c] font-semibold mt-1">Ubicación y llamadas, sin sorpresas.</p>
-                  <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
-                    $25.000 <span className="text-sm font-bold text-[#61494c]">COP / mes</span>
-                  </p>
-                </div>
-                <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Llamadas ilimitadas a todo destino</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Geolocalización en tiempo real</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Sin permanencia — pagas mes a mes</span></li>
-                </ul>
-              </div>
-            </div>
-            <p className="text-center text-xs text-[#8c6d71] mt-6 max-w-xl mx-auto">
-              No necesitas que tu colegio esté afiliado a Kidway para usar el localizador — regístrate como padre y elige "solo localizar y llamar" al agregar a tu hijo.
-            </p>
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={() => openGpsOrderModal()}
-                className="py-4 px-10 rounded-2xl text-white font-display font-black text-xs uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer text-center shadow-md shadow-emerald-500/25"
-              >
-                📍 Comprar el Localizador
-              </button>
-            </div>
           </div>
         </div>
       </section>

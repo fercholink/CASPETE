@@ -50,6 +50,7 @@ export default function FuncionalidadesPage() {
   const [testFood, setTestFood] = useState<FoodItem>(COLOMBIAN_FOOD_ITEMS[0]); // default Salpicon (healthy & delicious)
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
 
   // Ancla directa desde el menú ("Precios") — baja suave hasta la sección al cargar
   useEffect(() => {
@@ -132,21 +133,65 @@ export default function FuncionalidadesPage() {
             })}
           </div>
 
+          {/* Banner corto y contundente */}
+          <div className="mt-16 max-w-4xl mx-auto bg-gradient-to-r from-emerald-500 to-teal-500 rounded-[2rem] px-8 py-7 text-center shadow-lg shadow-emerald-500/20">
+            <p className="font-display text-xl sm:text-2xl font-black text-white leading-snug">
+              🛡️ Tranquilidad total, en tiempo real
+            </p>
+            <p className="text-emerald-50 text-sm font-semibold mt-1.5">
+              Sabe dónde está tu hijo y escúchalo cuando quieras — sin que necesite celular propio.
+            </p>
+          </div>
+
           {/* Galería de fotos del localizador (administrable desde el panel SUPER_ADMIN) */}
           {galleryImages.length > 0 && (
-            <div className="mt-16 max-w-5xl mx-auto">
+            <div className="mt-10 max-w-5xl mx-auto">
               <div className="flex gap-4 overflow-x-auto pb-4 px-1 snap-x snap-mandatory">
                 {galleryImages.map((img) => (
                   <figure
                     key={img.id}
                     className="flex-shrink-0 w-64 snap-start bg-[#fffcf9] border border-[#f7e3d7] rounded-[1.75rem] overflow-hidden"
                   >
-                    <img src={img.image_url} alt={img.caption ?? 'Localizador GPS Kidway'} className="w-full h-56 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setLightboxImage(img)}
+                      className="block w-full cursor-zoom-in border-none bg-transparent p-0"
+                      aria-label="Ampliar imagen"
+                    >
+                      <img src={img.image_url} alt={img.caption ?? 'Localizador GPS Kidway'} className="w-full h-56 object-cover" />
+                    </button>
                     {img.caption && (
                       <figcaption className="p-4 text-xs text-[#61494c] font-semibold text-left">{img.caption}</figcaption>
                     )}
                   </figure>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Lightbox: ampliar imagen de la galería (útil sobre todo en celular) */}
+          {lightboxImage && (
+            <div
+              onClick={() => setLightboxImage(null)}
+              className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in cursor-zoom-out"
+            >
+              <button
+                type="button"
+                onClick={() => setLightboxImage(null)}
+                className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white text-xl flex items-center justify-center border-none cursor-pointer"
+                aria-label="Cerrar"
+              >
+                ✕
+              </button>
+              <div className="max-w-2xl w-full text-center" onClick={(e) => e.stopPropagation()}>
+                <img
+                  src={lightboxImage.image_url}
+                  alt={lightboxImage.caption ?? 'Localizador GPS Kidway'}
+                  className="w-full max-h-[75vh] object-contain rounded-2xl"
+                />
+                {lightboxImage.caption && (
+                  <p className="text-white text-sm font-semibold mt-4">{lightboxImage.caption}</p>
+                )}
               </div>
             </div>
           )}

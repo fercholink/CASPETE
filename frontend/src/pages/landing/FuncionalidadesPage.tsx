@@ -41,12 +41,15 @@ const DEVICE_SPECS = [
   { icon: RefreshCw, label: 'Actualización remota de firmware', desc: 'El dispositivo se mantiene al día sin que tengas que hacer nada.' },
 ];
 
+interface GalleryImage { id: string; image_url: string; caption: string | null }
+
 export default function FuncionalidadesPage() {
   const { openLeadModal } = useLeadModal();
   const { openGpsOrderModal } = useGpsOrderModal();
   const location = useLocation();
   const [testFood, setTestFood] = useState<FoodItem>(COLOMBIAN_FOOD_ITEMS[0]); // default Salpicon (healthy & delicious)
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
 
   // Ancla directa desde el menú ("Precios") — baja suave hasta la sección al cargar
   useEffect(() => {
@@ -54,6 +57,16 @@ export default function FuncionalidadesPage() {
       document.getElementById('precios')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [location.hash]);
+
+  // Galería administrable desde el panel SUPER_ADMIN — sin auth, pública
+  useEffect(() => {
+    const baseUrl = import.meta.env.VITE_API_URL || '';
+    const url = baseUrl.endsWith('/api') ? `${baseUrl}/gps-gallery/public` : `${baseUrl}/api/gps-gallery/public`;
+    fetch(url)
+      .then((r) => r.json())
+      .then((json: { success: boolean; data?: GalleryImage[] }) => setGalleryImages(json.data ?? []))
+      .catch(() => {});
+  }, []);
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -118,6 +131,25 @@ export default function FuncionalidadesPage() {
               );
             })}
           </div>
+
+          {/* Galería de fotos del localizador (administrable desde el panel SUPER_ADMIN) */}
+          {galleryImages.length > 0 && (
+            <div className="mt-16 max-w-5xl mx-auto">
+              <div className="flex gap-4 overflow-x-auto pb-4 px-1 snap-x snap-mandatory">
+                {galleryImages.map((img) => (
+                  <figure
+                    key={img.id}
+                    className="flex-shrink-0 w-64 snap-start bg-[#fffcf9] border border-[#f7e3d7] rounded-[1.75rem] overflow-hidden"
+                  >
+                    <img src={img.image_url} alt={img.caption ?? 'Localizador GPS Kidway'} className="w-full h-56 object-cover" />
+                    {img.caption && (
+                      <figcaption className="p-4 text-xs text-[#61494c] font-semibold text-left">{img.caption}</figcaption>
+                    )}
+                  </figure>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Explicación del botón SOS */}
           <div className="mt-14 max-w-3xl mx-auto bg-[#fef2f2] border border-red-200 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center gap-8 text-left">

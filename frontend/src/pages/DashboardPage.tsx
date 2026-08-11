@@ -126,6 +126,7 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
     { to: '/topup-requests',  label: 'Recargas',             icon: '💰' },
     { to: '/gps-payments',    label: 'Pagos GPS',            icon: '📍' },
     { to: '/gps-device-orders', label: 'Pedidos GPS',        icon: '📦' },
+    { to: '/gps-gallery',      label: 'Galería GPS',          icon: '🖼️' },
     { to: '/transactions',    label: 'Transacciones',        icon: '📊' },
   ],
   SCHOOL_ADMIN: [

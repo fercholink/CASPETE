@@ -460,6 +460,20 @@ model PaymentMethod {
   updated_at DateTime @updatedAt
 }
 
+// Galería de fotos del localizador GPS en la landing (sección "Ubicación y
+// Llamadas" de /funcionalidades), administrable por SUPER_ADMIN sin deploy.
+model GpsGalleryImage {
+  id         String   @id @default(uuid()) @db.Uuid
+  image_url  String   @db.Text
+  caption    String?  @db.VarChar(200)
+  active     Boolean  @default(true)
+  sort_order Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([active])
+}
+
 // Suscripciones Web Push para notificaciones al padre
 model PushSubscription {
   id         String   @id @default(uuid()) @db.Uuid

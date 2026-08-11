@@ -29,6 +29,7 @@ import FuncionalidadesPage from '../pages/landing/FuncionalidadesPage';
 import TopupRequestsPage from '../pages/TopupRequestsPage';
 import GpsPaymentsPage from '../pages/GpsPaymentsPage';
 import GpsDeviceOrdersPage from '../pages/GpsDeviceOrdersPage';
+import GpsGalleryPage from '../pages/GpsGalleryPage';
 import PaymentMethodsPage from '../pages/PaymentMethodsPage';
 import Ley2120DashboardPage from '../pages/Ley2120DashboardPage';
 import SuppliersPage from '../pages/SuppliersPage';
@@ -324,6 +325,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
         <GpsDeviceOrdersPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/gps-gallery',
+    element: (
+      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+        <GpsGalleryPage />
       </ProtectedRoute>
     ),
   },

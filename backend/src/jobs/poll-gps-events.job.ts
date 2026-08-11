@@ -21,10 +21,15 @@ let lastPolledAt: Date = new Date();
 
 const NOTIFIABLE_TYPES = new Set(['GEOFENCE_ENTER', 'GEOFENCE_EXIT', 'ROUTE_DEVIATION', 'ROUTE_RESTORED', 'LOW_BATTERY']);
 
-function buildTitle(type: PlatformEvent['type'], studentName: string): string | null {
+// geofenceName es null para la geocerca automática del colegio (se usa la
+// redacción especial "llegó/salió del colegio"); para cualquier geocerca
+// adicional se usa su nombre real, para no decir "colegio" en zonas que no lo son.
+function buildTitle(type: PlatformEvent['type'], studentName: string, geofenceName: string | null): string | null {
   switch (type) {
-    case 'GEOFENCE_ENTER': return `${studentName} llegó al colegio`;
-    case 'GEOFENCE_EXIT': return `${studentName} salió del colegio`;
+    case 'GEOFENCE_ENTER':
+      return geofenceName ? `${studentName} entró a "${geofenceName}"` : `${studentName} llegó al colegio`;
+    case 'GEOFENCE_EXIT':
+      return geofenceName ? `${studentName} salió de "${geofenceName}"` : `${studentName} salió del colegio`;
     case 'ROUTE_DEVIATION': return `${studentName} se desvió de la ruta esperada`;
     case 'ROUTE_RESTORED': return `${studentName} volvió a la ruta esperada`;
     case 'LOW_BATTERY': return `🔋 Batería baja del localizador de ${studentName}`;
@@ -39,11 +44,18 @@ function buildTag(type: PlatformEvent['type']): string {
 async function notifyEvent(event: PlatformEvent) {
   const tracker = await prisma.gPSTracker.findFirst({
     where: { platform_tracker_id: event.tracker_id },
-    select: { student: { select: { full_name: true, parent_id: true } } },
+    select: { student: { select: { full_name: true, parent_id: true, school: { select: { gps_geofence_id: true } } } } },
   });
   if (!tracker?.student) return;
 
-  const title = buildTitle(event.type, tracker.student.full_name);
+  let geofenceName: string | null = null;
+  const isGeofenceEvent = event.type === 'GEOFENCE_ENTER' || event.type === 'GEOFENCE_EXIT';
+  if (isGeofenceEvent && event.geofence_id && event.geofence_id !== tracker.student.school?.gps_geofence_id) {
+    const geofence = await gpsPlatform.getGeofence(event.geofence_id).catch(() => null);
+    geofenceName = geofence?.name ?? null;
+  }
+
+  const title = buildTitle(event.type, tracker.student.full_name, geofenceName);
   if (!title) return;
 
   const time = new Date(event.recorded_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });

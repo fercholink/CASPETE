@@ -12,7 +12,9 @@ const superAdminOnly = requireRole('SUPER_ADMIN');
 
 router.post('/', superAdminOnly, geofenceController.create);
 router.get('/', superAdminOnly, geofenceController.list);
+router.get('/:id', superAdminOnly, geofenceController.getOne);
 router.patch('/:id', superAdminOnly, geofenceController.update);
+router.delete('/:id', superAdminOnly, geofenceController.remove);
 router.post('/:id/trackers', superAdminOnly, geofenceController.linkTracker);
 router.delete('/:id/trackers/:trackerId', superAdminOnly, geofenceController.unlinkTracker);
 

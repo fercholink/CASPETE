@@ -226,13 +226,31 @@ export async function listGeofences(): Promise<PlatformGeofence[]> {
   return geofences ?? [];
 }
 
+export async function getGeofence(id: string): Promise<PlatformGeofence | null> {
+  return request<PlatformGeofence>(`/geofences/${id}`);
+}
+
+// El shape es inmutable, pero la geometría dentro del mismo shape sí se puede
+// editar (mover el centro/radio de un círculo, redibujar los puntos de un
+// polígono) — la Plataforma GPS valida que no se mezclen campos del otro shape.
 export async function updateGeofenceMeta(
   id: string,
-  input: { name?: string | undefined; active?: boolean | undefined },
+  input: {
+    name?: string | undefined;
+    active?: boolean | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+    radius_meters?: number | undefined;
+    points?: { lat: number; lon: number }[] | undefined;
+  },
 ): Promise<PlatformGeofence> {
   const updated = await request<PlatformGeofence>(`/geofences/${id}`, { method: 'PATCH', body: JSON.stringify(input) });
   if (!updated) throw new AppError('Geocerca no encontrada', 404);
   return updated;
+}
+
+export async function deleteGeofence(id: string): Promise<void> {
+  await request(`/geofences/${id}`, { method: 'DELETE' });
 }
 
 /** Crea o actualiza el trayecto esperado (casa↔colegio) de un estudiante en la Plataforma GPS. */

@@ -12,8 +12,18 @@ export async function listGeofences() {
   return gpsPlatform.listGeofences();
 }
 
+export async function getGeofence(id: string) {
+  const geofence = await gpsPlatform.getGeofence(id);
+  if (!geofence) throw new AppError('Geocerca no encontrada', 404);
+  return geofence;
+}
+
 export async function updateGeofence(id: string, input: UpdateGeofenceInput) {
   return gpsPlatform.updateGeofenceMeta(id, input);
+}
+
+export async function deleteGeofence(id: string) {
+  await gpsPlatform.deleteGeofence(id);
 }
 
 async function resolvePlatformTrackerId(trackerId: string): Promise<string> {

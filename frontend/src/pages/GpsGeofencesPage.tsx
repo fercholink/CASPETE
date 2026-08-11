@@ -23,7 +23,8 @@ export default function GpsGeofencesPage() {
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [showCreate, setShowCreate] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [shape, setShape] = useState<'CIRCLE' | 'POLYGON'>('CIRCLE');
   const [name, setName] = useState('');
   const [center, setCenter] = useState<{ lat: number; lon: number } | null>(null);
@@ -32,8 +33,12 @@ export default function GpsGeofencesPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
+  const [deleteTarget, setDeleteTarget] = useState<Geofence | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const mapRef = useRef<L.Map | null>(null);
   const drawLayerRef = useRef<L.Layer[]>([]);
+  const hasCenteredRef = useRef(false);
 
   useEffect(() => { fetchGeofences(); }, []);
 
@@ -53,17 +58,31 @@ export default function GpsGeofencesPage() {
   }
 
   function openCreate() {
+    setEditingId(null);
     setShape('CIRCLE');
     setName('');
     setCenter(null);
     setRadius('150');
     setPoints([]);
     setSaveError('');
-    setShowCreate(true);
+    hasCenteredRef.current = false;
+    setShowModal(true);
   }
 
-  function closeCreate() {
-    setShowCreate(false);
+  function openEdit(g: Geofence) {
+    setEditingId(g.id);
+    setShape(g.shape);
+    setName(g.name);
+    setCenter(g.shape === 'CIRCLE' && g.latitude && g.longitude ? { lat: Number(g.latitude), lon: Number(g.longitude) } : null);
+    setRadius(g.radius_meters ? String(g.radius_meters) : '150');
+    setPoints(g.shape === 'POLYGON' ? (g.points ?? []) : []);
+    setSaveError('');
+    hasCenteredRef.current = false;
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    setShowModal(false);
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     drawLayerRef.current = [];
   }
@@ -93,7 +112,8 @@ export default function GpsGeofencesPage() {
     }
   }, []);
 
-  // Redibuja el círculo o el polígono en construcción cuando cambian los puntos
+  // Redibuja el círculo o el polígono en construcción cuando cambian los puntos,
+  // y la primera vez que hay algo que mostrar (al editar), centra el mapa ahí.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -105,6 +125,7 @@ export default function GpsGeofencesPage() {
       const circle = L.circle([center.lat, center.lon], { radius: Number(radius) || 150, color: '#059669' }).addTo(map);
       const marker = L.marker([center.lat, center.lon]).addTo(map);
       drawLayerRef.current = [circle, marker];
+      if (!hasCenteredRef.current) { map.setView([center.lat, center.lon], 15); hasCenteredRef.current = true; }
     } else if (shape === 'POLYGON' && points.length > 0) {
       const latlngs: [number, number][] = points.map((p) => [p.lat, p.lon]);
       const markers = points.map((p) => L.circleMarker([p.lat, p.lon], { radius: 5, color: '#059669' }).addTo(map));
@@ -112,6 +133,7 @@ export default function GpsGeofencesPage() {
       if (points.length >= 2) {
         const poly = L.polygon(latlngs, { color: '#059669', fillOpacity: 0.15 }).addTo(map);
         drawLayerRef.current.push(poly);
+        if (!hasCenteredRef.current) { map.fitBounds(poly.getBounds(), { padding: [30, 30] }); hasCenteredRef.current = true; }
       }
     }
   }, [shape, center, radius, points]);
@@ -128,20 +150,31 @@ export default function GpsGeofencesPage() {
 
     setSaving(true);
     try {
-      await apiClient.post('/gps-geofences', {
-        name: name.trim(),
-        shape,
-        ...(shape === 'CIRCLE'
-          ? { latitude: center!.lat, longitude: center!.lon, radius_meters: Number(radius) }
-          : { points }),
-      });
-      closeCreate();
+      const geometry = shape === 'CIRCLE'
+        ? { latitude: center!.lat, longitude: center!.lon, radius_meters: Number(radius) }
+        : { points };
+      if (editingId) {
+        await apiClient.patch(`/gps-geofences/${editingId}`, { name: name.trim(), ...geometry });
+      } else {
+        await apiClient.post('/gps-geofences', { name: name.trim(), shape, ...geometry });
+      }
+      closeModal();
       fetchGeofences();
     } catch (e: any) {
       setSaveError(e?.response?.data?.error ?? 'Error al guardar la geocerca');
     } finally {
       setSaving(false);
     }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await apiClient.delete(`/gps-geofences/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      fetchGeofences();
+    } catch {} finally { setDeleting(false); }
   }
 
   if (user?.role !== 'SUPER_ADMIN') {
@@ -199,9 +232,17 @@ export default function GpsGeofencesPage() {
                         : `${g.points?.length ?? 0} puntos`}
                     </p>
                   </div>
-                  <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => toggleActive(g)}>
-                    {g.active ? '✓ Activa' : 'Inactiva'}
-                  </button>
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => toggleActive(g)}>
+                      {g.active ? '✓ Activa' : 'Inactiva'}
+                    </button>
+                    <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => openEdit(g)}>
+                      ✏️ Editar
+                    </button>
+                    <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px', color: '#dc2626' }} onClick={() => setDeleteTarget(g)}>
+                      🗑
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -209,13 +250,13 @@ export default function GpsGeofencesPage() {
         )}
       </main>
 
-      {showCreate && (
+      {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}
-          onClick={() => !saving && closeCreate()}>
+          onClick={() => !saving && closeModal()}>
           <div className="user-card" style={{ maxWidth: 640, width: '100%', padding: 24, marginBottom: 0, maxHeight: '92vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Nueva geocerca</h2>
-              <button className="btn-ghost" style={{ padding: '4px 10px', fontSize: 18, lineHeight: 1 }} onClick={closeCreate}>×</button>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{editingId ? 'Editar geocerca' : 'Nueva geocerca'}</h2>
+              <button className="btn-ghost" style={{ padding: '4px 10px', fontSize: 18, lineHeight: 1 }} onClick={closeModal}>×</button>
             </div>
 
             <div className="form-group">
@@ -223,26 +264,32 @@ export default function GpsGeofencesPage() {
               <input className="form-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Ruta peligrosa Av. 4ta" />
             </div>
 
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <button
-                className="btn-ghost"
-                style={{ flex: 1, background: shape === 'CIRCLE' ? 'var(--color-brand-light)' : undefined }}
-                onClick={() => { setShape('CIRCLE'); setPoints([]); }}
-              >
-                ⭕ Círculo
-              </button>
-              <button
-                className="btn-ghost"
-                style={{ flex: 1, background: shape === 'POLYGON' ? 'var(--color-brand-light)' : undefined }}
-                onClick={() => { setShape('POLYGON'); setCenter(null); }}
-              >
-                ▱ Polígono
-              </button>
-            </div>
+            {editingId ? (
+              <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                Forma: {shape === 'CIRCLE' ? '⭕ Círculo' : '▱ Polígono'} (no se puede cambiar — crea una nueva si necesitas otra forma).
+              </p>
+            ) : (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <button
+                  className="btn-ghost"
+                  style={{ flex: 1, background: shape === 'CIRCLE' ? 'var(--color-brand-light)' : undefined }}
+                  onClick={() => { setShape('CIRCLE'); setPoints([]); }}
+                >
+                  ⭕ Círculo
+                </button>
+                <button
+                  className="btn-ghost"
+                  style={{ flex: 1, background: shape === 'POLYGON' ? 'var(--color-brand-light)' : undefined }}
+                  onClick={() => { setShape('POLYGON'); setCenter(null); }}
+                >
+                  ▱ Polígono
+                </button>
+              </div>
+            )}
 
             <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-text-muted)' }}>
               {shape === 'CIRCLE'
-                ? 'Haz clic en el mapa para marcar el centro.'
+                ? 'Haz clic en el mapa para mover el centro.'
                 : `Haz clic para agregar puntos (mínimo 3). Llevas ${points.length}.`}
             </p>
 
@@ -262,9 +309,29 @@ export default function GpsGeofencesPage() {
             {saveError && <p className="form-error">{saveError}</p>}
 
             <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-              <button className="btn-ghost" style={{ flex: 1 }} disabled={saving} onClick={closeCreate}>Cancelar</button>
+              <button className="btn-ghost" style={{ flex: 1 }} disabled={saving} onClick={closeModal}>Cancelar</button>
               <button className="btn-primary" style={{ flex: 1 }} disabled={saving} onClick={handleSave}>
                 {saving ? 'Guardando...' : '💾 Guardar geocerca'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}
+          onClick={() => !deleting && setDeleteTarget(null)}>
+          <div className="user-card" style={{ maxWidth: 420, width: '100%', padding: '28px 24px' }} onClick={(e) => e.stopPropagation()}>
+            <p style={{ margin: '0 0 12px', fontSize: 14 }}>¿Eliminar la geocerca <strong>"{deleteTarget.name}"</strong>? No se puede deshacer.</p>
+            {deleteTarget.name.startsWith('Colegio: ') && (
+              <p style={{ margin: '0 0 16px', fontSize: 12, color: '#c37d0d' }}>
+                ⚠️ Este nombre sugiere que es la geocerca automática de un colegio. Si la borras, se recreará sola la próxima vez que se edite ese colegio, pero mientras tanto ese colegio queda sin geocerca.
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <button className="btn-ghost" style={{ flex: 1 }} disabled={deleting} onClick={() => setDeleteTarget(null)}>Cancelar</button>
+              <button style={{ flex: 1, padding: '10px 20px', border: 'none', borderRadius: 'var(--radius-pill)', fontWeight: 600, fontSize: 14, cursor: deleting ? 'wait' : 'pointer', background: '#dc2626', color: '#fff' }} disabled={deleting} onClick={confirmDelete}>
+                {deleting ? 'Eliminando...' : '🗑 Eliminar'}
               </button>
             </div>
           </div>

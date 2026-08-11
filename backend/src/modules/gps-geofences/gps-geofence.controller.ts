@@ -14,10 +14,20 @@ export async function list(_req: Request, res: Response) {
   sendSuccess(res, geofences);
 }
 
+export async function getOne(req: Request, res: Response) {
+  const geofence = await geofenceService.getGeofence(req.params['id'] as string);
+  sendSuccess(res, geofence);
+}
+
 export async function update(req: Request, res: Response) {
   const input = updateGeofenceSchema.parse(req.body);
   const geofence = await geofenceService.updateGeofence(req.params['id'] as string, input);
   sendSuccess(res, geofence, 'Geocerca actualizada');
+}
+
+export async function remove(req: Request, res: Response) {
+  await geofenceService.deleteGeofence(req.params['id'] as string);
+  sendSuccess(res, null, 'Geocerca eliminada');
 }
 
 export async function linkTracker(req: Request, res: Response) {

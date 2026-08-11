@@ -27,9 +27,16 @@ export const createGeofenceSchema = z
   });
 export type CreateGeofenceInput = z.infer<typeof createGeofenceSchema>;
 
+// La geometría dentro del mismo shape sí se puede editar (mover el círculo,
+// redibujar el polígono) — la Plataforma GPS rechaza mezclar campos del otro
+// shape, no hace falta repetir esa validación aquí.
 export const updateGeofenceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   active: z.boolean().optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+  radius_meters: z.coerce.number().int().positive().max(50000).optional(),
+  points: z.array(latLonSchema).min(3).optional(),
 });
 export type UpdateGeofenceInput = z.infer<typeof updateGeofenceSchema>;
 

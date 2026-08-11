@@ -1,6 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
 
 interface GpsPaymentRequest {
@@ -30,9 +28,6 @@ function fmtDate(iso: string) {
 }
 
 export default function GpsPaymentsPage() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
   const [requests, setRequests] = useState<GpsPaymentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -71,28 +66,13 @@ export default function GpsPaymentsPage() {
 
   return (
     <>
-      <nav className="dashboard-nav">
-        <span className="nav-logo"><span className="nav-logo-dot" />KIDWAY</span>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-            <span className="desktop-only">Inicio</span>
-          </button>
-          <button className="btn-ghost" onClick={logout}>
-            <span className="desktop-only">Cerrar sesión</span>
-            <span className="mobile-only">Salir</span>
-          </button>
-        </div>
-      </nav>
-
-      <main className="dashboard-body">
-        <div style={{ marginBottom: 24 }}>
-          <p className="dashboard-label">Finanzas</p>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.56px' }}>Pagos del Plan "Solo GPS"</h1>
-          <p style={{ margin: '4px 0 0', fontSize: 14, color: 'var(--color-text-muted)' }}>
-            Dispositivo ($120.000 pago único) y mensualidad ($25.000) de padres sin colegio afiliado
-          </p>
-        </div>
+      <div style={{ marginBottom: 24 }}>
+        <p className="dashboard-label">Finanzas</p>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.44px' }}>Pagos del Plan "Solo GPS"</h1>
+        <p style={{ margin: '4px 0 0', fontSize: 14, color: 'var(--color-text-muted)' }}>
+          Dispositivo ($120.000 pago único) y mensualidad ($25.000) de padres sin colegio afiliado
+        </p>
+      </div>
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <select className="form-select" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }} style={{ width: 170, marginBottom: 0 }}>
@@ -181,7 +161,6 @@ export default function GpsPaymentsPage() {
             <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ fontSize: 13, padding: '6px 14px' }}>Siguiente →</button>
           </div>
         )}
-      </main>
 
       {processTarget && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }} onClick={() => !processLoading && setProcessTarget(null)}>

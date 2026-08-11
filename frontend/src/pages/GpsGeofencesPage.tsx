@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
 
 interface Geofence {
@@ -17,9 +15,6 @@ interface Geofence {
 }
 
 export default function GpsGeofencesPage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -177,39 +172,20 @@ export default function GpsGeofencesPage() {
     } catch {} finally { setDeleting(false); }
   }
 
-  if (user?.role !== 'SUPER_ADMIN') {
-    return <div className="auth-page"><p className="form-error">Acceso denegado</p></div>;
-  }
-
   return (
     <>
-      <nav className="dashboard-nav">
-        <span className="nav-logo"><span className="nav-logo-dot" />KIDWAY</span>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            <span className="desktop-only">Inicio</span>
-          </button>
-          <button className="btn-ghost" onClick={logout}>
-            <span className="desktop-only">Cerrar sesión</span>
-            <span className="mobile-only">Salir</span>
-          </button>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
+        <div>
+          <p className="dashboard-label">GPS</p>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.44px' }}>Geocercas Adicionales</h1>
+          <p style={{ margin: '4px 0 0', fontSize: 14, color: 'var(--color-text-muted)' }}>
+            Zonas extra (circulares o poligonales) más allá de la geocerca automática de cada colegio. Vincula un localizador a una desde el panel del estudiante.
+          </p>
         </div>
-      </nav>
-
-      <main className="dashboard-body">
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
-          <div>
-            <p className="dashboard-label">GPS</p>
-            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.56px' }}>Geocercas Adicionales</h1>
-            <p style={{ margin: '4px 0 0', fontSize: 14, color: 'var(--color-text-muted)' }}>
-              Zonas extra (circulares o poligonales) más allá de la geocerca automática de cada colegio. Vincula un localizador a una desde el panel del estudiante.
-            </p>
-          </div>
-          <button className="btn-primary" style={{ flexShrink: 0, fontSize: 13, padding: '8px 18px' }} onClick={openCreate}>
-            + Nueva geocerca
-          </button>
-        </div>
+        <button className="btn-primary" style={{ flexShrink: 0, fontSize: 13, padding: '8px 18px' }} onClick={openCreate}>
+          + Nueva geocerca
+        </button>
+      </div>
 
         {loading && <div className="roadmap-note">Cargando...</div>}
         {!loading && geofences.length === 0 && <div className="roadmap-note">No hay geocercas adicionales todavía.</div>}
@@ -248,7 +224,6 @@ export default function GpsGeofencesPage() {
             ))}
           </div>
         )}
-      </main>
 
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}

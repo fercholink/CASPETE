@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
@@ -27,10 +27,7 @@ import InicioPage from '../pages/landing/InicioPage';
 import BeneficiosPage from '../pages/landing/BeneficiosPage';
 import FuncionalidadesPage from '../pages/landing/FuncionalidadesPage';
 import TopupRequestsPage from '../pages/TopupRequestsPage';
-import GpsPaymentsPage from '../pages/GpsPaymentsPage';
-import GpsDeviceOrdersPage from '../pages/GpsDeviceOrdersPage';
-import GpsGalleryPage from '../pages/GpsGalleryPage';
-import GpsGeofencesPage from '../pages/GpsGeofencesPage';
+import GpsAdminPage from '../pages/GpsAdminPage';
 import PaymentMethodsPage from '../pages/PaymentMethodsPage';
 import Ley2120DashboardPage from '../pages/Ley2120DashboardPage';
 import SuppliersPage from '../pages/SuppliersPage';
@@ -314,37 +311,18 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/gps-payments',
+    path: '/gps',
     element: (
       <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-        <GpsPaymentsPage />
+        <GpsAdminPage />
       </ProtectedRoute>
     ),
   },
-  {
-    path: '/gps-device-orders',
-    element: (
-      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-        <GpsDeviceOrdersPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/gps-gallery',
-    element: (
-      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-        <GpsGalleryPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/gps-geofences',
-    element: (
-      <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-        <GpsGeofencesPage />
-      </ProtectedRoute>
-    ),
-  },
+  // Consolidadas en /gps (con pestañas) — se mantienen como redirects por si alguien tiene el enlace viejo guardado.
+  { path: '/gps-payments', element: <Navigate to="/gps" replace /> },
+  { path: '/gps-device-orders', element: <Navigate to="/gps" replace /> },
+  { path: '/gps-gallery', element: <Navigate to="/gps" replace /> },
+  { path: '/gps-geofences', element: <Navigate to="/gps" replace /> },
   {
     path: '/payment-methods',
     element: (

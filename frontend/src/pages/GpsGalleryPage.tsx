@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
 import ImageCropper from '../components/ImageCropper';
 
@@ -26,8 +24,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 export default function GpsGalleryPage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -124,39 +120,20 @@ export default function GpsGalleryPage() {
     } catch {} finally { setDeleteLoading(false); }
   }
 
-  if (user?.role !== 'SUPER_ADMIN') {
-    return <div className="auth-page"><p className="form-error">Acceso denegado</p></div>;
-  }
-
   return (
     <>
-      <nav className="dashboard-nav">
-        <span className="nav-logo"><span className="nav-logo-dot" />KIDWAY</span>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            <span className="desktop-only">Inicio</span>
-          </button>
-          <button className="btn-ghost" onClick={logout}>
-            <span className="desktop-only">Cerrar sesión</span>
-            <span className="mobile-only">Salir</span>
-          </button>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
+        <div>
+          <p className="dashboard-label">Landing</p>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.44px' }}>Galería del Localizador GPS</h1>
+          <p style={{ margin: '4px 0 0', fontSize: 14, color: 'var(--color-text-muted)' }}>
+            Estas fotos aparecen en la sección "Ubicación y Llamadas" de kidway.co/funcionalidades.
+          </p>
         </div>
-      </nav>
-
-      <main className="dashboard-body">
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
-          <div>
-            <p className="dashboard-label">Landing</p>
-            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.56px' }}>Galería del Localizador GPS</h1>
-            <p style={{ margin: '4px 0 0', fontSize: 14, color: 'var(--color-text-muted)' }}>
-              Estas fotos aparecen en la sección "Ubicación y Llamadas" de kidway.co/funcionalidades.
-            </p>
-          </div>
-          <button className="btn-primary" style={{ flexShrink: 0, fontSize: 13, padding: '8px 18px' }} onClick={openCreate}>
-            + Nueva imagen
-          </button>
-        </div>
+        <button className="btn-primary" style={{ flexShrink: 0, fontSize: 13, padding: '8px 18px' }} onClick={openCreate}>
+          + Nueva imagen
+        </button>
+      </div>
 
         {loading && <div className="roadmap-note">Cargando...</div>}
 
@@ -186,7 +163,6 @@ export default function GpsGalleryPage() {
             ))}
           </div>
         )}
-      </main>
 
       {/* Create / Edit modal */}
       {(editTarget || createMode) && (

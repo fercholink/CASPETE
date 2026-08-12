@@ -72,6 +72,11 @@ export async function setVibrationAlarm(req: Request, res: Response) {
   sendSuccess(res, result, 'Alarma de vibración actualizada');
 }
 
+export async function getTrackerGeofences(req: Request, res: Response) {
+  const result = await gpsService.getTrackerGeofences(req.params['id'] as string, req.user!);
+  sendSuccess(res, result);
+}
+
 export async function getCurrentLocation(req: Request, res: Response) {
   const studentId = req.params['studentId'] as string;
   const result = await gpsService.getCurrentLocation(studentId, req.user!, req);

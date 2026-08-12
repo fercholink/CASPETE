@@ -304,6 +304,22 @@ export async function setVibrationAlarm(id: string, enabled: boolean, actor: Jwt
   return gpsPlatform.setVibrationAlarm(tracker.platform_tracker_id!, enabled);
 }
 
+// Geocercas a las que está vinculado el tracker — un mismo localizador puede
+// estar en varias a la vez (la del colegio, más las adicionales que se le agreguen).
+export async function getTrackerGeofences(id: string, actor: JwtPayload) {
+  const tracker = await prisma.gPSTracker.findUnique({
+    where: { id },
+    select: { platform_tracker_id: true, student: { select: { parent_id: true } } },
+  });
+  if (!tracker) throw new AppError('Localizador no encontrado', 404);
+  if (actor.role !== 'SUPER_ADMIN' && tracker.student?.parent_id !== actor.sub) {
+    throw new AppError('No tienes permiso para usar este localizador', 403);
+  }
+  if (!tracker.platform_tracker_id) return [];
+
+  return gpsPlatform.listTrackerGeofences(tracker.platform_tracker_id);
+}
+
 export async function getCurrentLocation(studentId: string, actor: JwtPayload, req: Request) {
   await assertParentOwnsStudent(studentId, actor);
 

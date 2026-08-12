@@ -203,6 +203,18 @@ export async function unlinkTrackerFromGeofence(geofenceId: string, platformTrac
   await request(`/geofences/${geofenceId}/trackers/${platformTrackerId}`, { method: 'DELETE' });
 }
 
+export interface TrackerGeofenceLink {
+  id: string;
+  currently_inside: boolean;
+  geofence: PlatformGeofence;
+}
+
+/** Geocercas (todas, sin límite) a las que está vinculado un tracker — un tracker puede estar en varias a la vez. */
+export async function listTrackerGeofences(platformTrackerId: string): Promise<TrackerGeofenceLink[]> {
+  const links = await request<TrackerGeofenceLink[]>(`/trackers/${platformTrackerId}/geofences`);
+  return links ?? [];
+}
+
 /**
  * Crea una geocerca "libre" (no la automática ligada 1:1 a un colegio, ver
  * `upsertGeofence`) — circular o poligonal, para zonas adicionales que un

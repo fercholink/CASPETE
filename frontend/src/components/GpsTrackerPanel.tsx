@@ -128,10 +128,14 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
   const [advancedError, setAdvancedError] = useState('');
   const [advancedSaved, setAdvancedSaved] = useState(false);
 
-  // Vincular a una geocerca adicional — solo SUPER_ADMIN
+  // Vincular a geocercas adicionales — solo SUPER_ADMIN. Un mismo localizador
+  // puede estar en varias geocercas a la vez (la del colegio + cualquier
+  // cantidad de zonas adicionales).
   const [geofenceOptions, setGeofenceOptions] = useState<{ id: string; name: string }[]>([]);
+  const [linkedGeofences, setLinkedGeofences] = useState<{ id: string; currently_inside: boolean; geofence: { id: string; name: string; shape: 'CIRCLE' | 'POLYGON' } }[]>([]);
   const [selectedGeofenceId, setSelectedGeofenceId] = useState('');
   const [linkingGeofence, setLinkingGeofence] = useState(false);
+  const [unlinkingGeofenceId, setUnlinkingGeofenceId] = useState<string | null>(null);
   const [linkGeofenceMsg, setLinkGeofenceMsg] = useState('');
 
   useEffect(() => {
@@ -151,7 +155,7 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
     setPositionRequestMsg('');
     setCenterNumber(''); setLbsEnabled(true); setSpeedThreshold(''); setVibrationAlarmEnabled(false);
     setAdvancedError(''); setAdvancedSaved(false);
-    setSelectedGeofenceId(''); setLinkGeofenceMsg('');
+    setSelectedGeofenceId(''); setLinkGeofenceMsg(''); setLinkedGeofences([]);
     if (isSuperAdmin) {
       apiClient.get<{ data: { id: string; name: string }[] }>('/gps-geofences')
         .then((r) => setGeofenceOptions(r.data.data))
@@ -176,6 +180,7 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
         apiClient.get<{ data: GpsPlanStatus }>(`/gps-payments/trackers/${tracker.id}/status`)
           .then((r2) => setGpsPlanStatus(r2.data.data))
           .catch(() => {});
+        if (isSuperAdmin) refreshLinkedGeofences(tracker.id);
       })
       .catch((err) => {
         if ((err as { response?: { status?: number } }).response?.status === 404) setGpsNotLinked(true);
@@ -356,6 +361,12 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
     }
   }
 
+  function refreshLinkedGeofences(trackerId: string) {
+    apiClient.get<{ data: typeof linkedGeofences }>(`/gps/trackers/${trackerId}/geofences`)
+      .then((r) => setLinkedGeofences(r.data.data))
+      .catch(() => {});
+  }
+
   async function handleLinkGeofence() {
     if (!gpsTracker || !selectedGeofenceId) return;
     setLinkingGeofence(true);
@@ -363,10 +374,25 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
     try {
       await apiClient.post(`/gps-geofences/${selectedGeofenceId}/trackers`, { tracker_id: gpsTracker.id });
       setLinkGeofenceMsg('Vinculado ✓');
+      setSelectedGeofenceId('');
+      refreshLinkedGeofences(gpsTracker.id);
     } catch (err) {
       setLinkGeofenceMsg((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo vincular');
     } finally {
       setLinkingGeofence(false);
+    }
+  }
+
+  async function handleUnlinkGeofence(geofenceId: string) {
+    if (!gpsTracker) return;
+    setUnlinkingGeofenceId(geofenceId);
+    try {
+      await apiClient.delete(`/gps-geofences/${geofenceId}/trackers/${gpsTracker.id}`);
+      refreshLinkedGeofences(gpsTracker.id);
+    } catch {
+      alert('No se pudo desvincular de la geocerca');
+    } finally {
+      setUnlinkingGeofenceId(null);
     }
   }
 
@@ -630,12 +656,35 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
               {geofenceOptions.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
                   <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8, fontWeight: 600 }}>
-                    Vincular a geocerca adicional
+                    Geocercas adicionales
                   </p>
+
+                  {linkedGeofences.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+                      {linkedGeofences.map((link) => (
+                        <div key={link.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 12px', borderRadius: 10, background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                          <span style={{ fontSize: 13 }}>
+                            {link.geofence.shape === 'CIRCLE' ? '⭕' : '▱'} {link.geofence.name}
+                            {link.currently_inside && <span style={{ color: '#059669', fontWeight: 600 }}> · adentro</span>}
+                          </span>
+                          <button
+                            className="btn-ghost" style={{ fontSize: 11, padding: '3px 8px', color: '#dc2626' }}
+                            disabled={unlinkingGeofenceId === link.geofence.id}
+                            onClick={() => handleUnlinkGeofence(link.geofence.id)}
+                          >
+                            {unlinkingGeofenceId === link.geofence.id ? '...' : '✕ Quitar'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', gap: 8 }}>
                     <select className="form-input" style={{ flex: 1, marginBottom: 0 }} value={selectedGeofenceId} onChange={(e) => setSelectedGeofenceId(e.target.value)}>
-                      <option value="">Elige una geocerca...</option>
-                      {geofenceOptions.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                      <option value="">Agregar a otra geocerca...</option>
+                      {geofenceOptions
+                        .filter((g) => !linkedGeofences.some((link) => link.geofence.id === g.id))
+                        .map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
                     <button className="btn-ghost" disabled={!selectedGeofenceId || linkingGeofence} onClick={handleLinkGeofence}>
                       {linkingGeofence ? '...' : 'Vincular'}

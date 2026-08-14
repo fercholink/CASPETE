@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, ShieldCheck, Heart, ArrowRight, School, Check, ChevronRight, MapPin } from 'lucide-react';
+import { ShieldCheck, Heart, ArrowRight, School, ChevronRight, MapPin, Phone } from 'lucide-react';
 import { useLeadModal } from '../../components/landing/LeadModalProvider';
 
 export default function InicioPage() {
@@ -7,176 +7,116 @@ export default function InicioPage() {
 
   return (
     <>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-24 lg:pt-20">
-        {/* Soft pastel decorative gradients */}
-        <div className="absolute inset-x-0 top-0 -z-10 h-[600px] bg-gradient-to-b from-[#eafaf1]/70 via-[#fff8f2] to-transparent" />
-        <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-100 rounded-full blur-3xl opacity-60 -z-10 animate-pulse" />
-        <div className="absolute top-40 right-10 w-80 h-80 bg-[#fffbeb] rounded-full blur-3xl opacity-70 -z-10" />
+      {/* Hero Section — dark "pine" band, living map as signature */}
+      <section className="relative overflow-hidden bg-[#0E2A22] pt-14 pb-20 lg:pt-20 lg:pb-28">
+        {/* Faint topographic glow, not a generic gradient blob */}
+        <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #F6F2E7 1px, transparent 0)', backgroundSize: '28px 28px' }} />
+        <div className="pointer-events-none absolute -top-32 -right-24 -z-10 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
 
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-y-12 gap-x-12 lg:grid-cols-12 lg:items-center">
+          <div className="grid grid-cols-1 gap-y-14 gap-x-12 lg:grid-cols-12 lg:items-center">
 
-            {/* Left Hero Text - Tender and Sweet */}
-            <div className="lg:col-span-7 space-y-8 text-left">
-              <div className="inline-flex items-center gap-x-2 rounded-full bg-emerald-50 border border-emerald-200 px-4 py-2 text-xs font-bold text-emerald-800">
-                <Sparkles className="h-4 w-4 text-emerald-500 animate-spin" />
-                <span>Ubicación en Tiempo Real y Llamadas Directas con tu Hijo</span>
+            {/* Left: thesis */}
+            <div className="lg:col-span-7 space-y-7 text-left">
+              <div className="inline-flex items-center gap-x-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#9FC9AE]">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span>Para mamás y papás en Colombia</span>
               </div>
 
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#4e2f33] leading-[1.05]">
-                Kidway: Sabe dónde está tu hijo. <span className="text-emerald-600 underline decoration-emerald-200 decoration-wavy decoration-3">Escúchalo</span> <br />
-                cuando quieras 📍📞
+              <h1 className="font-hero text-4xl sm:text-5xl lg:text-[3.4rem] font-semibold tracking-tight text-[#F6F2E7] leading-[1.08]">
+                Sabe dónde está tu hijo.
+                <br />
+                <span className="text-emerald-400">Escúchalo</span> cuando quieras.
               </h1>
 
-              <p className="text-base text-[#61494c] max-w-xl font-medium leading-relaxed font-sans">
-                Ubicación GPS en tiempo real y llamadas directas con tu hijo desde su localizador — sin que necesite un celular propio. Además, programa sus loncheras escolares y controla su alimentación, todo desde una sola app. Súper ágil, sin efectivo y protegido con <strong>Nequi</strong>.
+              <p className="text-base text-[#C9D6CC] max-w-xl leading-relaxed">
+                Ubicación GPS en tiempo real y llamadas directas a su localizador — sin que tu hijo necesite un celular propio. Y cuando llega la hora del almuerzo, programas su lonchera desde la misma app.
               </p>
 
-              {/* Badges of trust and certification */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-x-2 text-xs font-bold text-emerald-850 bg-emerald-50 px-3.5 py-2 rounded-full border border-emerald-150">
-                  <MapPin className="h-4 w-4 text-emerald-600" />
-                  <span>Rastreo GPS en Tiempo Real</span>
-                </div>
-                <div className="flex items-center gap-x-2 text-xs font-bold text-[#854d0e] bg-[#fef9c3] px-3.5 py-2 rounded-full border border-[#fef08a]">
-                  <Check className="h-3.5 w-3.5 bg-yellow-500 text-white rounded-full p-0.5" />
-                  <span>Llamadas Directas al Localizador</span>
-                </div>
-              </div>
-
-              {/* Action Buttons for moms */}
+              {/* Action buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
                 <Link
                   to="/register"
-                  className="px-8 py-4 rounded-2xl text-white font-display font-black text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-600 transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-emerald-500/20 border-2 border-emerald-500 text-decoration-none"
+                  className="px-7 py-4 rounded-2xl text-[#0E2A22] font-display font-black text-xs uppercase tracking-wider bg-emerald-400 hover:bg-emerald-300 transition-colors flex items-center justify-center gap-2.5 cursor-pointer text-decoration-none"
                 >
-                  <Heart className="h-4 w-4 fill-current text-white" />
-                  <span>Ingresar como Mamá o Papá</span>
+                  <Heart className="h-4 w-4 fill-current" />
+                  <span>Ingresar como mamá o papá</span>
                   <ArrowRight className="h-4 w-4 stroke-[3px]" />
                 </Link>
                 <button
                   onClick={() => openLeadModal('COMMISSION')}
-                  className="px-8 py-4 rounded-2xl text-xs uppercase tracking-wider font-extrabold transition-all border border-[#faeae1] bg-white text-[#7d5d61] hover:bg-[#fffcf9] flex items-center justify-center gap-2.5 cursor-pointer shadow-xs"
+                  className="px-7 py-4 rounded-2xl text-xs uppercase tracking-wider font-extrabold transition-colors border border-[#3A5347] text-[#E7E1CF] hover:bg-white/5 flex items-center justify-center gap-2.5 cursor-pointer"
                 >
-                  <School className="h-4 w-4 text-emerald-500" />
-                  <span>Registrar mi Colegio</span>
+                  <School className="h-4 w-4" />
+                  <span>Registrar mi colegio</span>
                 </button>
               </div>
 
-              {/* Indicadores clave para padres */}
-              <div className="grid grid-cols-3 gap-6 pt-6 text-center sm:text-left border-t border-[#f7e3d7]">
-                <div>
-                  <div className="font-display text-3xl font-black text-emerald-500">📍 GPS</div>
-                  <div className="text-[10px] uppercase font-bold text-[#8c6d71] tracking-wider">Ubicación en Tiempo Real</div>
-                </div>
-                <div>
-                  <div className="font-display text-3xl font-black text-purple-600 font-sans">📞 Directas</div>
-                  <div className="text-[10px] uppercase font-bold text-[#8c6d71] tracking-wider">Llamadas al Localizador</div>
-                </div>
-                <div>
-                  <div className="font-display text-3xl font-black text-[#7cd197]">🍎 +Salud</div>
-                  <div className="text-[10px] uppercase font-bold text-[#8c6d71] tracking-wider">Loncheras y Nutrición</div>
-                </div>
+              {/* What's included — inline, not a stat grid */}
+              <div className="flex flex-wrap items-center gap-x-7 gap-y-3 pt-5 border-t border-[#233D31] text-sm text-[#C9D6CC]">
+                <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-400" /> Ubicación en vivo</span>
+                <span className="inline-flex items-center gap-2"><Phone className="h-4 w-4 text-emerald-400" /> Llamadas directas</span>
+                <span className="inline-flex items-center gap-2">🎒 Loncheras escolares</span>
               </div>
             </div>
 
-            {/* Right Hero Graphics - Cute and Cozy Smartphone Mockup */}
-            <div className="lg:col-span-5 relative">
-              <div className="absolute inset-0 bg-radial-gradient from-emerald-500/15 via-transparent to-transparent blur-3xl -z-10" />
+            {/* Right: signature — the living map */}
+            <div className="lg:col-span-5">
+              <div className="relative mx-auto max-w-[380px] -rotate-1">
+                <div className="rounded-[2rem] bg-[#F6F2E7] p-5 shadow-2xl shadow-black/40">
+                  <div className="flex items-center justify-between px-1 pb-3">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0E2A22]/60">Ruta de hoy</span>
+                    <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-emerald-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 motion-safe:animate-pulse" />
+                      En vivo
+                    </span>
+                  </div>
 
-              {/* iPhone style Mockup - Decorated in warm emerald/green frame */}
-              <div className="mx-auto max-w-[340px] rounded-[38px] border-[8px] border-emerald-250 bg-[#fffaf6] p-3 shadow-xl relative overflow-hidden ring-8 ring-emerald-50">
-                {/* Cute Teddy Bear ear shape accent on header */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 h-3.5 w-24 bg-emerald-200 rounded-b-xl z-20" />
+                  <div className="relative">
+                    <svg viewBox="0 0 380 340" className="w-full h-auto" role="img" aria-label="Mapa con la ruta de casa al colegio y la ubicación actual de tu hijo">
+                      <defs>
+                        <pattern id="kwMapDots" width="18" height="18" patternUnits="userSpaceOnUse">
+                          <circle cx="2" cy="2" r="1.3" fill="#E2D6B8" />
+                        </pattern>
+                      </defs>
+                      <rect x="0" y="0" width="380" height="340" rx="20" fill="url(#kwMapDots)" />
 
-                {/* Screen Container */}
-                <div className="bg-[#fffdfb] rounded-[28px] overflow-hidden text-left h-[500px] flex flex-col justify-between p-4 relative font-sans text-xs border border-[#faeae1]">
+                      {/* road */}
+                      <path d="M42,286 C112,266 88,168 176,140 C254,116 258,66 328,42" fill="none" stroke="#E1D3AE" strokeWidth="13" strokeLinecap="round" />
+                      <path d="M42,286 C112,266 88,168 176,140 C254,116 258,66 328,42" fill="none" stroke="#FF7A50" strokeWidth="2" strokeDasharray="1 11" strokeLinecap="round" opacity="0.75" />
 
-                  {/* Mock status bar */}
-                  <div className="flex justify-between items-center text-[10px] text-[#8c6d71] font-bold px-1 select-none font-mono">
-                    <span>9:41 AM 🌿</span>
-                    <div className="flex items-center gap-1">
-                      <span>LTE 📡</span>
-                      <div className="w-5 h-2.5 border border-emerald-200 rounded-sm p-[1px] flex gap-[1px]">
-                        <div className="bg-emerald-500 w-full h-full rounded-sm" />
-                      </div>
+                      {/* home marker */}
+                      <g transform="translate(24,262)">
+                        <path d="M-6,18 L20,-2 L46,18 L46,44 L-6,44 Z" fill="#0E2A22" />
+                        <rect x="14" y="26" width="12" height="18" fill="#F6F2E7" />
+                      </g>
+
+                      {/* school marker */}
+                      <g transform="translate(298,10)">
+                        <rect x="0" y="14" width="38" height="30" rx="3" fill="#0E2A22" />
+                        <rect x="17" y="0" width="3" height="16" fill="#0E2A22" />
+                        <path d="M20,1 L36,7 L20,13 Z" fill="#18E299" />
+                      </g>
+                    </svg>
+
+                    {/* pulsing beacon = the child's live position */}
+                    <div className="absolute" style={{ left: '46%', top: '40%', transform: 'translate(-50%,-50%)' }}>
+                      <span className="absolute inset-0 -m-3 rounded-full bg-[#FF7A50]/30 motion-safe:animate-ping motion-reduce:hidden" />
+                      <span className="absolute inset-0 -m-6 rounded-full bg-[#FF7A50]/15 motion-safe:animate-ping motion-reduce:hidden" style={{ animationDelay: '0.5s' }} />
+                      <span className="relative block h-3.5 w-3.5 rounded-full bg-[#FF7A50] ring-4 ring-[#F6F2E7]" />
+                    </div>
+
+                    {/* call bubble tied to the beacon */}
+                    <div className="absolute flex items-center gap-1.5 rounded-full bg-white pl-2 pr-3 py-1.5 shadow-md border border-[#EDE4CC]" style={{ left: '58%', top: '52%' }}>
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
+                        <Phone className="h-2.5 w-2.5" />
+                      </span>
+                      <span className="text-[10px] font-bold text-[#0E2A22]">Llamar a Isabella</span>
                     </div>
                   </div>
 
-                  {/* Cute App Header */}
-                  <div className="mt-4 flex justify-between items-center bg-emerald-50 p-3 rounded-2xl shadow-xs border border-emerald-200/50">
-                    <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-full bg-white border border-emerald-500 flex items-center justify-center overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200" alt="Pantalla de aplicación móvil Kidway para programar loncheras escolares en Colombia" className="object-cover w-full h-full" />
-                      </div>
-                      <div>
-                        <div className="font-black text-[#5c3a3e] text-[11px] flex items-center gap-1">
-                          <span>Isabella G.</span>
-                          <span className="inline-flex items-center gap-0.5 text-emerald-600 text-[8px] font-bold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En línea
-                          </span>
-                        </div>
-                        <div className="text-[9px] text-[#8c6d71]">Saldo: <strong className="text-emerald-800 font-bold font-mono">$18.500 COP</strong></div>
-                      </div>
-                    </div>
-                    <div className="nequi-gradient text-[8px] text-white px-2 py-1 rounded-full font-bold flex items-center gap-1 shadow-xs font-mono">
-                      <span>Nequi 💚</span>
-                    </div>
-                  </div>
-
-                  {/* Location + call cards */}
-                  <div className="my-3 flex-1 overflow-y-auto space-y-3 pr-1">
-
-                    {/* Live location card */}
-                    <div className="bg-[#f0fbf4] border border-emerald-200 p-3 rounded-2xl">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-extrabold text-emerald-700 text-[10px] uppercase tracking-wider block font-mono">📍 Ubicación en tiempo real</span>
-                        <span className="bg-emerald-100 text-emerald-850 px-2 py-0.5 rounded-full text-[9px] font-bold">Hace 2 min</span>
-                      </div>
-                      <div className="relative h-20 rounded-xl overflow-hidden border border-emerald-100 bg-[#e8f5ee]">
-                        <div className="absolute inset-0 opacity-40" style={{ backgroundImage: 'linear-gradient(#c9e9d6 1px, transparent 1px), linear-gradient(90deg, #c9e9d6 1px, transparent 1px)', backgroundSize: '14px 14px' }} />
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full">
-                          <MapPin className="h-6 w-6 text-emerald-600 drop-shadow fill-emerald-100" />
-                        </div>
-                      </div>
-                      <p className="text-[8px] text-[#8c6d71] font-medium mt-1.5">Camino al colegio · Trayecto normal ✓</p>
-                    </div>
-
-                    {/* Call card */}
-                    <div className="bg-[#fff9f4] border border-[#f7e3d7] p-3 rounded-2xl flex items-center justify-between gap-2 shadow-xs">
-                      <div className="text-left">
-                        <span className="text-[10px] text-[#5c3a3e] font-bold block">Llamar a Isabella 📞</span>
-                        <span className="text-[8px] text-[#8c6d71]">Desde su localizador — sin celular propio</span>
-                      </div>
-                      <div className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shrink-0">
-                        <span className="text-sm">📞</span>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Mock Push Notification */}
-                  <div className="bg-emerald-50 text-emerald-800 p-2.5 rounded-xl shadow-md border border-emerald-150 flex items-start gap-2 animate-bounce">
-                    <div className="bg-emerald-500 p-1 rounded-lg text-white">
-                      <Check className="h-3 w-3 stroke-[3px]" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-[9px]">¡Isabella llegó al colegio!</div>
-                      <div className="text-[8.5px] text-[#7d5d61] leading-tight font-sans">Ubicación confirmada a las 7:05 AM. ¡Te notificamos para tu tranquilidad!</div>
-                    </div>
-                  </div>
-
+                  <p className="pt-3 px-1 font-mono text-[10px] text-[#0E2A22]/50">Última actualización · hace 2 min</p>
                 </div>
-              </div>
-
-              {/* Floating cute accents */}
-              <div className="absolute -top-4 -right-4 bg-[#ffd275] text-[#5c3a3e] px-4 py-2 rounded-2xl font-display font-black text-sm rotate-6 shadow-md border border-[#fef08a] animate-pulse">
-                📍 En vivo
-              </div>
-              <div className="absolute -bottom-6 -left-4 bg-white text-[#7d5d61] px-4 py-3 rounded-2xl font-sans text-xs font-bold shadow-md border border-[#f7e3d7] flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
-                <span>Ubicación privada, solo tú la ves</span>
               </div>
             </div>
 
@@ -185,40 +125,40 @@ export default function InicioPage() {
       </section>
 
       {/* Teaser hacia Beneficios / Funcionalidades */}
-      <section className="py-16 bg-[#fffcf9] border-y border-[#faeae1]">
+      <section className="py-16 bg-[#F6F2E7] border-t border-[#E7DCC3]">
         <div className="mx-auto max-w-5xl px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
           <Link
             to="/beneficios"
-            className="group bg-white p-7 rounded-[2rem] border border-[#f7e3d7] hover:border-emerald-300/50 transition-all text-left flex flex-col justify-between gap-4 text-decoration-none"
+            className="group bg-white p-7 rounded-[2rem] border border-[#EDE4CC] hover:border-emerald-300 transition-colors text-left flex flex-col justify-between gap-4 text-decoration-none"
           >
             <div className="space-y-2">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md">
+              <div className="w-11 h-11 rounded-2xl bg-[#0E2A22] text-emerald-400 flex items-center justify-center">
                 <ShieldCheck className="h-5 w-5" />
               </div>
-              <h3 className="font-display text-xl font-black text-[#4e2f33]">Nuestros Beneficios</h3>
-              <p className="text-xs text-[#61494c] leading-relaxed">
+              <h3 className="font-display text-xl font-black text-[#0E2A22]">Nuestros beneficios</h3>
+              <p className="text-xs text-[#6B5D4F] leading-relaxed">
                 Todo lo que ganan padres, tenderos y colegios al usar Kidway.
               </p>
             </div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 group-hover:gap-2.5 transition-all">
+            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 group-hover:gap-2.5 transition-all">
               Ver beneficios <ChevronRight className="h-4 w-4" />
             </span>
           </Link>
 
           <Link
             to="/funcionalidades"
-            className="group bg-white p-7 rounded-[2rem] border border-[#f7e3d7] hover:border-emerald-300/50 transition-all text-left flex flex-col justify-between gap-4 text-decoration-none"
+            className="group bg-white p-7 rounded-[2rem] border border-[#EDE4CC] hover:border-emerald-300 transition-colors text-left flex flex-col justify-between gap-4 text-decoration-none"
           >
             <div className="space-y-2">
-              <div className="w-11 h-11 rounded-2xl bg-teal-400 text-white flex items-center justify-center shadow-md">
+              <div className="w-11 h-11 rounded-2xl bg-[#0E2A22] text-emerald-400 flex items-center justify-center">
                 <MapPin className="h-5 w-5" />
               </div>
-              <h3 className="font-display text-xl font-black text-[#4e2f33]">Funcionalidades</h3>
-              <p className="text-xs text-[#61494c] leading-relaxed">
-                Simulador de sellos de advertencia, cómo funciona el ecosistema y planes de precios.
+              <h3 className="font-display text-xl font-black text-[#0E2A22]">Funcionalidades</h3>
+              <p className="text-xs text-[#6B5D4F] leading-relaxed">
+                Cómo funciona el localizador, las geocercas y los planes de precios.
               </p>
             </div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 group-hover:gap-2.5 transition-all">
+            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 group-hover:gap-2.5 transition-all">
               Explorar funcionalidades <ChevronRight className="h-4 w-4" />
             </span>
           </Link>

@@ -28,6 +28,7 @@ export interface PlatformTracker {
   lbs_enabled: boolean | null;
   speed_threshold_kmh: number | null;
   vibration_alarm_enabled: boolean | null;
+  wifi_attendance_json: WifiAttendanceSlot[] | null;
 }
 
 export interface PlatformPosition {
@@ -70,7 +71,8 @@ export interface PlatformEvent {
   type:
     | 'SOS' | 'OVERSPEED' | 'VIBRATION' | 'CHARGING_CONNECTED' | 'CHARGING_DISCONNECTED'
     | 'CHARGING_COMPLETE' | 'LOW_BATTERY' | 'DEVICE_REMOVED' | 'DEVICE_WORN'
-    | 'GEOFENCE_ENTER' | 'GEOFENCE_EXIT' | 'ROUTE_DEVIATION' | 'ROUTE_RESTORED';
+    | 'GEOFENCE_ENTER' | 'GEOFENCE_EXIT' | 'WIFI_ATTENDANCE_ENTER' | 'WIFI_ATTENDANCE_EXIT'
+    | 'ROUTE_DEVIATION' | 'ROUTE_RESTORED';
   speed_kmh: number | null;
   geofence_id: string | null;
   route_id: string | null;
@@ -350,6 +352,25 @@ export async function setAlarmClock(platformTrackerId: string, alarms: AlarmCloc
   await request(`/trackers/${platformTrackerId}/alarm-clock`, {
     method: 'PATCH',
     body: JSON.stringify({ alarms }),
+  });
+}
+
+export interface WifiAttendanceSlot {
+  weekdays: number[]; // 1-7, lunes=1 ... domingo=7
+  startTime: string; // "HH:MM"
+  endTime: string; // "HH:MM"
+  ssid: string;
+}
+
+/**
+ * Guarda y envía las franjas de asistencia por WiFi (hasta 3; [] la cancela).
+ * No es conectividad a internet — el dispositivo detecta si está al alcance
+ * de esa red WiFi (ej. la del colegio) y avisa entrada/salida.
+ */
+export async function setWifiAttendance(platformTrackerId: string, slots: WifiAttendanceSlot[]): Promise<void> {
+  await request(`/trackers/${platformTrackerId}/wifi-attendance`, {
+    method: 'PATCH',
+    body: JSON.stringify({ slots }),
   });
 }
 

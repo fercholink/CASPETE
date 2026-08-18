@@ -19,7 +19,10 @@ import type { PlatformEvent } from '../lib/gpsPlatform.js';
 
 let lastPolledAt: Date = new Date();
 
-const NOTIFIABLE_TYPES = new Set(['GEOFENCE_ENTER', 'GEOFENCE_EXIT', 'ROUTE_DEVIATION', 'ROUTE_RESTORED', 'LOW_BATTERY']);
+const NOTIFIABLE_TYPES = new Set([
+  'GEOFENCE_ENTER', 'GEOFENCE_EXIT', 'WIFI_ATTENDANCE_ENTER', 'WIFI_ATTENDANCE_EXIT',
+  'ROUTE_DEVIATION', 'ROUTE_RESTORED', 'LOW_BATTERY',
+]);
 
 // geofenceName es null para la geocerca automática del colegio (se usa la
 // redacción especial "llegó/salió del colegio"); para cualquier geocerca
@@ -30,6 +33,10 @@ function buildTitle(type: PlatformEvent['type'], studentName: string, geofenceNa
       return geofenceName ? `${studentName} entró a "${geofenceName}"` : `${studentName} llegó al colegio`;
     case 'GEOFENCE_EXIT':
       return geofenceName ? `${studentName} salió de "${geofenceName}"` : `${studentName} salió del colegio`;
+    // El protocolo no informa qué SSID configurado disparó el aviso (solo entrada/salida),
+    // así que el mensaje es genérico — no dice el nombre de la red.
+    case 'WIFI_ATTENDANCE_ENTER': return `📶 ${studentName} llegó a la zona de WiFi configurada`;
+    case 'WIFI_ATTENDANCE_EXIT': return `📶 ${studentName} salió de la zona de WiFi configurada`;
     case 'ROUTE_DEVIATION': return `${studentName} se desvió de la ruta esperada`;
     case 'ROUTE_RESTORED': return `${studentName} volvió a la ruta esperada`;
     case 'LOW_BATTERY': return `🔋 Batería baja del localizador de ${studentName}`;
@@ -38,7 +45,9 @@ function buildTitle(type: PlatformEvent['type'], studentName: string, geofenceNa
 }
 
 function buildTag(type: PlatformEvent['type']): string {
-  return type === 'LOW_BATTERY' ? 'gps-battery' : 'gps-geofence';
+  if (type === 'LOW_BATTERY') return 'gps-battery';
+  if (type === 'WIFI_ATTENDANCE_ENTER' || type === 'WIFI_ATTENDANCE_EXIT') return 'gps-wifi-attendance';
+  return 'gps-geofence';
 }
 
 async function notifyEvent(event: PlatformEvent) {

@@ -3,7 +3,7 @@ import * as gpsService from './gps.service.js';
 import {
   linkTrackerSchema, historyQuerySchema, emergencyContactsSchema, findDeviceSchema,
   powerActionSchema, setAlarmClockSchema, setPhoneNumberSchema,
-  setLbsEnabledSchema, setSpeedThresholdSchema, setVibrationAlarmSchema,
+  setLbsEnabledSchema, setSpeedThresholdSchema, setVibrationAlarmSchema, setWifiAttendanceSchema,
 } from './gps.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
@@ -47,6 +47,12 @@ export async function setAlarmClock(req: Request, res: Response) {
   const input = setAlarmClockSchema.parse(req.body);
   await gpsService.setAlarmClock(req.params['id'] as string, input.alarms, req.user!);
   sendSuccess(res, null, 'Alarma actualizada');
+}
+
+export async function setWifiAttendance(req: Request, res: Response) {
+  const input = setWifiAttendanceSchema.parse(req.body);
+  await gpsService.setWifiAttendance(req.params['id'] as string, input.slots, req.user!);
+  sendSuccess(res, null, 'Asistencia por WiFi actualizada');
 }
 
 export async function requestPosition(req: Request, res: Response) {

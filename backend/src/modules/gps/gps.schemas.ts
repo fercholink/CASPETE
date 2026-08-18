@@ -52,6 +52,20 @@ export const setAlarmClockSchema = z.object({
 });
 export type SetAlarmClockInput = z.infer<typeof setAlarmClockSchema>;
 
+// Asistencia por WiFi: hasta 3 franjas [{días, horario, ssid}]. No es
+// conectividad a internet — el dispositivo detecta si está al alcance de esa
+// red WiFi (ej. la del colegio) y avisa entrada/salida.
+const wifiAttendanceSlotSchema = z.object({
+  weekdays: z.array(z.coerce.number().int().min(1).max(7)).min(1).max(7),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Formato HH:MM'),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Formato HH:MM'),
+  ssid: z.string().min(1).max(32),
+});
+export const setWifiAttendanceSchema = z.object({
+  slots: z.array(wifiAttendanceSlotSchema).max(3),
+});
+export type SetWifiAttendanceInput = z.infer<typeof setWifiAttendanceSchema>;
+
 // ── Configuración avanzada del dispositivo — solo SUPER_ADMIN ──────────────
 export const setLbsEnabledSchema = z.object({ enabled: z.boolean() });
 export type SetLbsEnabledInput = z.infer<typeof setLbsEnabledSchema>;

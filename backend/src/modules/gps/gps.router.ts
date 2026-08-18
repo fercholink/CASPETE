@@ -20,6 +20,7 @@ router.patch('/trackers/:id/phone-number', gpsRoles, gpsController.setPhoneNumbe
 router.patch('/trackers/:id/find', gpsRoles, gpsController.findDevice);
 router.patch('/trackers/:id/power', gpsRoles, gpsController.sendPowerAction);
 router.patch('/trackers/:id/alarm-clock', gpsRoles, gpsController.setAlarmClock);
+router.patch('/trackers/:id/wifi-attendance', gpsRoles, gpsController.setWifiAttendance);
 router.patch('/trackers/:id/request-position', gpsRoles, gpsController.requestPosition);
 router.patch('/trackers/:id/lbs', superAdminOnly, gpsController.setLbsEnabled);
 router.patch('/trackers/:id/speed-threshold', superAdminOnly, gpsController.setSpeedThreshold);

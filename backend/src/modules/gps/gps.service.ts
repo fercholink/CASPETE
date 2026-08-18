@@ -62,6 +62,7 @@ function buildTrackerInfo(local: LocalTracker, platform: gpsPlatform.PlatformTra
     mom_number: platform?.mom_number ?? null,
     center_number: platform?.center_number ?? null,
     alarm_clock_json: platform?.alarm_clock_json ?? null,
+    wifi_attendance_json: platform?.wifi_attendance_json ?? null,
     iccid: platform?.iccid ?? null,
     lbs_enabled: platform?.lbs_enabled ?? null,
     speed_threshold_kmh: platform?.speed_threshold_kmh ?? null,
@@ -253,6 +254,24 @@ export async function setAlarmClock(id: string, alarms: gpsPlatform.AlarmClockEn
   }
 
   await gpsPlatform.setAlarmClock(tracker.platform_tracker_id, alarms);
+}
+
+// Asistencia por WiFi (hasta 3 franjas). No es conectividad a internet — el
+// dispositivo avisa si está al alcance de la red configurada (ej. la del colegio).
+export async function setWifiAttendance(id: string, slots: gpsPlatform.WifiAttendanceSlot[], actor: JwtPayload) {
+  const tracker = await prisma.gPSTracker.findUnique({
+    where: { id },
+    select: { platform_tracker_id: true, student: { select: { parent_id: true } } },
+  });
+  if (!tracker) throw new AppError('Localizador no encontrado', 404);
+  if (actor.role !== 'SUPER_ADMIN' && tracker.student?.parent_id !== actor.sub) {
+    throw new AppError('No tienes permiso para usar este localizador', 403);
+  }
+  if (!tracker.platform_tracker_id) {
+    throw new AppError('Este localizador todavía no está sincronizado con la Plataforma GPS', 409);
+  }
+
+  await gpsPlatform.setWifiAttendance(tracker.platform_tracker_id, slots);
 }
 
 // Pide al dispositivo que reporte su posición ya mismo, en vez de esperar el

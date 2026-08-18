@@ -22,6 +22,7 @@ interface TrackerData {
   mom_number: string | null;
   center_number: string | null;
   alarm_clock_json: { weekdays: number; hour: number; minute: number }[] | null;
+  wifi_attendance_json: { weekdays: number[]; startTime: string; endTime: string; ssid: string }[] | null;
   iccid: string | null;
   lbs_enabled: boolean | null;
   speed_threshold_kmh: number | null;
@@ -107,6 +108,18 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
   const [alarmSaved, setAlarmSaved] = useState(false);
   const [alarmError, setAlarmError] = useState('');
 
+  // Asistencia por WiFi — NO es conectividad a internet (el dispositivo siempre
+  // usa la SIM). Solo detecta si está al alcance de una red WiFi específica
+  // (ej. la del colegio) y avisa entrada/salida. bitmask igual que la alarma
+  // (bit0=lunes...bit6=domingo), se convierte a [1-7] al guardar.
+  const [wifiWeekdays, setWifiWeekdays] = useState(0);
+  const [wifiStartTime, setWifiStartTime] = useState('00:00');
+  const [wifiEndTime, setWifiEndTime] = useState('23:59');
+  const [wifiSsid, setWifiSsid] = useState('');
+  const [savingWifiAttendance, setSavingWifiAttendance] = useState(false);
+  const [wifiAttendanceSaved, setWifiAttendanceSaved] = useState(false);
+  const [wifiAttendanceError, setWifiAttendanceError] = useState('');
+
   // Números de contacto (SOS/papá/mamá) — el dispositivo llama a estos al presionar su botón físico de SOS
   const [sosNumber, setSosNumber] = useState('');
   const [dadNumber, setDadNumber] = useState('');
@@ -150,6 +163,8 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
     setDeviceSounding(false); setFindError('');
     setPowerError('');
     setAlarmWeekdays(0); setAlarmTime(''); setAlarmError(''); setAlarmSaved(false);
+    setWifiWeekdays(0); setWifiStartTime('00:00'); setWifiEndTime('23:59'); setWifiSsid('');
+    setWifiAttendanceError(''); setWifiAttendanceSaved(false);
     setGpsPlanStatus(null); setGpsPaymentType(null); setGpsPaymentScreenshot('');
     setGpsPaymentRef(''); setGpsPaymentError(''); setGpsPaymentSubmitted(false);
     setPositionRequestMsg('');
@@ -177,6 +192,13 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
         const savedAlarm = tracker.alarm_clock_json?.[0];
         setAlarmWeekdays(savedAlarm?.weekdays ?? 0);
         setAlarmTime(savedAlarm ? `${String(savedAlarm.hour).padStart(2, '0')}:${String(savedAlarm.minute).padStart(2, '0')}` : '');
+        const savedWifiSlot = tracker.wifi_attendance_json?.[0];
+        if (savedWifiSlot) {
+          setWifiWeekdays(savedWifiSlot.weekdays.reduce((mask, day) => mask | (1 << (day - 1)), 0));
+          setWifiStartTime(savedWifiSlot.startTime);
+          setWifiEndTime(savedWifiSlot.endTime);
+          setWifiSsid(savedWifiSlot.ssid);
+        }
         apiClient.get<{ data: GpsPlanStatus }>(`/gps-payments/trackers/${tracker.id}/status`)
           .then((r2) => setGpsPlanStatus(r2.data.data))
           .catch(() => {});
@@ -335,6 +357,30 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
       setAlarmError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la alarma');
     } finally {
       setSavingAlarm(false);
+    }
+  }
+
+  function toggleWifiWeekday(bit: number) {
+    setWifiWeekdays((prev) => (prev & (1 << bit) ? prev & ~(1 << bit) : prev | (1 << bit)));
+  }
+
+  async function handleSaveWifiAttendance(e: React.FormEvent) {
+    e.preventDefault();
+    if (!gpsTracker || !wifiSsid.trim()) return;
+    const weekdays: number[] = [];
+    for (let bit = 0; bit < 7; bit++) if (wifiWeekdays & (1 << bit)) weekdays.push(bit + 1);
+    setSavingWifiAttendance(true);
+    setWifiAttendanceError('');
+    setWifiAttendanceSaved(false);
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/wifi-attendance`, {
+        slots: [{ weekdays, startTime: wifiStartTime, endTime: wifiEndTime, ssid: wifiSsid.trim() }],
+      });
+      setWifiAttendanceSaved(true);
+    } catch (err) {
+      setWifiAttendanceError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la asistencia por WiFi');
+    } finally {
+      setSavingWifiAttendance(false);
     }
   }
 
@@ -618,6 +664,44 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
             {alarmSaved && <p style={{ margin: 0, fontSize: 12, color: '#059669', fontWeight: 600 }}>Alarma guardada ✓</p>}
             <button type="submit" className="btn-ghost" disabled={savingAlarm || !alarmTime || alarmWeekdays === 0}>
               {savingAlarm ? 'Guardando...' : 'Guardar alarma'}
+            </button>
+          </form>
+
+          <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4, fontWeight: 600 }}>📶 Asistencia por WiFi</p>
+          <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--color-placeholder)' }}>
+            No conecta la tarjeta a internet — solo avisa cuando entra o sale del alcance de esta red WiFi (ej. la del colegio), útil dentro de edificios donde el GPS pierde precisión.
+          </p>
+          <form onSubmit={handleSaveWifiAttendance} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+            <input
+              className="form-input" type="text" placeholder="Nombre de la red WiFi (SSID)" maxLength={32}
+              value={wifiSsid} onChange={(e) => setWifiSsid(e.target.value)}
+            />
+            <div style={{ display: 'flex', gap: 4, justifyContent: 'space-between' }}>
+              {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((label, bit) => (
+                <button
+                  key={bit}
+                  type="button"
+                  onClick={() => toggleWifiWeekday(bit)}
+                  style={{
+                    width: 32, height: 32, borderRadius: '50%', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    border: `1.5px solid ${wifiWeekdays & (1 << bit) ? 'var(--color-brand-deep)' : 'var(--color-border)'}`,
+                    background: wifiWeekdays & (1 << bit) ? 'var(--color-brand-deep)' : 'transparent',
+                    color: wifiWeekdays & (1 << bit) ? '#fff' : 'var(--color-text-muted)',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input className="form-input" type="time" value={wifiStartTime} onChange={(e) => setWifiStartTime(e.target.value)} style={{ flex: 1 }} />
+              <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>a</span>
+              <input className="form-input" type="time" value={wifiEndTime} onChange={(e) => setWifiEndTime(e.target.value)} style={{ flex: 1 }} />
+            </div>
+            {wifiAttendanceError && <p className="form-error" style={{ margin: 0 }}>{wifiAttendanceError}</p>}
+            {wifiAttendanceSaved && <p style={{ margin: 0, fontSize: 12, color: '#059669', fontWeight: 600 }}>Asistencia por WiFi guardada ✓</p>}
+            <button type="submit" className="btn-ghost" disabled={savingWifiAttendance || !wifiSsid.trim() || wifiWeekdays === 0}>
+              {savingWifiAttendance ? 'Guardando...' : 'Guardar asistencia por WiFi'}
             </button>
           </form>
 

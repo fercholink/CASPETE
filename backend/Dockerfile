@@ -30,5 +30,6 @@ RUN pnpm run build
 EXPOSE 3000
 
 # Comando para arrancar en producción
+# Ejecuta migraciones pendientes antes de levantar Node
 # --import precarga la instrumentación de Sentry antes de que se cargue Express (requisito de Sentry en ESM)
-CMD ["node", "--import", "./dist/instrument.js", "dist/server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node --import ./dist/instrument.js dist/server.js"]

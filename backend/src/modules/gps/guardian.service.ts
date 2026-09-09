@@ -24,6 +24,62 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
   FAMILY_OTHER: 'Familiar / Cuidador',
 };
 
+let tablesEnsured = false;
+export async function ensureGuardianTablesExist() {
+  if (tablesEnsured) return;
+  if (typeof (prisma as any).$executeRawUnsafe !== 'function') return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'GuardianRelationship') THEN
+          CREATE TYPE "GuardianRelationship" AS ENUM ('MOTHER', 'FATHER', 'GRANDPARENT', 'UNCLE_AUNT', 'LEGAL_TUTOR', 'FAMILY_OTHER');
+        END IF;
+      END $$;
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "GPSTracker" ADD COLUMN IF NOT EXISTS "included_guardians" INTEGER NOT NULL DEFAULT 1;
+      ALTER TABLE "GPSTracker" ADD COLUMN IF NOT EXISTS "custom_monthly_price" DECIMAL(10,2);
+      ALTER TABLE "GPSTracker" ADD COLUMN IF NOT EXISTS "custom_guardian_price" DECIMAL(10,2);
+      ALTER TABLE "GPSTracker" ADD COLUMN IF NOT EXISTS "max_emergency_numbers" INTEGER NOT NULL DEFAULT 3;
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "StudentGuardian" (
+          "id" UUID NOT NULL,
+          "student_id" UUID NOT NULL,
+          "parent_id" UUID NOT NULL,
+          "guardian_id" UUID,
+          "guardian_email" VARCHAR(255) NOT NULL,
+          "relationship" "GuardianRelationship" NOT NULL DEFAULT 'FAMILY_OTHER',
+          "status" VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+          "invite_token" VARCHAR(64),
+          "can_view_live" BOOLEAN NOT NULL DEFAULT true,
+          "can_view_history" BOOLEAN NOT NULL DEFAULT true,
+          "can_receive_alerts" BOOLEAN NOT NULL DEFAULT true,
+          "can_view_meals" BOOLEAN NOT NULL DEFAULT false,
+          "is_included_slot" BOOLEAN NOT NULL DEFAULT false,
+          "extra_price" DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+          "active" BOOLEAN NOT NULL DEFAULT true,
+          "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "StudentGuardian_pkey" PRIMARY KEY ("id")
+      );
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "StudentGuardian_invite_token_key" ON "StudentGuardian"("invite_token");
+      CREATE UNIQUE INDEX IF NOT EXISTS "StudentGuardian_student_id_guardian_email_key" ON "StudentGuardian"("student_id", "guardian_email");
+      CREATE INDEX IF NOT EXISTS "StudentGuardian_guardian_id_active_idx" ON "StudentGuardian"("guardian_id", "active");
+      CREATE INDEX IF NOT EXISTS "StudentGuardian_student_id_idx" ON "StudentGuardian"("student_id");
+    `);
+
+    tablesEnsured = true;
+  } catch (err) {
+    console.error('[Guardian DDL auto-healing]:', err);
+  }
+}
+
 async function assertParentOwnsStudent(studentId: string, actor: JwtPayload) {
   const student = await prisma.student.findUnique({
     where: { id: studentId },
@@ -39,6 +95,7 @@ async function assertParentOwnsStudent(studentId: string, actor: JwtPayload) {
 
 export async function getStudentPlanSummary(studentId: string, actor: JwtPayload) {
   await assertParentOwnsStudent(studentId, actor);
+  await ensureGuardianTablesExist();
 
   try {
     const tracker = await prisma.gPSTracker.findUnique({
@@ -99,6 +156,7 @@ export async function getStudentPlanSummary(studentId: string, actor: JwtPayload
 // ── Listar familiares del estudiante ───────────────────────────────────────
 
 export async function listStudentGuardians(studentId: string, actor: JwtPayload) {
+  await ensureGuardianTablesExist();
   await assertParentOwnsStudent(studentId, actor);
 
   try {
@@ -128,6 +186,7 @@ export async function listStudentGuardians(studentId: string, actor: JwtPayload)
 // ── Enrolar o invitar un familiar ─────────────────────────────────────────
 
 export async function enrollGuardian(studentId: string, input: EnrollGuardianInput, actor: JwtPayload) {
+  await ensureGuardianTablesExist();
   const student = await assertParentOwnsStudent(studentId, actor);
   const parentUser = await prisma.user.findUnique({
     where: { id: actor.sub },
@@ -302,6 +361,7 @@ export async function enrollGuardian(studentId: string, input: EnrollGuardianInp
 // ── Reenviar invitación por correo ────────────────────────────────────────
 
 export async function resendGuardianInvitation(studentId: string, guardianRecordId: string, actor: JwtPayload) {
+  await ensureGuardianTablesExist();
   const student = await assertParentOwnsStudent(studentId, actor);
   const parentUser = await prisma.user.findUnique({
     where: { id: actor.sub },
@@ -351,6 +411,7 @@ export async function updateGuardian(
   input: UpdateGuardianInput,
   actor: JwtPayload,
 ) {
+  await ensureGuardianTablesExist();
   await assertParentOwnsStudent(studentId, actor);
 
   const record = await prisma.studentGuardian.findUnique({
@@ -377,6 +438,7 @@ export async function updateGuardian(
 // ── Eliminar o cancelar invitación ────────────────────────────────────────
 
 export async function deleteGuardian(studentId: string, guardianRecordId: string, actor: JwtPayload) {
+  await ensureGuardianTablesExist();
   await assertParentOwnsStudent(studentId, actor);
 
   const record = await prisma.studentGuardian.findUnique({
@@ -420,6 +482,7 @@ export async function deleteGuardian(studentId: string, guardianRecordId: string
 // ── Estudiantes compartidos con el usuario logueado (como familiar) ────────
 
 export async function getMySharedStudents(actor: JwtPayload) {
+  await ensureGuardianTablesExist();
   try {
     const shares = await prisma.studentGuardian.findMany({
       where: { guardian_id: actor.sub, active: true, status: 'ACCEPTED' },

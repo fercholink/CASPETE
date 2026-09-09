@@ -130,7 +130,8 @@ export default function GpsFamilyCircleSection({ studentId }: { studentId: strin
       setShowForm(false);
       await loadData();
     } catch (err: any) {
-      setFormError(err?.response?.data?.message || 'Error al procesar la invitación');
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
+      setFormError(serverMsg || 'Error al procesar la invitación');
     } finally {
       setSubmitting(false);
     }
@@ -144,7 +145,8 @@ export default function GpsFamilyCircleSection({ studentId }: { studentId: strin
       );
       alert(res.data?.message || `Invitación reenviada a ${guardianEmail}`);
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'No se pudo reenviar la invitación');
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
+      alert(serverMsg || 'No se pudo reenviar la invitación');
     } finally {
       setResendingId(null);
     }
@@ -156,7 +158,8 @@ export default function GpsFamilyCircleSection({ studentId }: { studentId: strin
       await apiClient.delete(`/gps/students/${studentId}/guardians/${guardianRecordId}`);
       await loadData();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Error al eliminar familiar');
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
+      alert(serverMsg || 'Error al eliminar familiar');
     }
   };
 

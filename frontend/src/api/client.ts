@@ -48,8 +48,8 @@ apiClient.interceptors.response.use(
 
     const refreshToken = localStorage.getItem('kidway_refresh_token');
     if (!refreshToken) {
-      localStorage.removeItem('kidway_token');
-      window.location.href = '/login';
+      // Sin refresh token — simplemente rechazar. AuthContext + ProtectedRoute
+      // se encargan de redirigir al login vía React Router.
       return Promise.reject(error);
     }
 
@@ -58,7 +58,9 @@ apiClient.interceptors.response.use(
     if (isRefreshing) {
       return new Promise((resolve) => {
         refreshSubscribers.push((token) => {
-          axiosError.config!.headers!['Authorization'] = `Bearer ${token}`;
+          if (axiosError.config!.headers) {
+            axiosError.config!.headers['Authorization'] = `Bearer ${token}`;
+          }
           resolve(apiClient(axiosError.config!));
         });
       });
@@ -74,15 +76,19 @@ apiClient.interceptors.response.use(
       localStorage.setItem('kidway_token', token);
       localStorage.setItem('kidway_refresh_token', newRefreshToken);
       onTokenRefreshed(token);
-      axiosError.config!.headers!['Authorization'] = `Bearer ${token}`;
+      if (axiosError.config!.headers) {
+        axiosError.config!.headers['Authorization'] = `Bearer ${token}`;
+      }
       return apiClient(axiosError.config!);
     } catch {
+      // Refresh falló — limpiar tokens y rechazar.
+      // AuthContext detectará user=null y ProtectedRoute redirigirá a /login.
       localStorage.removeItem('kidway_token');
       localStorage.removeItem('kidway_refresh_token');
-      window.location.href = '/login';
       return Promise.reject(error);
     } finally {
       isRefreshing = false;
     }
   },
 );
+

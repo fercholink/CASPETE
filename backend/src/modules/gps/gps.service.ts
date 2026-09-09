@@ -81,7 +81,11 @@ function mapPosition(p: gpsPlatform.PlatformPosition) {
   };
 }
 
-async function assertParentOwnsStudent(studentId: string, actor: JwtPayload) {
+async function assertParentOwnsStudent(
+  studentId: string,
+  actor: JwtPayload,
+  requiredPermission?: 'live' | 'history' | 'route',
+) {
   const student = await prisma.student.findUnique({
     where: { id: studentId },
     select: { id: true, parent_id: true, school_id: true },
@@ -89,6 +93,26 @@ async function assertParentOwnsStudent(studentId: string, actor: JwtPayload) {
   if (!student) throw new AppError('Estudiante no encontrado', 404);
   if (actor.role === 'SUPER_ADMIN') return student;
   if (actor.role === 'PARENT' && student.parent_id === actor.sub) return student;
+
+  // Permitir lectura a familiares activos del Círculo de Confianza
+  if (requiredPermission && actor.role === 'PARENT') {
+    const guardianShare = await prisma.studentGuardian.findUnique({
+      where: {
+        student_id_guardian_id: {
+          student_id: studentId,
+          guardian_id: actor.sub,
+        },
+      },
+      select: { active: true, can_view_live: true, can_view_history: true },
+    });
+
+    if (guardianShare && guardianShare.active) {
+      if (requiredPermission === 'live' && guardianShare.can_view_live) return student;
+      if (requiredPermission === 'history' && guardianShare.can_view_history) return student;
+      if (requiredPermission === 'route' && (guardianShare.can_view_live || guardianShare.can_view_history)) return student;
+    }
+  }
+
   throw new AppError('No tienes permiso para acceder a este estudiante', 403);
 }
 
@@ -340,7 +364,7 @@ export async function getTrackerGeofences(id: string, actor: JwtPayload) {
 }
 
 export async function getCurrentLocation(studentId: string, actor: JwtPayload, req: Request) {
-  await assertParentOwnsStudent(studentId, actor);
+  await assertParentOwnsStudent(studentId, actor, 'live');
 
   if (actor.role === 'SUPER_ADMIN') {
     await logAudit({
@@ -394,7 +418,7 @@ export async function getHistory(
   actor: JwtPayload,
   req: Request,
 ) {
-  await assertParentOwnsStudent(studentId, actor);
+  await assertParentOwnsStudent(studentId, actor, 'history');
 
   if (actor.role === 'SUPER_ADMIN') {
     await logAudit({
@@ -429,7 +453,7 @@ export async function getHistory(
 // dibujarla en el mapa junto al recorrido real, no para las alertas (esas
 // las evalúa la Plataforma GPS sola).
 export async function getExpectedRoute(studentId: string, actor: JwtPayload) {
-  await assertParentOwnsStudent(studentId, actor);
+  await assertParentOwnsStudent(studentId, actor, 'route');
 
   const tracker = await prisma.gPSTracker.findUnique({
     where: { student_id: studentId },

@@ -3,16 +3,16 @@ import { AppError } from '../../middleware/error.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { CreateGpsPaymentInput } from './gps-payment.schemas.js';
 
-// Plan "solo localizar y llamar" (School.is_gps_only) — precios fijos, no
-// configurables desde la app todavía.
+// Plan "solo localizar y llamar" (School.is_gps_only) y servicios GPS de Kidway
 export const GPS_DEVICE_PRICE = 120000;
-export const GPS_MONTHLY_PRICE = 25000;
+export const GPS_MONTHLY_PRICE = 30000;
+export const GPS_EXTRA_GUARDIAN_PRICE = 5000;
 
 const paymentSelect = {
   id: true, tracker_id: true, parent_id: true, type: true, amount: true,
   receipt_url: true, payment_reference: true, status: true, period_end: true,
   created_at: true, updated_at: true,
-  tracker: { select: { id: true, device_name: true, student: { select: { full_name: true } } } },
+  tracker: { select: { id: true, device_name: true, student: { select: { id: true, full_name: true } } } },
   parent: { select: { full_name: true, email: true } },
 } as const;
 
@@ -21,7 +21,8 @@ async function assertGpsOnlyTrackerOwnedByParent(trackerId: string, actor: JwtPa
     where: { id: trackerId },
     select: {
       id: true, subscription_paid_until: true,
-      student: { select: { parent_id: true, school: { select: { is_gps_only: true } } } },
+      included_guardians: true, custom_monthly_price: true, custom_guardian_price: true, max_emergency_numbers: true,
+      student: { select: { id: true, parent_id: true, school: { select: { is_gps_only: true } } } },
     },
   });
   if (!tracker) throw new AppError('Localizador no encontrado', 404);
@@ -33,9 +34,21 @@ async function assertGpsOnlyTrackerOwnedByParent(trackerId: string, actor: JwtPa
 }
 
 export async function createGpsPaymentRequest(input: CreateGpsPaymentInput, actor: JwtPayload) {
-  await assertGpsOnlyTrackerOwnedByParent(input.trackerId, actor);
+  const tracker = await assertGpsOnlyTrackerOwnedByParent(input.trackerId, actor);
 
-  const amount = input.type === 'DEVICE' ? GPS_DEVICE_PRICE : GPS_MONTHLY_PRICE;
+  let amount = GPS_DEVICE_PRICE;
+  if (input.type === 'MONTHLY_SUBSCRIPTION') {
+    const basePrice = tracker.custom_monthly_price ? Number(tracker.custom_monthly_price) : GPS_MONTHLY_PRICE;
+    const extraPrice = tracker.custom_guardian_price ? Number(tracker.custom_guardian_price) : GPS_EXTRA_GUARDIAN_PRICE;
+    const includedCount = tracker.included_guardians ?? 1;
+
+    const activeGuardiansCount = tracker.student?.id
+      ? await prisma.studentGuardian.count({ where: { student_id: tracker.student.id, active: true } })
+      : 0;
+
+    const extraGuardians = Math.max(0, activeGuardiansCount - includedCount);
+    amount = basePrice + (extraGuardians * extraPrice);
+  }
 
   return prisma.gPSPaymentRequest.create({
     data: {
@@ -79,7 +92,8 @@ export async function getGpsSubscriptionStatus(trackerId: string, actor: JwtPayl
     where: { id: trackerId },
     select: {
       device_purchased: true, subscription_paid_until: true,
-      student: { select: { parent_id: true, school: { select: { is_gps_only: true } } } },
+      included_guardians: true, custom_monthly_price: true, custom_guardian_price: true, max_emergency_numbers: true,
+      student: { select: { id: true, parent_id: true, school: { select: { is_gps_only: true } } } },
     },
   });
   if (!tracker) throw new AppError('Localizador no encontrado', 404);
@@ -90,13 +104,30 @@ export async function getGpsSubscriptionStatus(trackerId: string, actor: JwtPayl
   const now = new Date();
   const subscriptionActive = Boolean(tracker.subscription_paid_until && tracker.subscription_paid_until > now);
 
+  const basePrice = tracker.custom_monthly_price ? Number(tracker.custom_monthly_price) : GPS_MONTHLY_PRICE;
+  const extraPrice = tracker.custom_guardian_price ? Number(tracker.custom_guardian_price) : GPS_EXTRA_GUARDIAN_PRICE;
+  const includedCount = tracker.included_guardians ?? 1;
+
+  const activeGuardiansCount = tracker.student?.id
+    ? await prisma.studentGuardian.count({ where: { student_id: tracker.student.id, active: true } })
+    : 0;
+
+  const extraGuardians = Math.max(0, activeGuardiansCount - includedCount);
+  const totalMonthlyPrice = basePrice + (extraGuardians * extraPrice);
+
   return {
     is_gps_only_plan: tracker.student?.school.is_gps_only ?? false,
     device_purchased: tracker.device_purchased,
     subscription_paid_until: tracker.subscription_paid_until,
     subscription_active: subscriptionActive,
     device_price: GPS_DEVICE_PRICE,
-    monthly_price: GPS_MONTHLY_PRICE,
+    base_monthly_price: basePrice,
+    extra_guardian_price: extraPrice,
+    included_guardians: includedCount,
+    active_guardians_count: activeGuardiansCount,
+    extra_guardians_count: extraGuardians,
+    monthly_price: totalMonthlyPrice,
+    max_emergency_numbers: tracker.max_emergency_numbers ?? 3,
   };
 }
 

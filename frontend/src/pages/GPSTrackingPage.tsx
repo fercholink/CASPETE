@@ -92,12 +92,24 @@ export default function GPSTrackingPage() {
   const [viewDate, setViewDate] = useState(''); // '' = en vivo (hoy); 'YYYY-MM-DD' = un día pasado
 
   useEffect(() => {
-    apiClient.get<{ data: { students: Student[] } }>('/students?limit=50')
-      .then((r) => {
-        setStudents(r.data.data.students);
-        if (r.data.data.students.length > 0) setSelectedId(r.data.data.students[0]!.id);
+    Promise.allSettled([
+      apiClient.get<{ data: { students: Student[] } }>('/students?limit=50'),
+      apiClient.get<{ data: Array<{ student: Student; owner_parent: { full_name: string } }> }>('/gps/shared-students'),
+    ])
+      .then(([ownRes, sharedRes]) => {
+        const ownStudents: Student[] = ownRes.status === 'fulfilled' ? ownRes.value.data.data.students : [];
+        const sharedStudents: Student[] = sharedRes.status === 'fulfilled'
+          ? (sharedRes.value.data.data || []).map((s) => ({
+              ...s.student,
+              full_name: `${s.student.full_name} (Familiar)`
+            }))
+          : [];
+
+        const allStudents = [...ownStudents, ...sharedStudents];
+        setStudents(allStudents);
+        if (allStudents.length > 0 && allStudents[0]) setSelectedId(allStudents[0].id);
       })
-      .catch(() => setError('No se pudieron cargar tus hijos'))
+      .catch(() => setError('No se pudieron cargar los estudiantes'))
       .finally(() => setLoading(false));
   }, []);
 

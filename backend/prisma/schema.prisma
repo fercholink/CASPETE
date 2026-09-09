@@ -195,6 +195,8 @@ model User {
   teacher          Teacher?
   sent_communications     Communication[]    @relation("SentCommunications")
   received_communications Communication[]    @relation("ReceivedCommunications")
+  owner_guardians         StudentGuardian[]  @relation("OwnerGuardians")
+  guardian_shares         StudentGuardian[]  @relation("UserAsGuardian")
 }
 
 
@@ -247,6 +249,7 @@ model Student {
   grades         Grade[]
   gps_tracker    GPSTracker?
   attendances    Attendance[]
+  guardians      StudentGuardian[]
 
   @@unique([school_id, national_id])
 }
@@ -846,6 +849,12 @@ model GPSTracker {
   device_purchased        Boolean   @default(false)
   subscription_paid_until DateTime? // null = nunca ha pagado la mensualidad; con fecha = pagada hasta ese día
 
+  // ── Parámetros Configurables y Personalizados por Cuenta ──────────────────
+  included_guardians      Int       @default(1)    // Número de familiares incluidos en el plan base (por defecto 1)
+  custom_monthly_price    Decimal?  @db.Decimal(10, 2) // Sobrescribe los $30.000 estándar si no es null
+  custom_guardian_price   Decimal?  @db.Decimal(10, 2) // Sobrescribe los $5.000 estándar si no es null
+  max_emergency_numbers   Int       @default(3)    // Máximo de números autorizados para llamadas (por defecto 3)
+
   student        Student?            @relation(fields: [student_id], references: [id], onDelete: SetNull)
   telemetry      GPSTelemetry[]
   payment_requests GPSPaymentRequest[]
@@ -853,7 +862,7 @@ model GPSTracker {
 
 enum GPSPaymentType {
   DEVICE               // pago único, $120.000 — compra del localizador
-  MONTHLY_SUBSCRIPTION // $25.000/mes — llamadas ilimitadas + geolocalización en tiempo real
+  MONTHLY_SUBSCRIPTION // $30.000/mes — llamadas ilimitadas + geolocalización en tiempo real (+ familiares incluidos/adicionales)
 }
 
 // Comprobante de pago del dispositivo/suscripción "solo localizar y llamar"
@@ -952,6 +961,46 @@ model Attendance {
 
   @@index([student_id, scanned_at])
   @@index([course_id, scanned_at])
+}
+
+// ── Círculo Familiar / Guardianes (Ubicación compartida) ────────────────────
+enum GuardianRelationship {
+  MOTHER        // Madre
+  FATHER        // Padre
+  GRANDPARENT   // Abuelo / Abuela
+  UNCLE_AUNT    // Tío / Tía
+  LEGAL_TUTOR   // Tutor legal
+  FAMILY_OTHER  // Otro familiar / Cuidador
+}
+
+model StudentGuardian {
+  id              String               @id @default(uuid()) @db.Uuid
+  student_id      String               @db.Uuid
+  parent_id       String               @db.Uuid              // Padre titular que otorga el permiso
+  guardian_id     String               @db.Uuid              // Usuario familiar (debe tener cuenta en Kidway)
+  relationship    GuardianRelationship @default(FAMILY_OTHER)
+
+  // Permisos granulares
+  can_view_live     Boolean   @default(true)  // Ubicación en tiempo real
+  can_view_history  Boolean   @default(true)  // Historial de recorridos
+  can_receive_alerts Boolean  @default(true)  // Notificaciones push de geocercas
+  can_view_meals    Boolean   @default(false) // Loncheras (listo para habilitar a futuro)
+
+  // Facturación y cupo
+  is_included_slot  Boolean   @default(false) // True si está cubierto por el cupo incluido del padre
+  extra_price       Decimal   @default(0.00) @db.Decimal(10, 2) // Tarifa adicional asignada
+  active            Boolean   @default(true)
+
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  student  Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  parent   User    @relation("OwnerGuardians", fields: [parent_id], references: [id], onDelete: Cascade)
+  guardian User    @relation("UserAsGuardian", fields: [guardian_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, guardian_id])
+  @@index([guardian_id, active])
+  @@index([student_id])
 }
 
 

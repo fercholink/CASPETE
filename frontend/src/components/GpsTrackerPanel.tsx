@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import QRCodeLib from 'react-qr-code';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
+import GpsFamilyCircleSection from './GpsFamilyCircleSection';
 
 const QRCode = (QRCodeLib as any).default || QRCodeLib;
 
@@ -781,6 +782,10 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
               )}
             </>
           )}
+
+          <div style={{ marginBottom: 20 }}>
+            <GpsFamilyCircleSection studentId={studentId} />
+          </div>
 
           <button className="btn-ghost" style={{ width: '100%', color: '#dc2626', marginBottom: 10 }} disabled={poweringOff || !gpsTracker.online} onClick={handlePowerOff}>
             {poweringOff ? 'Apagando...' : '⏻ Apagar tarjeta'}

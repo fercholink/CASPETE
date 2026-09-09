@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as gpsController from './gps.controller.js';
+import * as guardianController from './guardian.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
 
@@ -12,6 +13,15 @@ const gpsRoles = requireRole('PARENT', 'SUPER_ADMIN');
 // Configuración avanzada del dispositivo (LBS, sobrevelocidad, vibración) — solo SUPER_ADMIN,
 // no es algo que un padre normalmente necesite tocar (ver gps.service.ts).
 const superAdminOnly = requireRole('SUPER_ADMIN');
+
+// ── Círculo Familiar y Estudiantes Compartidos ──────────────────────────────
+router.get('/shared-students', gpsRoles, guardianController.getMySharedStudents);
+router.get('/students/:studentId/plan-summary', gpsRoles, guardianController.getPlanSummary);
+router.get('/students/:studentId/guardians', gpsRoles, guardianController.listGuardians);
+router.post('/students/:studentId/guardians', gpsRoles, guardianController.enrollGuardian);
+router.patch('/students/:studentId/guardians/:guardianId', gpsRoles, guardianController.updateGuardian);
+router.delete('/students/:studentId/guardians/:guardianId', gpsRoles, guardianController.deleteGuardian);
+router.patch('/trackers/:trackerId/custom-plan', superAdminOnly, guardianController.updateTrackerCustomPlan);
 
 router.post('/trackers', gpsRoles, gpsController.link);
 router.delete('/trackers/:id', gpsRoles, gpsController.unlink);

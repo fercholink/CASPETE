@@ -36,7 +36,16 @@ interface GpsPlanStatus {
   subscription_paid_until: string | null;
   subscription_active: boolean;
   device_price: number;
+  base_monthly_price?: number;
+  extra_guardian_price?: number;
+  included_guardians?: number;
+  active_guardians_count?: number;
+  extra_guardians_count?: number;
   monthly_price: number;
+  max_emergency_numbers?: number;
+  student_id?: string | null;
+  student_name?: string;
+  student_balance?: number;
 }
 
 function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<string> {
@@ -91,6 +100,9 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [gpsPlanStatus, setGpsPlanStatus] = useState<GpsPlanStatus | null>(null);
   const [gpsPaymentType, setGpsPaymentType] = useState<'DEVICE' | 'MONTHLY_SUBSCRIPTION' | null>(null);
+  const [paymentMethodTab, setPaymentMethodTab] = useState<'BALANCE' | 'WOMPI' | 'TRANSFER'>('BALANCE');
+  const [balancePaySuccessMsg, setBalancePaySuccessMsg] = useState('');
+  const [wompiCheckoutLoading, setWompiCheckoutLoading] = useState(false);
   const [gpsPaymentScreenshot, setGpsPaymentScreenshot] = useState('');
   const [gpsPaymentRef, setGpsPaymentRef] = useState('');
   const [gpsPaymentLoading, setGpsPaymentLoading] = useState(false);
@@ -212,6 +224,57 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
       .finally(() => setGpsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId]);
+
+  async function handlePayWithKidwayBalance() {
+    if (!gpsTracker) return;
+    setGpsPaymentLoading(true);
+    setGpsPaymentError('');
+    setBalancePaySuccessMsg('');
+    try {
+      const res = await apiClient.post<{ message?: string; data: { new_balance: number; subscription_paid_until: string } }>(
+        '/gps-payments/pay-with-balance',
+        { trackerId: gpsTracker.id },
+      );
+      setBalancePaySuccessMsg(res.data.message || '¡Mensualidad GPS pagada con éxito usando tu saldo Kidway!');
+      const r2 = await apiClient.get<{ data: GpsPlanStatus }>(`/gps-payments/trackers/${gpsTracker.id}/status`);
+      setGpsPlanStatus(r2.data.data);
+      setTimeout(() => {
+        setGpsPaymentType(null);
+        setBalancePaySuccessMsg('');
+      }, 3500);
+    } catch (err: any) {
+      setGpsPaymentError(err.response?.data?.message || err.response?.data?.error || 'Error al procesar el pago con saldo');
+    } finally {
+      setGpsPaymentLoading(false);
+    }
+  }
+
+  async function handlePayWithWompi() {
+    if (!gpsTracker) return;
+    setWompiCheckoutLoading(true);
+    setGpsPaymentError('');
+    try {
+      const res = await apiClient.post<{
+        data: {
+          publicKey: string;
+          currency: string;
+          amountInCents: number;
+          reference: string;
+          signatureIntegrity: string;
+          redirectUrl: string;
+        };
+      }>('/gps-payments/wompi/checkout', { trackerId: gpsTracker.id });
+
+      const checkoutData = res.data.data;
+      const checkoutUrl = `https://checkout.wompi.co/p/?public-key=${checkoutData.publicKey}&currency=${checkoutData.currency}&amount-in-cents=${checkoutData.amountInCents}&reference=${checkoutData.reference}&signature:integrity=${checkoutData.signatureIntegrity}&redirect-url=${encodeURIComponent(checkoutData.redirectUrl)}`;
+
+      window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+    } catch (err: any) {
+      setGpsPaymentError(err.response?.data?.message || err.response?.data?.error || 'Error al iniciar pasarela Wompi');
+    } finally {
+      setWompiCheckoutLoading(false);
+    }
+  }
 
   async function handleSubmitGpsPayment() {
     if (!gpsTracker || !gpsPaymentType) return;
@@ -550,69 +613,222 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
             Ver ubicación en el mapa
           </Link>
 
-          {gpsPlanStatus?.is_gps_only_plan && (
+          {gpsPlanStatus && (
             <div style={{ marginBottom: 20, padding: 16, borderRadius: 12, background: gpsPlanStatus.subscription_active ? 'rgba(24,226,153,0.08)' : '#fef2f2', border: `1px solid ${gpsPlanStatus.subscription_active ? 'var(--color-brand-deep)' : '#fca5a5'}` }}>
-              <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)' }}>
-                Plan solo localizar y llamar
-              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <p style={{ margin: 0, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)' }}>
+                  Suscripción y Plan GPS
+                </p>
+                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, fontWeight: 600, background: gpsPlanStatus.subscription_active ? '#d1fae5' : '#fee2e2', color: gpsPlanStatus.subscription_active ? '#065f46' : '#991b1b' }}>
+                  {gpsPlanStatus.subscription_active ? '● Activa' : '● Vencida o Pendiente'}
+                </span>
+              </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8 }}>
                 <span style={{ fontSize: 13 }}>
                   Dispositivo — {gpsPlanStatus.device_purchased ? '✅ Comprado' : `$${gpsPlanStatus.device_price.toLocaleString('es-CO')} (pago único)`}
                 </span>
                 {!gpsPlanStatus.device_purchased && (
-                  <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px', flexShrink: 0 }} onClick={() => setGpsPaymentType('DEVICE')}>
-                    Pagar
+                  <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px', flexShrink: 0 }} onClick={() => { setGpsPaymentType('DEVICE'); setPaymentMethodTab('WOMPI'); }}>
+                    Pagar equipo
                   </button>
                 )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 13 }}>
-                  Mensualidad (${gpsPlanStatus.monthly_price.toLocaleString('es-CO')}/mes) —{' '}
-                  {gpsPlanStatus.subscription_active
-                    ? `✅ Al día hasta ${new Date(gpsPlanStatus.subscription_paid_until!).toLocaleDateString('es-CO')}`
-                    : gpsPlanStatus.subscription_paid_until
-                      ? '⚠️ Vencida'
-                      : '⚠️ Sin pagar'}
-                </span>
-                <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px', flexShrink: 0 }} onClick={() => setGpsPaymentType('MONTHLY_SUBSCRIPTION')}>
-                  {gpsPlanStatus.subscription_active ? 'Renovar' : 'Pagar'}
+                <div style={{ fontSize: 13 }}>
+                  <div>
+                    <strong>${gpsPlanStatus.monthly_price.toLocaleString('es-CO')} COP/mes</strong>
+                    {Boolean(gpsPlanStatus.extra_guardians_count && gpsPlanStatus.extra_guardians_count > 0) && (
+                      <span style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block' }}>
+                        (Base ${(gpsPlanStatus.base_monthly_price ?? 30000).toLocaleString('es-CO')} + {gpsPlanStatus.extra_guardians_count} familiar(es) extra)
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: gpsPlanStatus.subscription_active ? '#047857' : '#b91c1c', marginTop: 2 }}>
+                    {gpsPlanStatus.subscription_active
+                      ? `Al día hasta ${new Date(gpsPlanStatus.subscription_paid_until!).toLocaleDateString('es-CO')}`
+                      : gpsPlanStatus.subscription_paid_until
+                        ? `Vencida el ${new Date(gpsPlanStatus.subscription_paid_until).toLocaleDateString('es-CO')}`
+                        : 'Aún no has pagado la primera mensualidad'}
+                  </div>
+                </div>
+                <button
+                  className="btn-primary"
+                  style={{ fontSize: 12, padding: '6px 14px', flexShrink: 0, fontWeight: 600 }}
+                  onClick={() => { setGpsPaymentType('MONTHLY_SUBSCRIPTION'); setPaymentMethodTab('BALANCE'); setGpsPaymentError(''); }}
+                >
+                  {gpsPlanStatus.subscription_active ? 'Renovar mes' : 'Pagar mensualidad'}
                 </button>
               </div>
 
               {!gpsPlanStatus.subscription_active && (
-                <p style={{ margin: '8px 0 0', fontSize: 11, color: '#991b1b' }}>
-                  El rastreo y las llamadas están en pausa hasta que se pague la mensualidad.
+                <p style={{ margin: '8px 0 0', fontSize: 11, color: '#991b1b', lineHeight: 1.4 }}>
+                  ⚠️ El rastreo GPS en tiempo real y las llamadas están en pausa hasta completar la mensualidad.
                 </p>
               )}
 
-              {gpsPaymentType && (
-                <div style={{ marginTop: 12, padding: 12, background: '#fff', borderRadius: 10, border: '1px solid var(--color-border)' }}>
-                  <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 600 }}>
-                    Comprobante de pago — {gpsPaymentType === 'DEVICE'
-                      ? `Dispositivo ($${gpsPlanStatus.device_price.toLocaleString('es-CO')})`
-                      : `Mensualidad ($${gpsPlanStatus.monthly_price.toLocaleString('es-CO')})`}
-                  </p>
-                  <input type="file" accept="image/*" onChange={handleGpsPaymentScreenshotChange} style={{ marginBottom: 8, fontSize: 12, width: '100%' }} />
-                  <input
-                    className="form-input" placeholder="O ingresa el número de referencia"
-                    value={gpsPaymentRef} onChange={(e) => setGpsPaymentRef(e.target.value)}
-                    style={{ marginBottom: 8 }}
-                  />
-                  {gpsPaymentError && <p className="form-error" style={{ margin: '0 0 8px' }}>{gpsPaymentError}</p>}
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn-ghost" style={{ flex: 1 }} onClick={() => { setGpsPaymentType(null); setGpsPaymentError(''); }}>
-                      Cancelar
-                    </button>
-                    <button className="btn-primary" style={{ flex: 1 }} disabled={gpsPaymentLoading} onClick={handleSubmitGpsPayment}>
-                      {gpsPaymentLoading ? 'Enviando...' : 'Enviar comprobante'}
-                    </button>
-                  </div>
+              {balancePaySuccessMsg && (
+                <div style={{ marginTop: 12, padding: 12, background: '#ecfdf5', border: '1px solid #10b981', borderRadius: 8, color: '#065f46', fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
+                  ✓ {balancePaySuccessMsg}
                 </div>
               )}
+
+              {gpsPaymentType && (
+                <div style={{ marginTop: 14, padding: 14, background: '#fff', borderRadius: 12, border: '1px solid var(--color-border)', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--color-brand-black)' }}>
+                      Pagar {gpsPaymentType === 'DEVICE' ? 'Dispositivo GPS ($' + gpsPlanStatus.device_price.toLocaleString('es-CO') + ')' : 'Mensualidad ($' + gpsPlanStatus.monthly_price.toLocaleString('es-CO') + ' COP)'}
+                    </p>
+                    <button
+                      onClick={() => { setGpsPaymentType(null); setGpsPaymentError(''); }}
+                      style={{ background: 'transparent', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--color-text-muted)', lineHeight: 1 }}
+                      title="Cerrar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Selector de métodos de pago */}
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: '#f1f5f9', padding: 4, borderRadius: 8 }}>
+                    {gpsPaymentType === 'MONTHLY_SUBSCRIPTION' && (
+                      <button
+                        type="button"
+                        onClick={() => { setPaymentMethodTab('BALANCE'); setGpsPaymentError(''); }}
+                        style={{
+                          flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                          background: paymentMethodTab === 'BALANCE' ? '#fff' : 'transparent',
+                          color: paymentMethodTab === 'BALANCE' ? '#0f172a' : '#64748b',
+                          boxShadow: paymentMethodTab === 'BALANCE' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                        }}
+                      >
+                        🎒 Saldo Kidway
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMethodTab('WOMPI'); setGpsPaymentError(''); }}
+                      style={{
+                        flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                        background: paymentMethodTab === 'WOMPI' ? '#fff' : 'transparent',
+                        color: paymentMethodTab === 'WOMPI' ? '#0f172a' : '#64748b',
+                        boxShadow: paymentMethodTab === 'WOMPI' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                      }}
+                    >
+                      💳 Tarjeta / PSE
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMethodTab('TRANSFER'); setGpsPaymentError(''); }}
+                      style={{
+                        flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                        background: paymentMethodTab === 'TRANSFER' ? '#fff' : 'transparent',
+                        color: paymentMethodTab === 'TRANSFER' ? '#0f172a' : '#64748b',
+                        boxShadow: paymentMethodTab === 'TRANSFER' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                      }}
+                    >
+                      📱 Transferencia
+                    </button>
+                  </div>
+
+                  {/* Pestaña 1: Débito de Saldo de Recargas Kidway */}
+                  {paymentMethodTab === 'BALANCE' && gpsPaymentType === 'MONTHLY_SUBSCRIPTION' && (
+                    <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>Saldo actual de {gpsPlanStatus.student_name || 'estudiante'}:</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: (gpsPlanStatus.student_balance ?? 0) >= gpsPlanStatus.monthly_price ? '#059669' : '#dc2626' }}>
+                          ${(gpsPlanStatus.student_balance ?? 0).toLocaleString('es-CO')} COP
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>Total a debitar:</span>
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>${gpsPlanStatus.monthly_price.toLocaleString('es-CO')} COP</span>
+                      </div>
+
+                      {(gpsPlanStatus.student_balance ?? 0) >= gpsPlanStatus.monthly_price ? (
+                        <div>
+                          <p style={{ margin: '0 0 10px', fontSize: 11, color: '#059669', lineHeight: 1.4 }}>
+                            ⚡ <strong>Pago instantáneo en 1 clic:</strong> Se debitará del saldo disponible y tu servicio quedará renovado de inmediato sin esperar aprobaciones.
+                          </p>
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            style={{ width: '100%', background: '#059669', borderColor: '#059669', padding: '10px 14px', fontSize: 13, fontWeight: 700 }}
+                            disabled={gpsPaymentLoading}
+                            onClick={handlePayWithKidwayBalance}
+                          >
+                            {gpsPaymentLoading ? 'Procesando pago...' : `Pagar $${gpsPlanStatus.monthly_price.toLocaleString('es-CO')} COP con mi Saldo`}
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <p style={{ margin: '0 0 10px', fontSize: 11, color: '#b91c1c', lineHeight: 1.4 }}>
+                            Saldo insuficiente. Te faltan ${(gpsPlanStatus.monthly_price - (gpsPlanStatus.student_balance ?? 0)).toLocaleString('es-CO')} COP. Puedes pagar con Tarjeta/PSE en la pestaña de arriba o recargar la cuenta.
+                          </p>
+                          <Link to="/topups" className="btn-ghost" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', fontSize: 12, padding: '8px' }}>
+                            Recargar cuenta Kidway
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Pestaña 2: Pago en línea con Wompi (Tarjeta / PSE) */}
+                  {paymentMethodTab === 'WOMPI' && (
+                    <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 12 }}>
+                      <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: '#0f172a' }}>
+                        Pasarela en línea Wompi (Bancolombia)
+                      </p>
+                      <p style={{ margin: '0 0 12px', fontSize: 11, color: 'var(--color-text-muted)', lineHeight: 1.4 }}>
+                        Acepta Tarjeta de Crédito, Débito, PSE (cualquier banco) y Botón Bancolombia. Tu servicio se activará automáticamente al instante.
+                      </p>
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        style={{ width: '100%', padding: '10px 14px', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                        disabled={wompiCheckoutLoading}
+                        onClick={handlePayWithWompi}
+                      >
+                        {wompiCheckoutLoading ? 'Generando pasarela...' : `💳 Pagar $${(gpsPaymentType === 'DEVICE' ? gpsPlanStatus.device_price : gpsPlanStatus.monthly_price).toLocaleString('es-CO')} en Wompi`}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Pestaña 3: Transferencia tradicional con comprobante */}
+                  {paymentMethodTab === 'TRANSFER' && (
+                    <div>
+                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: 10, marginBottom: 10, fontSize: 11, color: '#166534', lineHeight: 1.4 }}>
+                        <strong>Cuentas autorizadas Kidway / BS Comunicaciones:</strong><br />
+                        • Nequi / Daviplata: <strong>310 000 0000</strong><br />
+                        • Bancolombia Ahorros: <strong>000-000000-00</strong>
+                      </div>
+                      <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--color-text-muted)' }}>
+                        Sube una foto o captura del comprobante de transferencia:
+                      </p>
+                      <input type="file" accept="image/*" onChange={handleGpsPaymentScreenshotChange} style={{ marginBottom: 8, fontSize: 12, width: '100%' }} />
+                      <input
+                        className="form-input" placeholder="O escribe el número de comprobante/aprobación"
+                        value={gpsPaymentRef} onChange={(e) => setGpsPaymentRef(e.target.value)}
+                        style={{ marginBottom: 10 }}
+                      />
+                      <button className="btn-primary" style={{ width: '100%', padding: '10px' }} disabled={gpsPaymentLoading} onClick={handleSubmitGpsPayment}>
+                        {gpsPaymentLoading ? 'Enviando comprobante...' : 'Enviar comprobante a validación'}
+                      </button>
+                    </div>
+                  )}
+
+                  {gpsPaymentError && (
+                    <p className="form-error" style={{ margin: '10px 0 0', fontSize: 12, textAlign: 'center' }}>
+                      {gpsPaymentError}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {gpsPaymentSubmitted && (
-                <p style={{ margin: '8px 0 0', fontSize: 12, color: '#059669', fontWeight: 600 }}>Comprobante enviado — será validado pronto ✓</p>
+                <p style={{ margin: '10px 0 0', fontSize: 12, color: '#059669', fontWeight: 600, textAlign: 'center' }}>
+                  Comprobante enviado — será validado pronto por administración ✓
+                </p>
               )}
             </div>
           )}

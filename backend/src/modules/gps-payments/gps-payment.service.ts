@@ -17,25 +17,24 @@ const paymentSelect = {
   parent: { select: { full_name: true, email: true } },
 } as const;
 
-async function assertGpsOnlyTrackerOwnedByParent(trackerId: string, actor: JwtPayload) {
+async function assertGpsTrackerOwnedByParent(trackerId: string, actor: JwtPayload) {
   const tracker = await prisma.gPSTracker.findUnique({
     where: { id: trackerId },
     select: {
-      id: true, subscription_paid_until: true,
+      id: true, subscription_paid_until: true, device_name: true,
       included_guardians: true, custom_monthly_price: true, custom_guardian_price: true, max_emergency_numbers: true,
-      student: { select: { id: true, parent_id: true, school: { select: { is_gps_only: true } } } },
+      student: { select: { id: true, parent_id: true, balance: true, full_name: true, school_id: true, school: { select: { is_gps_only: true } } } },
     },
   });
   if (!tracker) throw new AppError('Localizador no encontrado', 404);
-  if (tracker.student?.parent_id !== actor.sub) throw new AppError('No tienes permiso sobre este localizador', 403);
-  if (!tracker.student.school.is_gps_only) {
-    throw new AppError('Este cobro solo aplica para localizadores sin colegio afiliado', 400);
+  if (actor.role !== 'SUPER_ADMIN' && tracker.student?.parent_id !== actor.sub) {
+    throw new AppError('No tienes permiso sobre este localizador', 403);
   }
   return tracker;
 }
 
 export async function createGpsPaymentRequest(input: CreateGpsPaymentInput, actor: JwtPayload) {
-  const tracker = await assertGpsOnlyTrackerOwnedByParent(input.trackerId, actor);
+  const tracker = await assertGpsTrackerOwnedByParent(input.trackerId, actor);
   const globalPricing = await getGpsGlobalPricing();
 
   let amount = globalPricing.device_price;
@@ -93,9 +92,10 @@ export async function getGpsSubscriptionStatus(trackerId: string, actor: JwtPayl
   const tracker = await prisma.gPSTracker.findUnique({
     where: { id: trackerId },
     select: {
+      id: true, device_name: true,
       device_purchased: true, subscription_paid_until: true,
       included_guardians: true, custom_monthly_price: true, custom_guardian_price: true, max_emergency_numbers: true,
-      student: { select: { id: true, parent_id: true, school: { select: { is_gps_only: true } } } },
+      student: { select: { id: true, parent_id: true, balance: true, full_name: true, school: { select: { is_gps_only: true } } } },
     },
   });
   if (!tracker) throw new AppError('Localizador no encontrado', 404);
@@ -131,7 +131,102 @@ export async function getGpsSubscriptionStatus(trackerId: string, actor: JwtPayl
     extra_guardians_count: extraGuardians,
     monthly_price: totalMonthlyPrice,
     max_emergency_numbers: tracker.max_emergency_numbers ?? globalPricing.max_emergency_numbers,
+    student_id: tracker.student?.id ?? null,
+    student_name: tracker.student?.full_name ?? '',
+    student_balance: tracker.student ? Number(tracker.student.balance) : 0,
   };
+}
+
+export async function payGpsWithKidwayBalance(trackerId: string, actor: JwtPayload) {
+  const tracker = await assertGpsTrackerOwnedByParent(trackerId, actor);
+  if (!tracker.student) {
+    throw new AppError('El localizador no tiene un estudiante asociado para debitar saldo', 400);
+  }
+
+  const globalPricing = await getGpsGlobalPricing();
+  const basePrice = tracker.custom_monthly_price ? Number(tracker.custom_monthly_price) : globalPricing.monthly_price;
+  const extraPrice = tracker.custom_guardian_price ? Number(tracker.custom_guardian_price) : globalPricing.extra_guardian_price;
+  const includedCount = tracker.included_guardians ?? globalPricing.included_guardians;
+
+  const activeGuardiansCount = await prisma.studentGuardian.count({
+    where: { student_id: tracker.student.id, active: true },
+  });
+
+  const extraGuardians = Math.max(0, activeGuardiansCount - includedCount);
+  const totalAmount = basePrice + (extraGuardians * extraPrice);
+
+  const studentBalance = Number(tracker.student.balance);
+  if (studentBalance < totalAmount) {
+    throw new AppError(
+      `Saldo insuficiente en Kidway. Saldo actual: $${studentBalance.toLocaleString('es-CO')} COP. Se requieren: $${totalAmount.toLocaleString('es-CO')} COP. Por favor recarga la cuenta o usa Tarjeta / PSE.`,
+      400
+    );
+  }
+
+  return prisma.$transaction(async (tx) => {
+    // Débito atómico condicional para evitar saldo negativo por carreras
+    const updateResult = await tx.student.updateMany({
+      where: { id: tracker.student!.id, balance: { gte: totalAmount } },
+      data: { balance: { decrement: totalAmount } },
+    });
+
+    if (updateResult.count === 0) {
+      throw new AppError('El saldo disponible en Kidway cambió o es insuficiente para completar el pago', 400);
+    }
+
+    const updatedStudent = await tx.student.findUniqueOrThrow({
+      where: { id: tracker.student!.id },
+      select: { balance: true, school_id: true, full_name: true },
+    });
+
+    const now = new Date();
+    const baseDate = tracker.subscription_paid_until && tracker.subscription_paid_until > now
+      ? tracker.subscription_paid_until
+      : now;
+    const periodEnd = new Date(baseDate);
+    periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+    await tx.gPSTracker.update({
+      where: { id: tracker.id },
+      data: { subscription_paid_until: periodEnd },
+    });
+
+    const gatewayRef = `KIDWAY-BAL-${Date.now()}`;
+
+    await tx.transaction.create({
+      data: {
+        school_id: updatedStudent.school_id,
+        student_id: tracker.student!.id,
+        type: 'CHARGE',
+        amount: totalAmount,
+        balance_after: updatedStudent.balance,
+        payment_method: 'SALDO_KIDWAY',
+        gateway_ref: gatewayRef,
+      },
+    });
+
+    const paymentRequest = await tx.gPSPaymentRequest.create({
+      data: {
+        tracker_id: tracker.id,
+        parent_id: actor.sub,
+        type: 'MONTHLY_SUBSCRIPTION',
+        amount: totalAmount,
+        receipt_url: 'saldo_recargas_kidway',
+        payment_reference: gatewayRef,
+        status: 'APPROVED',
+        period_end: periodEnd,
+      },
+      select: paymentSelect,
+    });
+
+    return {
+      success: true,
+      message: '¡Mensualidad GPS pagada con éxito usando tu saldo Kidway!',
+      payment: paymentRequest,
+      new_balance: Number(updatedStudent.balance),
+      subscription_paid_until: periodEnd,
+    };
+  });
 }
 
 export async function processGpsPaymentRequest(id: string, action: 'APPROVED' | 'REJECTED', actor: JwtPayload) {

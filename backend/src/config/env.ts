@@ -33,6 +33,11 @@ const envSchema = z.object({
   // simplemente no encuentra localizadores (no rompe el arranque).
   GPS_PLATFORM_API_URL: z.string().default('https://gps.bscomunicaciones.com/api/v1'),
   GPS_PLATFORM_API_KEY: z.string().default(''),
+  // Pasarela Wompi (Bancolombia) — pagos con Tarjeta de Crédito, Débito y PSE
+  WOMPI_PUBLIC_KEY: z.string().default('pub_test_Q5yDA9xoKdePzhSGeVe9KStAOepIOfRF'),
+  WOMPI_PRIVATE_KEY: z.string().default(''),
+  WOMPI_EVENTS_SECRET: z.string().default(''),
+  WOMPI_INTEGRITY_SECRET: z.string().default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);

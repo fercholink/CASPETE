@@ -416,3 +416,116 @@ export async function sendGuardianInvitationEmail(
     `,
   });
 }
+
+export async function sendDemoInvitationEmail(
+  to: string,
+  contactName: string,
+  schoolName: string,
+  demoUrl: string,
+) {
+  if (env.RESEND_API_KEY === 'mock_key' || !env.RESEND_API_KEY || env.RESEND_API_KEY.startsWith('mock_')) {
+    console.log('\n🚀 [MOCK EMAIL] Invitación de demo enviada a:', to);
+    console.log('👤 Rector:', contactName);
+    console.log('🏫 Colegio:', schoolName);
+    console.log('🔗 Enlace demo:', demoUrl);
+    console.log('--------------------------------------------------\n');
+    return;
+  }
+
+  await resend.emails.send({
+    from: `Kidway <${env.EMAIL_FROM}>`,
+    to,
+    subject: `🎉 ¡Tu demo de Kidway está lista, ${contactName}!`,
+    html: `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Demo lista - Kidway</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f0;padding:40px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+        <!-- Header -->
+        <tr><td style="background-color:#1a4731;background:linear-gradient(135deg,#1a4731,#2d6a4f);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
+          <div style="font-size:36px;margin-bottom:8px;">🎒</div>
+          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:1px;">KIDWAY</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;text-transform:uppercase;margin-top:4px;">Loncheras Escolares Inteligentes</div>
+        </td></tr>
+
+        <!-- Body -->
+        <tr><td style="background:#ffffff;padding:40px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Celebration banner -->
+          <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px 24px;margin-bottom:28px;text-align:center;">
+            <div style="font-size:40px;margin-bottom:8px;">🚀</div>
+            <div style="font-size:18px;font-weight:700;color:#15803d;">¡Tu demo está activada!</div>
+            <div style="font-size:13px;color:#166534;margin-top:4px;">${schoolName}</div>
+          </div>
+
+          <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 12px;">Hola, ${contactName} 👋</h1>
+          <p style="color:#6b7280;font-size:15px;line-height:1.6;margin:0 0 20px;">
+            Estamos emocionados de tenerte en Kidway. Hemos activado tu acceso para que configures el sistema de tu colegio.<br/>
+            Con tu cuenta podrás agregar docentes, tenderos y gestionar todo desde el panel administrativo.
+          </p>
+
+          <!-- Steps -->
+          <div style="margin:0 0 28px;">
+            <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.05em;">¿Qué puedes hacer?</div>
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;">
+              <div style="font-size:18px;min-width:28px;">👨‍💼</div>
+              <div style="font-size:14px;color:#374151;line-height:1.5;">Crear tu cuenta de administrador del colegio</div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;">
+              <div style="font-size:18px;min-width:28px;">🍱</div>
+              <div style="font-size:14px;color:#374151;line-height:1.5;">Configurar las tiendas y el menú escolar</div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;">
+              <div style="font-size:18px;min-width:28px;">📚</div>
+              <div style="font-size:14px;color:#374151;line-height:1.5;">Agregar cursos, docentes y estudiantes</div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;">
+              <div style="font-size:18px;min-width:28px;">👨‍👩‍👦</div>
+              <div style="font-size:14px;color:#374151;line-height:1.5;">Los padres podrán registrarse y hacer pedidos</div>
+            </div>
+          </div>
+
+          <!-- CTA Button -->
+          <div style="text-align:center;margin:32px 0;">
+            <a href="${demoUrl}" style="display:inline-block;background-color:#1a4731;background:linear-gradient(135deg,#1a4731,#2d6a4f);color:#fff;font-size:16px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:12px;letter-spacing:0.3px;box-shadow:0 4px 14px rgba(26,71,49,0.4);">
+              🏫 Configurar mi colegio
+            </a>
+          </div>
+
+          <!-- TTL warning -->
+          <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px;padding:14px 16px;margin:24px 0;">
+            <p style="color:#92400e;font-size:13px;margin:0;">
+              ⏰ <strong>Este enlace expira en 7 días.</strong> Si tienes problemas para acceder, responde a este correo y te ayudamos.
+            </p>
+          </div>
+
+          <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:24px 0 0;">
+            Si el botón no funciona, copia y pega este enlace en tu navegador:<br/>
+            <a href="${demoUrl}" style="color:#1a4731;word-break:break-all;">${demoUrl}</a>
+          </p>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:24px 0;text-align:center;">
+          <p style="color:#9ca3af;font-size:12px;margin:0;">
+            © ${new Date().getFullYear()} Kidway · Loncheras Escolares Inteligentes<br/>
+            <a href="https://kidway.co" style="color:#1a4731;">kidway.co</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+    `,
+  });
+}

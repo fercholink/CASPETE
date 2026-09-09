@@ -48,6 +48,7 @@ import GPSTrackingPage from '../pages/GPSTrackingPage';
 import SchoolsRevenuePage from '../pages/SchoolsRevenuePage';
 import MonthlyMenuPage from '../pages/MonthlyMenuPage';
 import PensionAuditPage from '../pages/PensionAuditPage';
+import DemoSetupPage from '../pages/DemoSetupPage';
 
 export const router = createBrowserRouter([
   {
@@ -77,6 +78,8 @@ export const router = createBrowserRouter([
   { path: '/terms-of-service', element: <TermsOfServicePage /> },
   { path: '/eliminacion-datos', element: <DataDeletionPage /> },
   { path: '/data-deletion', element: <DataDeletionPage /> },
+  // ── Demo de onboarding para rector (enlace llegado por correo) ──────────
+  { path: '/demo-setup', element: <DemoSetupPage /> },
 
   {
     path: '/dashboard',

@@ -751,8 +751,17 @@ model SchoolLead {
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
+  // ── Demo de onboarding ─────────────────────────────────────────────────────
+  // Cuando el super admin activa la demo, se genera un token de invitación
+  // que se envía al rector para que configure su cuenta SCHOOL_ADMIN.
+  demo_token         String?   @db.Text             // SHA-256 del token de invitación
+  demo_token_expires DateTime?                      // TTL del token (7 días)
+  demo_activated_at  DateTime?                      // Cuándo se activó la demo
+  demo_school_id     String?   @db.Uuid             // Colegio creado durante el setup (FK opcional)
+
   @@index([status])
   @@index([created_at])
+  @@index([demo_token])
 }
 
 // ── Módulo Académico / Gestión Docente y Notas ─────────────────────────────

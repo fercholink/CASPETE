@@ -79,4 +79,34 @@ router.delete(
   },
 );
 
+// ── POST /api/leads/:id/activate-demo — SUPER_ADMIN: enviar correo de invitación al rector ──
+router.post(
+  '/:id/activate-demo',
+  authenticate,
+  requireRole(['SUPER_ADMIN']),
+  async (req, res, next) => {
+    try {
+      const id = req.params['id'] as string | undefined;
+      if (!id) { res.status(400).json({ success: false, error: 'ID requerido' }); return; }
+      const data = await leads.activateDemoForLead(id);
+      res.json({ success: true, data });
+    } catch (e) { next(e); }
+  },
+);
+
+// ── GET /api/leads/demo/verify — Público: verificar token de demo ───────────
+// El rector abre el enlace del correo → el frontend llama a este endpoint
+// para confirmar que el token es válido y obtener el nombre del colegio.
+router.get(
+  '/demo/verify',
+  async (req, res, next) => {
+    try {
+      const token = typeof req.query['token'] === 'string' ? req.query['token'] : null;
+      if (!token) { res.status(400).json({ success: false, error: 'Token requerido' }); return; }
+      const data = await leads.verifyDemoToken(token);
+      res.json({ success: true, data });
+    } catch (e) { next(e); }
+  },
+);
+
 export default router;

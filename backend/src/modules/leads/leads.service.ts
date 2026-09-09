@@ -1,5 +1,8 @@
+import { randomBytes, createHash } from 'crypto';
 import { AppError } from '../../middleware/error.middleware.js';
 import { prisma } from '../../lib/prisma.js';
+import { sendDemoInvitationEmail } from '../../lib/email.js';
+import { env } from '../../config/env.js';
 import type { CreateLeadInput, AdminCreateLeadInput, UpdateLeadInput } from './leads.schemas.js';
 
 const MIN_FILL_TIME_MS = 2500; // un humano no llena 6+ campos en menos de esto
@@ -93,4 +96,76 @@ export async function deleteLead(id: string) {
   const existing = await prisma.schoolLead.findUnique({ where: { id } });
   if (!existing) throw new AppError('Lead no encontrado', 404);
   await prisma.schoolLead.delete({ where: { id } });
+}
+
+const DEMO_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
+
+/**
+ * Activa la demo para un lead:
+ * 1. Genera un token aleatorio y lo guarda hasheado en la BD
+ * 2. Cambia el status del lead a DEMO
+ * 3. Envía un correo al rector con el enlace de configuración
+ *
+ * Idempotente: si el lead ya tiene demo activa y no expiró, re-envía el correo.
+ */
+export async function activateDemoForLead(id: string) {
+  const lead = await prisma.schoolLead.findUnique({ where: { id } });
+  if (!lead) throw new AppError('Lead no encontrado', 404);
+  if (lead.status === 'CLOSED') throw new AppError('No se puede activar demo para un lead cerrado', 400);
+
+  // Generar token raw (lo que va en el correo) y su hash (lo que se guarda en BD)
+  const rawToken = randomBytes(40).toString('hex');
+  const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+  const tokenExpires = new Date(Date.now() + DEMO_TOKEN_TTL_MS);
+
+  const updated = await prisma.schoolLead.update({
+    where: { id },
+    data: {
+      status: 'DEMO',
+      demo_token: tokenHash,
+      demo_token_expires: tokenExpires,
+      demo_activated_at: new Date(),
+    },
+  });
+
+  const baseUrl = (env.FRONTEND_URL.split(',')[0] ?? 'https://kidway.co').trim();
+  const demoUrl = `${baseUrl}/demo-setup?token=${rawToken}`;
+
+  await sendDemoInvitationEmail(
+    lead.contact_email,
+    lead.contact_name,
+    lead.school_name,
+    demoUrl,
+  );
+
+  return updated;
+}
+
+/**
+ * Verifica un token de demo y retorna la info del lead (sin datos sensibles).
+ * Usado por la página pública /demo-setup antes de mostrar el formulario.
+ */
+export async function verifyDemoToken(rawToken: string) {
+  const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+
+  const lead = await prisma.schoolLead.findFirst({
+    where: {
+      demo_token: tokenHash,
+      demo_token_expires: { gt: new Date() },
+    },
+    select: {
+      id: true,
+      school_name: true,
+      city: true,
+      contact_name: true,
+      contact_email: true,
+      demo_school_id: true,
+    },
+  });
+
+  if (!lead) {
+    throw new AppError('El enlace de invitación es inválido o ya expiró', 400);
+  }
+
+  return lead;
 }

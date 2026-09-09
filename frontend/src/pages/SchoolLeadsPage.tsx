@@ -69,6 +69,8 @@ export default function SchoolLeadsPage() {
   const [newStatus, setNewStatus] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [activatingDemo, setActivatingDemo] = useState(false);
+  const [demoSuccess, setDemoSuccess] = useState(false);
 
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState<NewLeadForm>(emptyForm());
@@ -91,6 +93,24 @@ export default function SchoolLeadsPage() {
     setSelected(lead);
     setNotes(lead.notes ?? '');
     setNewStatus(lead.status);
+    setDemoSuccess(false);
+  }
+
+  async function activateDemo(id: string) {
+    if (!confirm('¿Activar la demo para este colegio? Se enviará un correo al rector con el enlace de configuración.')) return;
+    setActivatingDemo(true);
+    setDemoSuccess(false);
+    try {
+      await apiClient.post(`/leads/${id}/activate-demo`, {});
+      setDemoSuccess(true);
+      await fetchLeads();
+      // Actualizar el selected para reflejar el nuevo status
+      setSelected((prev) => prev ? { ...prev, status: 'DEMO' } : null);
+    } catch (err: unknown) {
+      alert((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Error al activar la demo');
+    } finally {
+      setActivatingDemo(false);
+    }
   }
 
   async function saveLead() {
@@ -298,17 +318,49 @@ export default function SchoolLeadsPage() {
               <textarea className="form-input" rows={4} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Llamar el lunes, piden demo el jueves..." style={{ fontSize: 14, resize: 'vertical' }} />
             </div>
 
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn-primary" disabled={saving} onClick={saveLead} style={{ flex: 1 }}>
-                {saving ? 'Guardando...' : '💾 Guardar cambios'}
-              </button>
-              <button
-                disabled={deleting}
-                onClick={() => void removeLead(selected.id)}
-                style={{ padding: '0 18px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)', color: '#dc2626', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
-              >
-                🗑 Eliminar
-              </button>
+            <div style={{ display: 'flex', gap: 10, flexDirection: 'column' }}>
+              {/* Botón de activación de demo */}
+              {selected.status !== 'DEMO' && selected.status !== 'CLOSED' && (
+                <button
+                  id={`activate-demo-${selected.id}`}
+                  className="btn-primary"
+                  disabled={activatingDemo}
+                  onClick={() => void activateDemo(selected.id)}
+                  style={{ width: '100%', background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', boxShadow: '0 4px 14px rgba(124,58,237,0.3)' }}
+                >
+                  {activatingDemo ? '📨 Enviando correo...' : '🚀 Activar Demo — Enviar correo al rector'}
+                </button>
+              )}
+              {demoSuccess && (
+                <div style={{ background: 'rgba(22,197,94,0.1)', border: '1px solid rgba(22,197,94,0.3)', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#15803d', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  ✅ Correo enviado exitosamente. El rector recibirá el enlace en su bandeja de entrada.
+                </div>
+              )}
+              {selected.status === 'DEMO' && (
+                <div style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#7c3aed', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  🚀 Demo ya activada. Puedes volver a enviar el correo si el rector no lo recibió.
+                  <button
+                    className="btn-ghost"
+                    disabled={activatingDemo}
+                    onClick={() => void activateDemo(selected.id)}
+                    style={{ fontSize: 12, padding: '4px 10px', marginLeft: 'auto', whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    {activatingDemo ? '...' : '📨 Reenviar'}
+                  </button>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn-primary" disabled={saving} onClick={() => void saveLead()} style={{ flex: 1 }}>
+                  {saving ? 'Guardando...' : '💾 Guardar cambios'}
+                </button>
+                <button
+                  disabled={deleting}
+                  onClick={() => void removeLead(selected.id)}
+                  style={{ padding: '0 18px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)', color: '#dc2626', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
+                >
+                  🗑 Eliminar
+                </button>
+              </div>
             </div>
           </div>
         </div>

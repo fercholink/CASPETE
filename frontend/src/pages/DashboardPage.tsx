@@ -164,13 +164,18 @@ const QUICK_LINKS: Partial<Record<string, { to: string; label: string; icon: str
 function SuperAdminDashboard() {
   const [global, setGlobal] = useState<GlobalStats | null>(null);
   const [admin, setAdmin] = useState<AdminSummary | null>(null);
+  const [leadsNew, setLeadsNew]   = useState<number>(0);
+  const [leadsDemo, setLeadsDemo] = useState<number>(0);
 
   const fetchAll = useCallback(() => {
     apiClient.get<{ data: GlobalStats }>('/reports/global').then(r => setGlobal(r.data.data)).catch(() => {});
     apiClient.get<{ data: AdminSummary }>('/reports/summary').then(r => setAdmin(r.data.data)).catch(() => {});
+    // Contar solicitudes NEW y DEMO para mostrar badge en dashboard
+    apiClient.get<{ total: number }>('/leads?status=NEW&limit=1').then(r => setLeadsNew(r.data.total)).catch(() => {});
+    apiClient.get<{ total: number }>('/leads?status=DEMO&limit=1').then(r => setLeadsDemo(r.data.total)).catch(() => {});
   }, []);
 
-  useEffect(() => { fetchAll(); const i = setInterval(fetchAll, 15_000); return () => clearInterval(i); }, [fetchAll]);
+  useEffect(() => { fetchAll(); const i = setInterval(fetchAll, 30_000); return () => clearInterval(i); }, [fetchAll]);
 
   return (
     <>
@@ -215,6 +220,36 @@ function SuperAdminDashboard() {
             <StatCard label="Confirmados"       value={admin.orders_confirmed}       icon="✅" color="#6366f1"  to="/orders?status=CONFIRMED" />
             <StatCard label="Entregados"        value={admin.orders_delivered_today} icon="🚀" color="#059669" to="/orders?status=DELIVERED" />
           </div>
+
+          {/* ── Tarjeta Solicitudes de Colegios ── */}
+          <Link to="/school-leads" style={{ textDecoration: 'none', display: 'block', marginBottom: 12 }}>
+            <div className="user-card" style={{ padding: '16px 20px', marginBottom: 0, background: 'linear-gradient(135deg, #1e1b4b 0%, #3730a3 100%)', border: 'none', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(55,48,163,0.35)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <span style={{ fontSize: 32, flexShrink: 0 }}>📥</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#fff' }}>Solicitudes de Colegios</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>
+                    Colegios interesados desde la landing · Activar demo · Onboarding
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  {leadsNew > 0 && (
+                    <span style={{ background: '#ef4444', color: '#fff', fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20, minWidth: 24, textAlign: 'center' }}>
+                      {leadsNew} nueva{leadsNew !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {leadsDemo > 0 && (
+                    <span style={{ background: '#7c3aed', color: '#fff', fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20, minWidth: 24, textAlign: 'center' }}>
+                      {leadsDemo} demo{leadsDemo !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18 }}>→</span>
+                </div>
+              </div>
+            </div>
+          </Link>
 
           {/* Tarjeta Ley 2120 */}
           <Link to="/ley2120" style={{ textDecoration: 'none', display: 'block', marginBottom: 20 }}>

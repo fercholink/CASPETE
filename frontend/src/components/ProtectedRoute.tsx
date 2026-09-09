@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: Props) {
-  const { user, isLoading } = useAuth();
+  const { user, token, isLoading } = useAuth();
 
   // Registrar notificaciones push para padres
   usePushNotification();
@@ -19,6 +19,27 @@ export function ProtectedRoute({ children, allowedRoles }: Props) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4rem' }}>
         Cargando...
+      </div>
+    );
+  }
+
+  // Hay token guardado pero no se pudo verificar (backend no disponible).
+  // No redirigir al login — mostrar aviso de error de red.
+  if (!user && token) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 12, textAlign: 'center', padding: 24 }}>
+        <span style={{ fontSize: 40 }}>📡</span>
+        <p style={{ fontWeight: 600, fontSize: 16, margin: 0 }}>No se pudo conectar con el servidor</p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 14, margin: 0 }}>
+          Tu sesión sigue activa. Recarga la página cuando el servidor esté disponible.
+        </p>
+        <button
+          className="btn-primary"
+          style={{ marginTop: 8 }}
+          onClick={() => window.location.reload()}
+        >
+          🔄 Recargar
+        </button>
       </div>
     );
   }

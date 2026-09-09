@@ -52,8 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Intenta cargar el usuario. El interceptor del apiClient ya reintenta
     // automáticamente con el refresh token si el access token expiró.
-    // Si el interceptor refresca exitosamente, /auth/me devuelve 200 y
-    // actualizamos el token guardado (el interceptor ya lo guardó en localStorage).
     apiClient
       .get<{ success: true; data: AuthUser }>('/auth/me')
       .then((res) => {
@@ -61,10 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentToken = localStorage.getItem('kidway_token') ?? token;
         setState({ user: res.data.data, token: currentToken, isLoading: false });
       })
-      .catch(async () => {
-        // El interceptor ya intentó el refresh. Si llegamos aquí, el refresh
-        // también falló. Pero hacemos un intento explícito adicional por si
-        // hay una condición de carrera entre el interceptor y este catch.
+      .catch(async (err: unknown) => {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        const isNetworkError = !status; // sin status = error de red / backend caído
+
+        if (isNetworkError) {
+          // Backend no disponible temporalmente — NO borrar tokens.
+          // Simplemente marcar isLoading=false sin usuario; ProtectedRoute
+          // redirigirá a login solo si no hay tokens guardados.
+          // Cuando el backend vuelva, el usuario solo tiene que recargar.
+          setState({ user: null, token, isLoading: false });
+          return;
+        }
+
+        // Error 401 real del servidor → intentar refresh
         const refreshToken = localStorage.getItem('kidway_refresh_token');
         if (!refreshToken) {
           localStorage.removeItem('kidway_token');
@@ -82,14 +90,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem('kidway_token', newToken);
           localStorage.setItem('kidway_refresh_token', newRefreshToken);
 
-          // Reintentar /auth/me con el nuevo token
           const meRes = await apiClient.get<{ success: true; data: AuthUser }>('/auth/me');
           setState({ user: meRes.data.data, token: newToken, isLoading: false });
-        } catch {
-          // Refresh definitivamente expirado — limpiar sesión
-          localStorage.removeItem('kidway_token');
-          localStorage.removeItem('kidway_refresh_token');
-          setState({ user: null, token: null, isLoading: false });
+        } catch (refreshErr: unknown) {
+          const refreshStatus = (refreshErr as { response?: { status?: number } })?.response?.status;
+          if (!refreshStatus) {
+            // También es error de red en el refresh — conservar tokens
+            setState({ user: null, token, isLoading: false });
+          } else {
+            // Refresh rechazado por el servidor (401) — sesión expirada definitivamente
+            localStorage.removeItem('kidway_token');
+            localStorage.removeItem('kidway_refresh_token');
+            setState({ user: null, token: null, isLoading: false });
+          }
         }
       });
   }, []);

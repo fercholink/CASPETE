@@ -96,15 +96,14 @@ async function assertParentOwnsStudent(
 
   // Permitir lectura a familiares activos del Círculo de Confianza
   if (requiredPermission && actor.role === 'PARENT') {
-    const guardianShare = await prisma.studentGuardian.findUnique({
+    const guardianShare = await prisma.studentGuardian.findFirst({
       where: {
-        student_id_guardian_id: {
-          student_id: studentId,
-          guardian_id: actor.sub,
-        },
+        student_id: studentId,
+        guardian_id: actor.sub,
+        active: true,
       },
       select: { active: true, can_view_live: true, can_view_history: true },
-    });
+    }).catch(() => null);
 
     if (guardianShare && guardianShare.active) {
       if (requiredPermission === 'live' && guardianShare.can_view_live) return student;

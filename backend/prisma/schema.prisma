@@ -1006,4 +1006,13 @@ model StudentGuardian {
   @@index([student_id])
 }
 
+model SystemSetting {
+  key         String   @id @db.VarChar(100)
+  value       String   @db.Text
+  description String?  @db.Text
+  updated_at  DateTime @default(now()) @updatedAt
+
+  @@map("SystemSetting")
+}
+
 

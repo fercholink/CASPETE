@@ -51,6 +51,13 @@ export default function FuncionalidadesPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
+  const [gpsPricing, setGpsPricing] = useState({
+    device_price: 120000,
+    monthly_price: 30000,
+    extra_guardian_price: 5000,
+    included_guardians: 1,
+    max_emergency_numbers: 3,
+  });
 
   // Ancla directa desde el menú ("Precios") — baja suave hasta la sección al cargar
   useEffect(() => {
@@ -58,6 +65,20 @@ export default function FuncionalidadesPage() {
       document.getElementById('precios')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [location.hash]);
+
+  // Cargar tarifas públicas actualizadas por el Master Admin
+  useEffect(() => {
+    const baseUrl = import.meta.env.VITE_API_URL || '';
+    const url = baseUrl.endsWith('/api') ? `${baseUrl}/gps/pricing` : `${baseUrl}/api/gps/pricing`;
+    fetch(url)
+      .then((r) => r.json())
+      .then((json: { success: boolean; data?: any }) => {
+        if (json?.data) {
+          setGpsPricing(json.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Galería administrable desde el panel SUPER_ADMIN — sin auth, pública
   useEffect(() => {
@@ -255,7 +276,7 @@ export default function FuncionalidadesPage() {
                   <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Localizador GPS</h4>
                   <p className="text-xs text-[#61494c] font-semibold mt-1">Pago único, es tuyo para siempre.</p>
                   <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
-                    $120.000 <span className="text-sm font-bold text-[#61494c]">COP</span>
+                    ${Number(gpsPricing.device_price).toLocaleString('es-CO')} <span className="text-sm font-bold text-[#61494c]">COP</span>
                   </p>
                 </div>
                 <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
@@ -273,14 +294,14 @@ export default function FuncionalidadesPage() {
                   <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Plan Mensual Todo Incluido</h4>
                   <p className="text-xs text-[#61494c] font-semibold mt-1">Ubicación, llamadas y familia conectada.</p>
                   <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
-                    $30.000 <span className="text-sm font-bold text-[#61494c]">COP / mes</span>
+                    ${Number(gpsPricing.monthly_price).toLocaleString('es-CO')} <span className="text-sm font-bold text-[#61494c]">COP / mes</span>
                   </p>
                 </div>
                 <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Llamadas ilimitadas a los 3 números autorizados</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Llamadas ilimitadas a los {gpsPricing.max_emergency_numbers} números autorizados</span></li>
                   <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Geolocalización en tiempo real y geocercas</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span><strong>1 familiar adicional incluido ($0 extra)</strong> para mamá o papá</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Familiares adicionales a solo +$5.000 COP/mes c/u</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span><strong>{gpsPricing.included_guardians} familiar adicional incluido ($0 extra)</strong> para mamá o papá</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Familiares adicionales a solo +${Number(gpsPricing.extra_guardian_price).toLocaleString('es-CO')} COP/mes c/u</span></li>
                   <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Sin permanencia — pagas mes a mes</span></li>
                 </ul>
               </div>

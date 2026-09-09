@@ -15,7 +15,7 @@ export function useGpsOrderModal() {
 interface PaymentMethodField { label: string; value: string }
 interface PaymentMethodInfo { id: string; key: string; label: string; icon: string; color: string; fields: PaymentMethodField[] }
 
-const DEVICE_PRICE = 120000;
+const DEFAULT_DEVICE_PRICE = 120000;
 
 const EMPTY_FORM = {
   contact_name: '',
@@ -64,6 +64,7 @@ function apiBase() {
 export function GpsOrderModalProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
+  const [devicePrice, setDevicePrice] = useState(DEFAULT_DEVICE_PRICE);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodInfo[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodInfo | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -85,6 +86,12 @@ export function GpsOrderModalProvider({ children }: { children: React.ReactNode 
     fetch(`${apiBase()}/payment-methods/public`)
       .then((r) => r.json())
       .then((json: { success: boolean; data?: PaymentMethodInfo[] }) => setPaymentMethods(json.data ?? []))
+      .catch(() => {});
+    fetch(`${apiBase()}/gps/pricing`)
+      .then((r) => r.json())
+      .then((json: { success: boolean; data?: { device_price?: number } }) => {
+        if (json?.data?.device_price) setDevicePrice(json.data.device_price);
+      })
       .catch(() => {});
   }
 
@@ -164,7 +171,7 @@ export function GpsOrderModalProvider({ children }: { children: React.ReactNode 
                       <span>📍 Comprar el Localizador</span>
                     </h3>
                     <p className="text-xs text-[#8c6d71] mt-1 font-mono font-bold">
-                      Pago único: <span className="text-emerald-700 font-extrabold">${DEVICE_PRICE.toLocaleString('es-CO')} COP</span>
+                      Pago único: <span className="text-emerald-700 font-extrabold">${devicePrice.toLocaleString('es-CO')} COP</span>
                     </p>
                   </div>
                   <button

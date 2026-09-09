@@ -4,6 +4,7 @@ import { AppError } from '../../middleware/error.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { EnrollGuardianInput, UpdateGuardianInput, CustomPlanInput } from './guardian.schemas.js';
 import { GPS_MONTHLY_PRICE, GPS_EXTRA_GUARDIAN_PRICE } from '../gps-payments/gps-payment.service.js';
+import { getGpsGlobalPricing } from './gps-pricing.service.js';
 import { sendGuardianInvitationEmail } from '../../lib/email.js';
 import { env } from '../../config/env.js';
 
@@ -96,6 +97,7 @@ async function assertParentOwnsStudent(studentId: string, actor: JwtPayload) {
 export async function getStudentPlanSummary(studentId: string, actor: JwtPayload) {
   await assertParentOwnsStudent(studentId, actor);
   await ensureGuardianTablesExist();
+  const globalPricing = await getGpsGlobalPricing();
 
   try {
     const tracker = await prisma.gPSTracker.findUnique({
@@ -112,10 +114,10 @@ export async function getStudentPlanSummary(studentId: string, actor: JwtPayload
       },
     });
 
-    const basePrice = tracker?.custom_monthly_price ? Number(tracker.custom_monthly_price) : GPS_MONTHLY_PRICE;
-    const extraPrice = tracker?.custom_guardian_price ? Number(tracker.custom_guardian_price) : GPS_EXTRA_GUARDIAN_PRICE;
-    const includedCount = tracker?.included_guardians ?? 1;
-    const maxEmergencyNumbers = tracker?.max_emergency_numbers ?? 3;
+    const basePrice = tracker?.custom_monthly_price ? Number(tracker.custom_monthly_price) : globalPricing.monthly_price;
+    const extraPrice = tracker?.custom_guardian_price ? Number(tracker.custom_guardian_price) : globalPricing.extra_guardian_price;
+    const includedCount = tracker?.included_guardians ?? globalPricing.included_guardians;
+    const maxEmergencyNumbers = tracker?.max_emergency_numbers ?? globalPricing.max_emergency_numbers;
 
     const activeGuardians = await prisma.studentGuardian.count({
       where: { student_id: studentId, active: true },
@@ -141,13 +143,13 @@ export async function getStudentPlanSummary(studentId: string, actor: JwtPayload
     return {
       has_tracker: true,
       tracker_id: null,
-      base_monthly_price: GPS_MONTHLY_PRICE,
-      extra_guardian_price: GPS_EXTRA_GUARDIAN_PRICE,
-      included_guardians: 1,
-      max_emergency_numbers: 3,
+      base_monthly_price: globalPricing.monthly_price,
+      extra_guardian_price: globalPricing.extra_guardian_price,
+      included_guardians: globalPricing.included_guardians,
+      max_emergency_numbers: globalPricing.max_emergency_numbers,
       active_guardians_count: 0,
       extra_guardians_count: 0,
-      total_monthly_price: GPS_MONTHLY_PRICE,
+      total_monthly_price: globalPricing.monthly_price,
       subscription_paid_until: null,
     };
   }
@@ -220,18 +222,19 @@ export async function enrollGuardian(studentId: string, input: EnrollGuardianInp
   }
 
   // 3. Evaluar cupo incluido vs adicional
+  const globalPricing = await getGpsGlobalPricing();
   const tracker = await prisma.gPSTracker.findUnique({
     where: { student_id: studentId },
     select: { included_guardians: true, custom_guardian_price: true },
   });
 
-  const includedLimit = tracker?.included_guardians ?? 1;
+  const includedLimit = tracker?.included_guardians ?? globalPricing.included_guardians;
   const activeCount = await prisma.studentGuardian.count({
     where: { student_id: studentId, active: true },
   }).catch(() => 0);
 
   const isIncluded = activeCount < includedLimit;
-  const extraPrice = isIncluded ? 0 : (tracker?.custom_guardian_price ? Number(tracker.custom_guardian_price) : GPS_EXTRA_GUARDIAN_PRICE);
+  const extraPrice = isIncluded ? 0 : (tracker?.custom_guardian_price ? Number(tracker.custom_guardian_price) : globalPricing.extra_guardian_price);
 
   const inviteToken = randomBytes(24).toString('hex');
   const baseUrl = (env.FRONTEND_URL.split(',')[0] ?? 'http://localhost:5173').trim();
@@ -453,12 +456,13 @@ export async function deleteGuardian(studentId: string, guardianRecordId: string
   });
 
   // Re-balancear cupos incluidos para los que queden activos
+  const globalPricing = await getGpsGlobalPricing();
   const tracker = await prisma.gPSTracker.findUnique({
     where: { student_id: studentId },
     select: { included_guardians: true, custom_guardian_price: true },
   });
-  const includedLimit = tracker?.included_guardians ?? 1;
-  const extraPrice = tracker?.custom_guardian_price ? Number(tracker.custom_guardian_price) : GPS_EXTRA_GUARDIAN_PRICE;
+  const includedLimit = tracker?.included_guardians ?? globalPricing.included_guardians;
+  const extraPrice = tracker?.custom_guardian_price ? Number(tracker.custom_guardian_price) : globalPricing.extra_guardian_price;
 
   const remaining = await prisma.studentGuardian.findMany({
     where: { student_id: studentId, active: true },

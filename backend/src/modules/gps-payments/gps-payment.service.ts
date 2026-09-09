@@ -2,8 +2,9 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { CreateGpsPaymentInput } from './gps-payment.schemas.js';
+import { getGpsGlobalPricing } from '../gps/gps-pricing.service.js';
 
-// Plan "solo localizar y llamar" (School.is_gps_only) y servicios GPS de Kidway
+// Plan "solo localizar y llamar" (School.is_gps_only) y servicios GPS de Kidway (valores fallback)
 export const GPS_DEVICE_PRICE = 120000;
 export const GPS_MONTHLY_PRICE = 30000;
 export const GPS_EXTRA_GUARDIAN_PRICE = 5000;
@@ -35,12 +36,13 @@ async function assertGpsOnlyTrackerOwnedByParent(trackerId: string, actor: JwtPa
 
 export async function createGpsPaymentRequest(input: CreateGpsPaymentInput, actor: JwtPayload) {
   const tracker = await assertGpsOnlyTrackerOwnedByParent(input.trackerId, actor);
+  const globalPricing = await getGpsGlobalPricing();
 
-  let amount = GPS_DEVICE_PRICE;
+  let amount = globalPricing.device_price;
   if (input.type === 'MONTHLY_SUBSCRIPTION') {
-    const basePrice = tracker.custom_monthly_price ? Number(tracker.custom_monthly_price) : GPS_MONTHLY_PRICE;
-    const extraPrice = tracker.custom_guardian_price ? Number(tracker.custom_guardian_price) : GPS_EXTRA_GUARDIAN_PRICE;
-    const includedCount = tracker.included_guardians ?? 1;
+    const basePrice = tracker.custom_monthly_price ? Number(tracker.custom_monthly_price) : globalPricing.monthly_price;
+    const extraPrice = tracker.custom_guardian_price ? Number(tracker.custom_guardian_price) : globalPricing.extra_guardian_price;
+    const includedCount = tracker.included_guardians ?? globalPricing.included_guardians;
 
     const activeGuardiansCount = tracker.student?.id
       ? await prisma.studentGuardian.count({ where: { student_id: tracker.student.id, active: true } })
@@ -103,10 +105,11 @@ export async function getGpsSubscriptionStatus(trackerId: string, actor: JwtPayl
 
   const now = new Date();
   const subscriptionActive = Boolean(tracker.subscription_paid_until && tracker.subscription_paid_until > now);
+  const globalPricing = await getGpsGlobalPricing();
 
-  const basePrice = tracker.custom_monthly_price ? Number(tracker.custom_monthly_price) : GPS_MONTHLY_PRICE;
-  const extraPrice = tracker.custom_guardian_price ? Number(tracker.custom_guardian_price) : GPS_EXTRA_GUARDIAN_PRICE;
-  const includedCount = tracker.included_guardians ?? 1;
+  const basePrice = tracker.custom_monthly_price ? Number(tracker.custom_monthly_price) : globalPricing.monthly_price;
+  const extraPrice = tracker.custom_guardian_price ? Number(tracker.custom_guardian_price) : globalPricing.extra_guardian_price;
+  const includedCount = tracker.included_guardians ?? globalPricing.included_guardians;
 
   const activeGuardiansCount = tracker.student?.id
     ? await prisma.studentGuardian.count({ where: { student_id: tracker.student.id, active: true } })
@@ -120,14 +123,14 @@ export async function getGpsSubscriptionStatus(trackerId: string, actor: JwtPayl
     device_purchased: tracker.device_purchased,
     subscription_paid_until: tracker.subscription_paid_until,
     subscription_active: subscriptionActive,
-    device_price: GPS_DEVICE_PRICE,
+    device_price: globalPricing.device_price,
     base_monthly_price: basePrice,
     extra_guardian_price: extraPrice,
     included_guardians: includedCount,
     active_guardians_count: activeGuardiansCount,
     extra_guardians_count: extraGuardians,
     monthly_price: totalMonthlyPrice,
-    max_emergency_numbers: tracker.max_emergency_numbers ?? 3,
+    max_emergency_numbers: tracker.max_emergency_numbers ?? globalPricing.max_emergency_numbers,
   };
 }
 

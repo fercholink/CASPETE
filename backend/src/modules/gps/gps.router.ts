@@ -1,18 +1,25 @@
 import { Router } from 'express';
 import * as gpsController from './gps.controller.js';
 import * as guardianController from './guardian.controller.js';
+import * as gpsPricingController from './gps-pricing.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
 
 const router = Router();
+
+// Endpoint público para consultar tarifas vigentes de GPS (usado por Landing, compras y app)
+router.get('/pricing', gpsPricingController.getPricing);
+
 router.use(authenticate);
 
 // Acceso exclusivo del padre dueño del estudiante (o SUPER_ADMIN para soporte, con auditoría).
 // SCHOOL_ADMIN, VENDOR y TEACHER no tienen ningún endpoint de ubicación GPS.
 const gpsRoles = requireRole('PARENT', 'SUPER_ADMIN');
-// Configuración avanzada del dispositivo (LBS, sobrevelocidad, vibración) — solo SUPER_ADMIN,
-// no es algo que un padre normalmente necesite tocar (ver gps.service.ts).
+// Configuración avanzada y administración de precios — solo SUPER_ADMIN
 const superAdminOnly = requireRole('SUPER_ADMIN');
+
+// Modificar tarifas globales de GPS — solo Master / SUPER_ADMIN
+router.put('/pricing', superAdminOnly, gpsPricingController.updatePricing);
 
 // ── Círculo Familiar y Estudiantes Compartidos ──────────────────────────────
 router.get('/shared-students', gpsRoles, guardianController.getMySharedStudents);

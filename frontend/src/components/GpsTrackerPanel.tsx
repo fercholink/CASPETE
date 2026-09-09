@@ -103,6 +103,8 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
   const [paymentMethodTab, setPaymentMethodTab] = useState<'BALANCE' | 'WOMPI' | 'TRANSFER'>('BALANCE');
   const [balancePaySuccessMsg, setBalancePaySuccessMsg] = useState('');
   const [wompiCheckoutLoading, setWompiCheckoutLoading] = useState(false);
+  const [togglingCombo, setTogglingCombo] = useState(false);
+  const [comboMsg, setComboMsg] = useState('');
   const [gpsPaymentScreenshot, setGpsPaymentScreenshot] = useState('');
   const [gpsPaymentRef, setGpsPaymentRef] = useState('');
   const [gpsPaymentLoading, setGpsPaymentLoading] = useState(false);
@@ -273,6 +275,27 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
       setGpsPaymentError(err.response?.data?.message || err.response?.data?.error || 'Error al iniciar pasarela Wompi');
     } finally {
       setWompiCheckoutLoading(false);
+    }
+  }
+
+  async function handleToggleBsCombo() {
+    if (!gpsTracker || !gpsPlanStatus) return;
+    setTogglingCombo(true);
+    setComboMsg('');
+    const isCurrentlyCombo = (gpsPlanStatus.base_monthly_price === 15000);
+    const newPrice = isCurrentlyCombo ? null : 15000;
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/custom-plan`, {
+        custom_monthly_price: newPrice,
+      });
+      const r2 = await apiClient.get<{ data: GpsPlanStatus }>(`/gps-payments/trackers/${gpsTracker.id}/status`);
+      setGpsPlanStatus(r2.data.data);
+      setComboMsg(newPrice ? '✓ Combo BS Móvil ($15.000/mes) activado' : '✓ Tarifa estándar restablecida ($30.000/mes)');
+      setTimeout(() => setComboMsg(''), 3000);
+    } catch (err: any) {
+      setComboMsg(err.response?.data?.message || 'Error al cambiar tarifa');
+    } finally {
+      setTogglingCombo(false);
     }
   }
 
@@ -662,6 +685,46 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
                 </button>
               </div>
 
+              {/* Distintivo de tarifa Combo BS Móvil o banner promocional */}
+              {gpsPlanStatus.base_monthly_price === 15000 ? (
+                <div style={{ marginTop: 10, padding: '8px 10px', borderRadius: 8, background: '#ecfdf5', border: '1px solid #10b981', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 14 }}>🔥</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#065f46' }}>
+                    Tarifa Combo BS Móvil Activa ($15.000 COP/mes). ¡Ahorras el 50% de la mensualidad!
+                  </span>
+                </div>
+              ) : (
+                <div style={{
+                  marginTop: 10, padding: 12, borderRadius: 10,
+                  background: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)',
+                  color: '#fff', border: '1px solid #10b981',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 10, background: '#f59e0b', color: '#0f172a', fontWeight: 800, padding: '2px 6px', borderRadius: 999, textTransform: 'uppercase' }}>
+                      🔥 Oferta Combo BS Móvil
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#fde047' }}>
+                      ¡Paga solo $15.000 COP/mes!
+                    </span>
+                  </div>
+                  <p style={{ margin: '0 0 8px', fontSize: 11, lineHeight: 1.4, color: '#ecfdf5' }}>
+                    Pasa tu línea a <strong>BS Comunicaciones</strong> o adquiere un plan móvil (minutos ilimitados + datos + WhatsApp) y la mensualidad de este GPS te queda en <strong>tan solo $15.000 COP</strong>.
+                  </p>
+                  <a
+                    href="https://wa.me/573100000000?text=Hola%20BS%20Comunicaciones%2C%20tengo%20el%20GPS%20Kidway%20y%20quiero%20el%20Combo%20Plan%20M%C3%B3vil%20para%20pagar%20solo%20%2415.000%20mensuales"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      background: '#f59e0b', color: '#0f172a', fontWeight: 700,
+                      fontSize: 11, padding: '5px 12px', borderRadius: 6, textDecoration: 'none',
+                    }}
+                  >
+                    📱 Solicitar Combo en WhatsApp
+                  </a>
+                </div>
+              )}
+
               {!gpsPlanStatus.subscription_active && (
                 <p style={{ margin: '8px 0 0', fontSize: 11, color: '#991b1b', lineHeight: 1.4 }}>
                   ⚠️ El rastreo GPS en tiempo real y las llamadas están en pausa hasta completar la mensualidad.
@@ -953,6 +1016,39 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
                   {savingAdvanced ? 'Guardando...' : 'Guardar configuración avanzada'}
                 </button>
               </form>
+
+              {/* Control de Tarifa Combo BS Móvil para Super Admin */}
+              <div style={{ marginBottom: 20, padding: 14, borderRadius: 12, background: '#f8fafc', border: '1px solid var(--color-border)' }}>
+                <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
+                  ⭐ Tarifa Combo Familia Conectada BS Móvil (Super Admin)
+                </p>
+                <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--color-text-muted)', lineHeight: 1.4 }}>
+                  Si la familia tiene contratado un plan móvil pospago con BS Comunicaciones, activa aquí su tarifa preferencial de <strong>$15.000 COP/mes</strong>.
+                </p>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{
+                    fontSize: 12, padding: '8px 14px', width: '100%',
+                    background: gpsPlanStatus?.base_monthly_price === 15000 ? '#b91c1c' : '#059669',
+                    borderColor: gpsPlanStatus?.base_monthly_price === 15000 ? '#b91c1c' : '#059669',
+                    fontWeight: 700,
+                  }}
+                  disabled={togglingCombo}
+                  onClick={handleToggleBsCombo}
+                >
+                  {togglingCombo
+                    ? 'Actualizando...'
+                    : gpsPlanStatus?.base_monthly_price === 15000
+                      ? '✕ Quitar Combo BS Móvil (restablecer a $30.000 COP/mes)'
+                      : '⭐ Activar Tarifa Combo BS Móvil ($15.000 COP/mes)'}
+                </button>
+                {comboMsg && (
+                  <p style={{ margin: '8px 0 0', fontSize: 11, color: comboMsg.includes('✓') ? '#059669' : '#dc2626', fontWeight: 600, textAlign: 'center' }}>
+                    {comboMsg}
+                  </p>
+                )}
+              </div>
 
               {geofenceOptions.length > 0 && (
                 <div style={{ marginBottom: 20 }}>

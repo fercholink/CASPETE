@@ -125,6 +125,39 @@ export default function InicioPage() {
         </div>
       </section>
 
+      {/* Banner Promocional Combo Familia Conectada BS Comunicaciones */}
+      <section className="bg-gradient-to-r from-[#0E2A22] via-[#143d31] to-[#0A1E18] text-white py-12 px-6 border-t border-b border-emerald-900/50">
+        <div className="mx-auto max-w-5xl flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="space-y-3 text-left">
+            <div className="inline-flex items-center gap-2 bg-amber-400/15 text-amber-300 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest border border-amber-400/30">
+              <span>🔥 Oferta Exclusiva BS Comunicaciones</span>
+            </div>
+            <h2 className="font-display text-2xl sm:text-3xl font-black text-white leading-tight">
+              Combo Familia Conectada: Tu línea móvil + GPS para tu hijo
+            </h2>
+            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl leading-relaxed">
+              Pasa tu línea a <strong>BS Comunicaciones</strong> con minutos ilimitados, gigas de datos y WhatsApp, y la mensualidad del localizador GPS te queda en <strong>tan solo $15.000 COP/mes</strong> (50% de descuento).
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <a
+              href="https://wa.me/573100000000?text=Hola%20BS%20Comunicaciones%2C%20quiero%20informaci%C3%B3n%20del%20Combo%20Familia%20Conectada%20(Plan%20M%C3%B3vil%20%2B%20GPS%20a%20%2415.000%2Fmes)"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-[#0E2A22] font-display font-black text-xs uppercase tracking-wider text-center transition-all shadow-lg text-decoration-none whitespace-nowrap"
+            >
+              📱 Pedir Combo por WhatsApp
+            </a>
+            <Link
+              to="/funcionalidades"
+              className="w-full sm:w-auto px-6 py-4 rounded-2xl border border-emerald-400/40 text-emerald-200 hover:bg-white/5 font-display font-black text-xs uppercase tracking-wider text-center transition-all text-decoration-none whitespace-nowrap"
+            >
+              Ver Planes GPS
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Teaser hacia Beneficios / Funcionalidades */}
       <section className="py-16 bg-[#F6F2E7] border-t border-[#E7DCC3]">
         <div className="mx-auto max-w-5xl px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 gap-6">

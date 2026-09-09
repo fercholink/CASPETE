@@ -268,7 +268,7 @@ export default function FuncionalidadesPage() {
                 ¿Cuánto cuesta el localizador?
               </h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Dispositivo — pago único */}
               <div className="bg-white p-8 rounded-[2rem] border-2 border-[#f7e3d7] flex flex-col justify-between space-y-6 text-left">
                 <div>
@@ -281,29 +281,70 @@ export default function FuncionalidadesPage() {
                 </div>
                 <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
                   <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Dispositivo con SIM 4G incluida</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Batería de 1500 mAh</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Botón físico de SOS</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Batería de 1500 mAh de larga duración</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Botón físico de SOS instantáneo</span></li>
                 </ul>
+                <button
+                  onClick={() => openGpsOrderModal()}
+                  className="w-full py-3 px-4 rounded-xl text-white font-display font-black text-xs uppercase tracking-wider bg-[#0E2A22] hover:bg-emerald-800 transition-all cursor-pointer text-center"
+                >
+                  Pedir Localizador
+                </button>
               </div>
 
-              {/* Mensualidad — recomendado */}
-              <div className="bg-white p-8 rounded-[2.5rem] border-2 border-emerald-400 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-lg shadow-emerald-500/10 text-left">
-                <span className="absolute top-6 right-6 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Plan Familiar</span>
+              {/* Mensualidad estándar */}
+              <div className="bg-white p-8 rounded-[2rem] border-2 border-[#EDE4CC] flex flex-col justify-between space-y-6 text-left">
                 <div>
                   <span className="text-3xl">📍</span>
-                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Plan Mensual Todo Incluido</h4>
+                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Plan Mensual Estándar</h4>
                   <p className="text-xs text-[#61494c] font-semibold mt-1">Ubicación, llamadas y familia conectada.</p>
                   <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
                     ${Number(gpsPricing.monthly_price).toLocaleString('es-CO')} <span className="text-sm font-bold text-[#61494c]">COP / mes</span>
                   </p>
                 </div>
                 <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Llamadas ilimitadas a los {gpsPricing.max_emergency_numbers} números autorizados</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Geolocalización en tiempo real y geocercas</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span><strong>{gpsPricing.included_guardians} familiar adicional incluido ($0 extra)</strong> para mamá o papá</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Familiares adicionales a solo +${Number(gpsPricing.extra_guardian_price).toLocaleString('es-CO')} COP/mes c/u</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Sin permanencia — pagas mes a mes</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Llamadas ilimitadas a los {gpsPricing.max_emergency_numbers} números</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Geolocalización en vivo 24/7 y geocercas</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span><strong>{gpsPricing.included_guardians} familiar incluido ($0 extra)</strong></span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Sin contratos forzosos — mes a mes</span></li>
                 </ul>
+                <button
+                  onClick={() => openGpsOrderModal()}
+                  className="w-full py-3 px-4 rounded-xl text-emerald-800 border-2 border-emerald-500 font-display font-black text-xs uppercase tracking-wider hover:bg-emerald-50 transition-all cursor-pointer text-center"
+                >
+                  Elegir Estándar
+                </button>
+              </div>
+
+              {/* COMBO FAMILIA CONECTADA BS COMUNICACIONES — 50% DCTO */}
+              <div className="bg-gradient-to-br from-[#0E2A22] via-[#12382d] to-[#0A1E18] p-8 rounded-[2.5rem] border-2 border-amber-400 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-xl text-left text-white">
+                <span className="absolute top-6 right-6 bg-amber-400 text-[#0E2A22] px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest shadow">
+                  🔥 50% DCTO COMBO
+                </span>
+                <div>
+                  <span className="text-3xl">📶</span>
+                  <h4 className="font-display text-xl font-black text-emerald-300 mt-3">Combo BS Móvil + GPS</h4>
+                  <p className="text-xs text-emerald-100/80 font-semibold mt-1">Porta tu línea a BS Comunicaciones o estrena plan.</p>
+                  <div className="mt-4 flex items-baseline gap-2">
+                    <span className="font-display text-4xl font-black text-amber-300">$15.000</span>
+                    <span className="text-sm font-bold text-emerald-200">COP / mes</span>
+                    <span className="text-xs line-through text-white/40">$30.000 COP</span>
+                  </div>
+                </div>
+                <ul className="space-y-2.5 text-xs text-white/90 font-medium">
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-amber-400 flex-shrink-0" /><span><strong>Plan Móvil BS Comunicaciones:</strong> Gigas de datos, minutos ilimitados y WhatsApp para papá/mamá</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-amber-400 flex-shrink-0" /><span><strong>GPS a mitad de precio ($15.000 COP/mes)</strong> mientras mantengas tu línea activa</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-amber-400 flex-shrink-0" /><span>Llamadas ilimitadas al localizador y rastreo en tiempo real</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-amber-400 flex-shrink-0" /><span>Portabilidad rápida conservando tu mismo número</span></li>
+                </ul>
+                <a
+                  href="https://wa.me/573100000000?text=Hola%20BS%20Comunicaciones%2C%20quiero%20el%20Combo%20Familia%20Conectada%20(Plan%20M%C3%B3vil%20%2B%20GPS%20a%20mitad%20de%20precio%20%2415.000%2Fmes)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-[#0E2A22] font-display font-black text-xs uppercase tracking-wider text-center transition-all shadow-md text-decoration-none block"
+                >
+                  📱 Solicitar Combo en WhatsApp
+                </a>
               </div>
             </div>
             <p className="text-center text-xs text-[#8c6d71] mt-6 max-w-xl mx-auto">

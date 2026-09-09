@@ -33,6 +33,7 @@ export default function StudentBulkImportModal({ isOpen, onClose, onSuccess }: P
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const [schools, setSchools] = useState<SchoolOption[]>([]);
+  const [schoolsLoading, setSchoolsLoading] = useState(false);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(user?.school_id || '');
   const [parsedRows, setParsedRows] = useState<ParsedStudentRow[]>([]);
   const [fileName, setFileName] = useState('');
@@ -46,23 +47,53 @@ export default function StudentBulkImportModal({ isOpen, onClose, onSuccess }: P
 
   useEffect(() => {
     if (isOpen && isSuperAdmin) {
-      apiClient.get<{ data: SchoolOption[] }>('/schools')
+      setSchoolsLoading(true);
+      apiClient.get('/schools/active')
         .then(res => {
-          const list = Array.isArray(res.data?.data) ? res.data.data : [];
+          const raw = res.data?.data;
+          const list: SchoolOption[] = Array.isArray(raw)
+            ? raw
+            : (Array.isArray(raw?.schools) ? raw.schools : []);
           setSchools(list);
-          if (list.length > 0 && !selectedSchoolId && list[0]) {
-            setSelectedSchoolId(list[0].id);
+          if (list.length > 0) {
+            setSelectedSchoolId(prev => {
+              if (prev && list.some(s => s.id === prev)) return prev;
+              return list[0]?.id || '';
+            });
           }
         })
-        .catch(() => {});
+        .catch(err => {
+          console.error('Error cargando colegios activos, intentando fallback:', err);
+          apiClient.get('/schools')
+            .then(res2 => {
+              const raw2 = res2.data?.data;
+              const list2: SchoolOption[] = Array.isArray(raw2)
+                ? raw2
+                : (Array.isArray(raw2?.schools) ? raw2.schools : []);
+              setSchools(list2);
+              if (list2.length > 0) {
+                setSelectedSchoolId(prev => {
+                  if (prev && list2.some(s => s.id === prev)) return prev;
+                  return list2[0]?.id || '';
+                });
+              }
+            })
+            .catch(() => {});
+        })
+        .finally(() => {
+          setSchoolsLoading(false);
+        });
+    } else if (isOpen && !isSuperAdmin && user?.school_id) {
+      setSelectedSchoolId(user.school_id);
     }
+
     if (isOpen) {
       setParsedRows([]);
       setFileName('');
       setImportResult(null);
       setGeneralError('');
     }
-  }, [isOpen, isSuperAdmin, selectedSchoolId, user?.school_id]);
+  }, [isOpen, isSuperAdmin, user?.school_id]);
 
   if (!isOpen) return null;
 
@@ -290,22 +321,50 @@ export default function StudentBulkImportModal({ isOpen, onClose, onSuccess }: P
         {/* Cuerpo con scroll */}
         <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
           {/* Selector de colegio si es SUPER_ADMIN */}
-          {isSuperAdmin && (
+          {isSuperAdmin ? (
             <div style={{ marginBottom: 20, padding: 14, background: '#f1f5f9', borderRadius: 12 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#0f172a' }}>
-                <School className="h-4 w-4 text-emerald-600" />
-                Selecciona el Colegio de Destino:
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#0f172a' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <School className="h-4 w-4 text-emerald-600" />
+                  Selecciona el Colegio de Destino:
+                </span>
+                {schoolsLoading && (
+                  <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>Cargando colegios...</span>
+                )}
               </label>
               <select
                 className="form-input"
-                style={{ margin: 0 }}
+                style={{ margin: 0, background: '#ffffff', cursor: 'pointer', fontWeight: 500 }}
                 value={selectedSchoolId}
                 onChange={(e) => setSelectedSchoolId(e.target.value)}
+                disabled={schoolsLoading}
               >
-                {schools.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.city})</option>
-                ))}
+                {schools.length === 0 ? (
+                  <option value="">{schoolsLoading ? 'Cargando lista de colegios...' : 'No se encontraron colegios activos'}</option>
+                ) : (
+                  <>
+                    <option value="" disabled>-- Selecciona un colegio ({schools.length} disponibles) --</option>
+                    {schools.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} {s.city ? `(${s.city})` : ''}</option>
+                    ))}
+                  </>
+                )}
               </select>
+              {schools.length === 0 && !schoolsLoading && (
+                <p style={{ margin: '6px 0 0', fontSize: 12, color: '#dc2626' }}>
+                  No se pudieron cargar los colegios activos. Por favor verifica que existan colegios creados en el sistema.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div style={{ marginBottom: 20, padding: 12, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <School className="h-5 w-5 text-emerald-600" />
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Colegio de destino:</span>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#0f172a' }}>
+                  {user?.school?.name || 'Colegio Asignado'}
+                </p>
+              </div>
             </div>
           )}
 

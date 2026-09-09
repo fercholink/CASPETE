@@ -1,5 +1,6 @@
 import { createContext, useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import axios from 'axios';
 import { apiClient } from '../api/client';
 
 export interface AuthUser {
@@ -33,6 +34,8 @@ interface AuthContextValue extends AuthState {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
+const API_BASE_URL = import.meta.env['VITE_API_URL'] ?? 'http://localhost:3001/api';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -47,17 +50,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Intenta cargar el usuario. El interceptor del apiClient ya reintenta
+    // automáticamente con el refresh token si el access token expiró.
+    // Si el interceptor refresca exitosamente, /auth/me devuelve 200 y
+    // actualizamos el token guardado (el interceptor ya lo guardó en localStorage).
     apiClient
       .get<{ success: true; data: AuthUser }>('/auth/me')
       .then((res) => {
-        setState({ user: res.data.data, token, isLoading: false });
+        // El interceptor pudo haber renovado el token; leerlo desde localStorage
+        const currentToken = localStorage.getItem('kidway_token') ?? token;
+        setState({ user: res.data.data, token: currentToken, isLoading: false });
       })
-      .catch(() => {
-        // El interceptor de apiClient ya intenta el refresh automáticamente.
-        // Si llega aquí es porque el refresh también falló.
-        localStorage.removeItem('kidway_token');
-        localStorage.removeItem('kidway_refresh_token');
-        setState({ user: null, token: null, isLoading: false });
+      .catch(async () => {
+        // El interceptor ya intentó el refresh. Si llegamos aquí, el refresh
+        // también falló. Pero hacemos un intento explícito adicional por si
+        // hay una condición de carrera entre el interceptor y este catch.
+        const refreshToken = localStorage.getItem('kidway_refresh_token');
+        if (!refreshToken) {
+          localStorage.removeItem('kidway_token');
+          setState({ user: null, token: null, isLoading: false });
+          return;
+        }
+
+        try {
+          const refreshRes = await axios.post<{
+            success: true;
+            data: { token: string; refresh_token: string };
+          }>(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken });
+
+          const { token: newToken, refresh_token: newRefreshToken } = refreshRes.data.data;
+          localStorage.setItem('kidway_token', newToken);
+          localStorage.setItem('kidway_refresh_token', newRefreshToken);
+
+          // Reintentar /auth/me con el nuevo token
+          const meRes = await apiClient.get<{ success: true; data: AuthUser }>('/auth/me');
+          setState({ user: meRes.data.data, token: newToken, isLoading: false });
+        } catch {
+          // Refresh definitivamente expirado — limpiar sesión
+          localStorage.removeItem('kidway_token');
+          localStorage.removeItem('kidway_refresh_token');
+          setState({ user: null, token: null, isLoading: false });
+        }
       });
   }, []);
 
@@ -109,3 +142,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+

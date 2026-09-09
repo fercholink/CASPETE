@@ -66,7 +66,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(passport.initialize());
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok' });
 });
 
 app.use('/api/auth', authRouter);

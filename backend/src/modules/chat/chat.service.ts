@@ -16,6 +16,7 @@ import { AppError } from '../../middleware/error.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { CreateThreadInput, SendMessageInput, CloseThreadInput } from './chat.schemas.js';
 import { sendPushToUser } from '../push/push.service.js';
+import { sanitizeText } from '../../utils/sanitize.js';
 
 // ── Selector reutilizable ────────────────────────────────────────────────────
 
@@ -143,14 +144,17 @@ export async function createThread(input: CreateThreadInput, actor: JwtPayload) 
     }
   }
 
+  const cleanSubject = sanitizeText(input.subject);
+  const cleanFirstMessage = sanitizeText(input.first_message);
+
   // Crear hilo + primer mensaje en una transacción
   const thread = await prisma.$transaction(async (tx) => {
     const newThread = await tx.chatThread.create({
-      data: { school_id: schoolId, order_id: input.order_id ?? null, vendor_id: vendorId, parent_id: parentId, subject: input.subject },
+      data: { school_id: schoolId, order_id: input.order_id ?? null, vendor_id: vendorId, parent_id: parentId, subject: cleanSubject },
       select: threadSelect,
     });
     await tx.chatMessage.create({
-      data: { thread_id: newThread.id, sender_id: actor.sub, content: input.first_message },
+      data: { thread_id: newThread.id, sender_id: actor.sub, content: cleanFirstMessage },
     });
     return newThread;
   });
@@ -258,9 +262,11 @@ export async function sendMessage(threadId: string, input: SendMessageInput, act
     throw new AppError('Este hilo está cerrado. No se pueden enviar más mensajes.', 400);
   }
 
+  const cleanContent = sanitizeText(input.content);
+
   const message = await prisma.$transaction(async (tx) => {
     const msg = await tx.chatMessage.create({
-      data: { thread_id: threadId, sender_id: actor.sub, content: input.content },
+      data: { thread_id: threadId, sender_id: actor.sub, content: cleanContent },
       select: messageSelect,
     });
     // Actualizar updated_at del hilo para ordenación correcta en listado

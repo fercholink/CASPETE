@@ -4,28 +4,30 @@ import { useAuth } from '../hooks/useAuth';
 
 /**
  * /auth/callback
- * Google redirige aquí con ?token=JWT&refresh_token=REFRESH
- * Los guardamos en localStorage y redirigimos al dashboard.
+ *
+ * FIX A-01: Ya NO lee ?token= ni ?refresh_token= de la URL.
+ * El backend coloca los tokens en cookies HttpOnly+Secure al redirigir aquí.
+ * Esta página llama a GET /api/auth/me para cargar el usuario;
+ * la cookie access_token viaja automáticamente (withCredentials: true).
  */
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
-  const { setAuthFromTokens } = useAuth();
+  const { loginFromCookie } = useAuth();
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // Verificar si el backend reportó un error (ej: ?error=google_failed)
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    const refreshToken = params.get('refresh_token');
     const err = params.get('error');
 
-    if (err || !token || !refreshToken) {
+    if (err) {
       setError('Error al autenticar con Google. Intenta de nuevo.');
       setTimeout(() => navigate('/login'), 3000);
       return;
     }
 
-    // Esperamos a que el usuario esté cargado antes de navegar
-    setAuthFromTokens(token, refreshToken)
+    // Cargar el usuario usando la cookie HttpOnly que el backend ya colocó
+    loginFromCookie()
       .then(() => {
         navigate('/dashboard', { replace: true });
       })
@@ -33,7 +35,7 @@ export default function AuthCallbackPage() {
         setError('No se pudo verificar la cuenta. Intenta de nuevo.');
         setTimeout(() => navigate('/login'), 3000);
       });
-  }, [navigate, setAuthFromTokens]);
+  }, [navigate, loginFromCookie]);
 
   if (error) {
     return (

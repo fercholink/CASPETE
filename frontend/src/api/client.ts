@@ -5,6 +5,9 @@ const API_BASE_URL = import.meta.env['VITE_API_URL'] ?? 'http://localhost:3001/a
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  // withCredentials: true — necesario para que las cookies HttpOnly del flujo OAuth
+  // (access_token, refresh_token) se envíen automáticamente al backend.
+  withCredentials: true,
 });
 
 apiClient.interceptors.request.use((config) => {

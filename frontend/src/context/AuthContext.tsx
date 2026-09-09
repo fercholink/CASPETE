@@ -22,7 +22,13 @@ interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUser: (partial: Partial<AuthUser>) => void;
-  setAuthFromTokens: (token: string, refreshToken: string) => Promise<void>;
+  /**
+   * FIX A-01: Reemplaza setAuthFromTokens.
+   * Carga el usuario llamando a GET /api/auth/me.
+   * La cookie HttpOnly access_token (puesta por el backend en el callback OAuth)
+   * viaja automáticamente — no se necesita pasar ni guardar ningún token.
+   */
+  loginFromCookie: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -82,23 +88,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((prev) => prev.user ? { ...prev, user: { ...prev.user, ...partial } } : prev);
   }, []);
 
-  // Usado por el callback de Google OAuth para guardar tokens y cargar el usuario
-  const setAuthFromTokens = useCallback(async (token: string, refreshToken: string): Promise<void> => {
-    localStorage.setItem('kidway_token', token);
-    localStorage.setItem('kidway_refresh_token', refreshToken);
-    try {
-      const res = await apiClient.get<{ success: true; data: AuthUser }>('/auth/me');
-      setState({ user: res.data.data, token, isLoading: false });
-    } catch {
-      localStorage.removeItem('kidway_token');
-      localStorage.removeItem('kidway_refresh_token');
-      setState({ user: null, token: null, isLoading: false });
-      throw new Error('No se pudo cargar el usuario');
-    }
+  /**
+   * FIX A-01: Reemplaza setAuthFromTokens(token, refreshToken).
+   * Llama a GET /api/auth/me — la cookie HttpOnly access_token se envía
+   * automáticamente gracias a withCredentials: true en el apiClient.
+   * No se guarda ningún token en localStorage desde el flujo OAuth.
+   */
+  const loginFromCookie = useCallback(async (): Promise<void> => {
+    const res = await apiClient.get<{ success: true; data: AuthUser }>('/auth/me');
+    // El token de la cookie no lo gestionamos desde JS (es HttpOnly).
+    // Lo que sí guardamos es el token que devuelva el interceptor de refresco
+    // si hubiera que refrescar — pero para el login inicial con cookie, no hay token
+    // en localStorage todavía, así que lo marcamos como null y confiamos en la cookie.
+    setState({ user: res.data.data, token: null, isLoading: false });
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, updateUser, setAuthFromTokens }}>
+    <AuthContext.Provider value={{ ...state, login, logout, updateUser, loginFromCookie }}>
       {children}
     </AuthContext.Provider>
   );

@@ -711,7 +711,7 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
                     Pasa tu línea a <strong>BS Comunicaciones</strong> o adquiere un plan móvil (minutos ilimitados + datos + WhatsApp) y la mensualidad de este GPS te queda en <strong>tan solo $15.000 COP</strong>.
                   </p>
                   <a
-                    href="https://wa.me/573100000000?text=Hola%20BS%20Comunicaciones%2C%20tengo%20el%20GPS%20Kidway%20y%20quiero%20el%20Combo%20Plan%20M%C3%B3vil%20para%20pagar%20solo%20%2415.000%20mensuales"
+                    href="https://wa.me/573214364223?text=Hola%20BS%20Comunicaciones%2C%20tengo%20el%20GPS%20Kidway%20y%20quiero%20el%20Combo%20Plan%20M%C3%B3vil%20para%20pagar%20solo%20%2415.000%20mensuales"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -862,7 +862,7 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
                     <div>
                       <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: 10, marginBottom: 10, fontSize: 11, color: '#166534', lineHeight: 1.4 }}>
                         <strong>Cuentas autorizadas Kidway / BS Comunicaciones:</strong><br />
-                        • Nequi / Daviplata: <strong>310 000 0000</strong><br />
+                        • Nequi / Daviplata: <strong>321 436 4223</strong><br />
                         • Bancolombia Ahorros: <strong>000-000000-00</strong>
                       </div>
                       <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--color-text-muted)' }}>

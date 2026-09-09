@@ -11,6 +11,9 @@ const allRoles = requireRole('PARENT', 'VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN');
 // GET    /api/students/stats
 router.get('/stats', requireRole('SCHOOL_ADMIN', 'SUPER_ADMIN'), studentController.getStats);
 
+// POST   /api/students/bulk-import — importar masivamente desde Excel/CSV
+router.post('/bulk-import', requireRole('SCHOOL_ADMIN', 'SUPER_ADMIN'), studentController.bulkImport);
+
 // POST   /api/students
 router.post('/', requireRole('PARENT'), studentController.create);
 

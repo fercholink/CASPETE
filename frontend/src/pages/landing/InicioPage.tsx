@@ -141,7 +141,7 @@ export default function InicioPage() {
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
             <a
-              href="https://wa.me/573100000000?text=Hola%20BS%20Comunicaciones%2C%20quiero%20informaci%C3%B3n%20del%20Combo%20Familia%20Conectada%20(Plan%20M%C3%B3vil%20%2B%20GPS%20a%20%2415.000%2Fmes)"
+              href="https://wa.me/573214364223?text=Hola%20BS%20Comunicaciones%2C%20quiero%20informaci%C3%B3n%20del%20Combo%20Familia%20Conectada%20(Plan%20M%C3%B3vil%20%2B%20GPS%20a%20%2415.000%2Fmes)"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-[#0E2A22] font-display font-black text-xs uppercase tracking-wider text-center transition-all shadow-lg text-decoration-none whitespace-nowrap"

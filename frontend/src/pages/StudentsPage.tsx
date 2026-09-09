@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
 import GpsTrackerPanel from '../components/GpsTrackerPanel';
+import StudentBulkImportModal from '../components/StudentBulkImportModal';
 
 interface School { id: string; name: string; city: string }
 
@@ -40,6 +41,9 @@ export default function StudentsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState<Stats | null>(null);
+
+  // Modal importación masiva Excel
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // Delete modal
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
@@ -231,11 +235,23 @@ export default function StudentsPage() {
             <p className="dashboard-label">{isParent ? 'Mi familia' : 'Gestión'}</p>
             <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.56px' }}>{title}</h1>
           </div>
-          {isParent && (
-            <Link to="/students/new" className="btn-primary" style={{ width: 'auto', textDecoration: 'none' }}>
-              + Agregar hijo
-            </Link>
-          )}
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {isAdmin && (
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => setImportModalOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+              >
+                📊 Importar desde Excel
+              </button>
+            )}
+            {isParent && (
+              <Link to="/students/new" className="btn-primary" style={{ width: 'auto', textDecoration: 'none' }}>
+                + Agregar hijo
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Stats cards (admin only) */}
@@ -688,11 +704,26 @@ export default function StudentsPage() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}
           onClick={(e) => { if (e.target === e.currentTarget) setGpsStudentId(null); }}
         >
-          <div className="user-card" style={{ maxWidth: 420, width: '100%', padding: '32px 28px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <GpsTrackerPanel studentId={gpsStudentId} onClose={() => setGpsStudentId(null)} />
+          <div style={{ maxWidth: 840, width: '100%', maxHeight: '90vh', overflowY: 'auto', borderRadius: 20 }}>
+            <GpsTrackerPanel
+              studentId={gpsStudentId}
+              onClose={() => setGpsStudentId(null)}
+            />
           </div>
         </div>
       )}
+
+      {/* Modal importación masiva Excel */}
+      <StudentBulkImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onSuccess={() => {
+          fetchStudents(1);
+          if (isAdmin) {
+            apiClient.get<{ data: Stats }>('/students/stats').then(r => setStats(r.data.data)).catch(() => {});
+          }
+        }}
+      />
     </>
   );
 }

@@ -338,7 +338,7 @@ export default function FuncionalidadesPage() {
                   <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-amber-400 flex-shrink-0" /><span>Portabilidad rápida conservando tu mismo número</span></li>
                 </ul>
                 <a
-                  href="https://wa.me/573100000000?text=Hola%20BS%20Comunicaciones%2C%20quiero%20el%20Combo%20Familia%20Conectada%20(Plan%20M%C3%B3vil%20%2B%20GPS%20a%20mitad%20de%20precio%20%2415.000%2Fmes)"
+                  href="https://wa.me/573214364223?text=Hola%20BS%20Comunicaciones%2C%20quiero%20el%20Combo%20Familia%20Conectada%20(Plan%20M%C3%B3vil%20%2B%20GPS%20a%20mitad%20de%20precio%20%2415.000%2Fmes)"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-3.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-[#0E2A22] font-display font-black text-xs uppercase tracking-wider text-center transition-all shadow-md text-decoration-none block"

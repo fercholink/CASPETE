@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import * as studentService from './student.service.js';
 import { topupStudent } from '../orders/order.service.js';
-import { createStudentSchema, updateStudentSchema } from './student.schemas.js';
+import { createStudentSchema, updateStudentSchema, bulkImportStudentsSchema } from './student.schemas.js';
 import { topupSchema } from '../orders/order.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
@@ -65,3 +65,10 @@ export async function deleteOne(req: Request, res: Response) {
   await studentService.deleteStudent(id, req.user!);
   sendSuccess(res, null, 'Estudiante eliminado permanentemente');
 }
+
+export async function bulkImport(req: Request, res: Response) {
+  const input = bulkImportStudentsSchema.parse(req.body);
+  const result = await studentService.bulkImportStudents(input, req.user!);
+  sendSuccess(res, result, `Importación completada: ${result.created} creados, ${result.updated} actualizados`);
+}
+

@@ -31,5 +31,23 @@ export const updateStudentSchema = z.object({
   route_afternoon_arrival: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM').nullable().optional(),
 });
 
+export const bulkImportStudentItemSchema = z.object({
+  full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(200),
+  national_id: z.string().max(20).optional().nullable(),
+  grade: z.string().max(20).optional().nullable(),
+  parent_email: z.string().email('Correo de acudiente inválido'),
+  parent_name: z.string().max(200).optional().nullable(),
+  parent_phone: z.string().max(30).optional().nullable(),
+  allergies: z.string().max(500).optional().nullable(),
+});
+
+export const bulkImportStudentsSchema = z.object({
+  school_id: z.string().uuid('ID de colegio inválido').optional(),
+  students: z.array(bulkImportStudentItemSchema).min(1, 'Debes enviar al menos 1 estudiante').max(1000, 'Máximo 1000 estudiantes por lote'),
+});
+
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
+export type BulkImportStudentItem = z.infer<typeof bulkImportStudentItemSchema>;
+export type BulkImportStudentsInput = z.infer<typeof bulkImportStudentsSchema>;
+

@@ -13,7 +13,7 @@ async function main() {
     data: [
       {
         key: 'NEQUI', label: 'Nequi', icon: '📱', color: '#8B5CF6',
-        fields: [{ label: 'Número de celular', value: '310 000 0000' }, { label: 'Nombre', value: 'CASPETE S.A.S.' }],
+        fields: [{ label: 'Número de celular', value: '321 436 4223' }, { label: 'Nombre', value: 'BS COMUNICACIONES' }],
         sort_order: 1,
       },
       {

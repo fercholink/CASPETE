@@ -1,8 +1,9 @@
+import bcrypt from 'bcrypt';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import { syncStudentRoute } from '../../lib/routeSync.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
-import type { CreateStudentInput, UpdateStudentInput } from './student.schemas.js';
+import type { CreateStudentInput, UpdateStudentInput, BulkImportStudentsInput } from './student.schemas.js';
 
 const studentSelect = {
   id: true, school_id: true, parent_id: true, national_id: true,
@@ -186,3 +187,146 @@ export async function getStudentStats(actor: JwtPayload) {
   ]);
   return { total, active, inactive, totalBalance: totalBalance._sum.balance?.toString() ?? '0' };
 }
+
+export async function bulkImportStudents(input: BulkImportStudentsInput, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'SCHOOL_ADMIN') {
+    throw new AppError('Solo los administradores pueden importar estudiantes masivamente', 403);
+  }
+
+  const schoolId = actor.role === 'SCHOOL_ADMIN' ? actor.schoolId : (input.school_id || actor.schoolId);
+  if (!schoolId) {
+    throw new AppError('Debes especificar el colegio al cual pertenecen los estudiantes', 400);
+  }
+
+  const school = await prisma.school.findUnique({
+    where: { id: schoolId },
+    select: { id: true, name: true, active: true },
+  });
+  if (!school?.active) {
+    throw new AppError('El colegio seleccionado no existe o está inactivo', 404);
+  }
+
+  const defaultPasswordHash = await bcrypt.hash('Kidway2026*', 10);
+  const existingAllergies = await prisma.allergy.findMany({ select: { id: true, name: true } });
+
+  let createdCount = 0;
+  let updatedCount = 0;
+  const errors: { row: number; full_name: string; error: string }[] = [];
+
+  for (const [i, row] of input.students.entries()) {
+    try {
+      const parentEmail = row.parent_email.toLowerCase().trim();
+      let parent = await prisma.user.findUnique({
+        where: { email: parentEmail },
+        select: { id: true },
+      });
+
+      if (!parent) {
+        parent = await prisma.user.create({
+          data: {
+            email: parentEmail,
+            password_hash: defaultPasswordHash,
+            full_name: row.parent_name?.trim() || `Acudiente de ${row.full_name}`,
+            phone: row.parent_phone?.trim() || null,
+            role: 'PARENT',
+            active: true,
+          },
+          select: { id: true },
+        });
+      }
+
+      // Buscar si el estudiante ya existe (por national_id en este colegio o por nombre exacto + parent_id)
+      let existingStudent = null;
+      if (row.national_id?.trim()) {
+        existingStudent = await prisma.student.findUnique({
+          where: {
+            school_id_national_id: {
+              school_id: schoolId,
+              national_id: row.national_id.trim(),
+            },
+          },
+          select: { id: true },
+        });
+      }
+
+      if (!existingStudent) {
+        existingStudent = await prisma.student.findFirst({
+          where: {
+            school_id: schoolId,
+            parent_id: parent.id,
+            full_name: { equals: row.full_name.trim(), mode: 'insensitive' },
+          },
+          select: { id: true },
+        });
+      }
+
+      let studentId = '';
+      if (existingStudent) {
+        // Actualizar datos
+        await prisma.student.update({
+          where: { id: existingStudent.id },
+          data: {
+            full_name: row.full_name.trim(),
+            ...(row.grade?.trim() ? { grade: row.grade.trim() } : {}),
+            ...(row.national_id?.trim() ? { national_id: row.national_id.trim() } : {}),
+            active: true,
+          },
+        });
+        studentId = existingStudent.id;
+        updatedCount++;
+      } else {
+        const deliveryCode = String(Math.floor(100000 + Math.random() * 900000)).substring(0, 6);
+        const newStudent = await prisma.student.create({
+          data: {
+            school_id: schoolId,
+            parent_id: parent.id,
+            full_name: row.full_name.trim(),
+            national_id: row.national_id?.trim() || null,
+            grade: row.grade?.trim() || null,
+            delivery_code: deliveryCode,
+            active: true,
+          },
+          select: { id: true },
+        });
+        studentId = newStudent.id;
+        createdCount++;
+      }
+
+      // Procesar alergias si vienen especificadas
+      if (row.allergies?.trim()) {
+        const allergyNames = row.allergies.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+        const matchedAllergyIds: string[] = [];
+        for (const aName of allergyNames) {
+          const match = existingAllergies.find(ea => ea.name.toLowerCase().includes(aName) || aName.includes(ea.name.toLowerCase()));
+          if (match) {
+            matchedAllergyIds.push(match.id);
+          }
+        }
+        if (matchedAllergyIds.length > 0) {
+          for (const aId of matchedAllergyIds) {
+            await prisma.studentAllergy.upsert({
+              where: { student_id_allergy_id: { student_id: studentId, allergy_id: aId } },
+              create: { student_id: studentId, allergy_id: aId },
+              update: {},
+            }).catch(() => {});
+          }
+        }
+      }
+    } catch (err: any) {
+      errors.push({
+        row: i + 1,
+        full_name: row.full_name,
+        error: err.message || 'Error al procesar fila',
+      });
+    }
+  }
+
+  return {
+    school_name: school.name,
+    total_processed: input.students.length,
+    created: createdCount,
+    updated: updatedCount,
+    errors,
+  };
+}
+

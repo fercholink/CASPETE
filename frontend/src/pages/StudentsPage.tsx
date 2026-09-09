@@ -704,7 +704,7 @@ export default function StudentsPage() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}
           onClick={(e) => { if (e.target === e.currentTarget) setGpsStudentId(null); }}
         >
-          <div style={{ maxWidth: 840, width: '100%', maxHeight: '90vh', overflowY: 'auto', borderRadius: 20 }}>
+          <div style={{ maxWidth: 840, width: '100%', maxHeight: '90vh', overflowY: 'auto', borderRadius: 20, background: '#ffffff', padding: '28px', boxShadow: 'var(--shadow-card, 0 4px 24px rgba(0,0,0,0.1))' }}>
             <GpsTrackerPanel
               studentId={gpsStudentId}
               onClose={() => setGpsStudentId(null)}

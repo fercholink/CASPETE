@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../api/client';
 import GpsTrackerPanel from '../components/GpsTrackerPanel';
@@ -316,7 +316,10 @@ function DiagnosticoTab() {
 export default function GpsAdminPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<TabKey>('diagnostico');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab') as TabKey | null;
+  const tab: TabKey = rawTab && TABS.some((t) => t.key === rawTab) ? rawTab : 'diagnostico';
+  const setTab = (key: TabKey) => setSearchParams({ tab: key }, { replace: true });
 
   if (user?.role !== 'SUPER_ADMIN') {
     return <div className="auth-page"><p className="form-error">Acceso denegado</p></div>;

@@ -15,22 +15,30 @@ const MIN_FILL_TIME_MS = 2500; // un humano no llena 6+ campos en menos de esto
  */
 export async function createLead(input: CreateLeadInput, ipAddress: string | null) {
   // 1. Honeypot: campo oculto que solo un bot llenaría
-  if (input.website) return null;
-
-  // 2. Envío demasiado rápido tras cargar el formulario
-  if (input.form_loaded_at !== undefined && Date.now() - input.form_loaded_at < MIN_FILL_TIME_MS) {
+  if (input.website) {
+    console.log('[LEAD] 🚫 Descartado por honeypot — probable bot. IP:', ipAddress);
     return null;
   }
 
-  // 3. Duplicado: mismo correo en las últimas 24h — evita reenvíos repetidos de spam
+  // 2. Envío demasiado rápido tras cargar el formulario
+  const fillTime = input.form_loaded_at !== undefined ? Date.now() - input.form_loaded_at : null;
+  if (fillTime !== null && fillTime < MIN_FILL_TIME_MS) {
+    console.log(`[LEAD] 🚫 Descartado por velocidad — tiempo de llenado: ${fillTime}ms < ${MIN_FILL_TIME_MS}ms. IP:`, ipAddress);
+    return null;
+  }
+
+  // 3. Duplicado: mismo correo en las últimas 24h
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const recentDuplicate = await prisma.schoolLead.findFirst({
     where: { contact_email: input.contact_email, created_at: { gte: dayAgo } },
-    select: { id: true },
+    select: { id: true, created_at: true },
   });
-  if (recentDuplicate) return null;
+  if (recentDuplicate) {
+    console.log(`[LEAD] 🚫 Descartado por duplicado — email: ${input.contact_email}, lead existente id: ${recentDuplicate.id}, creado: ${recentDuplicate.created_at.toISOString()}`);
+    return null;
+  }
 
-  return prisma.schoolLead.create({
+  const lead = await prisma.schoolLead.create({
     data: {
       school_name:    input.school_name,
       city:           input.city,
@@ -44,6 +52,9 @@ export async function createLead(input: CreateLeadInput, ipAddress: string | nul
       ip_address: ipAddress,
     },
   });
+
+  console.log(`[LEAD] ✅ Lead creado — id: ${lead.id}, colegio: "${lead.school_name}", email: ${lead.contact_email}, IP: ${ipAddress}`);
+  return lead;
 }
 
 /** Registra un lead manualmente — SUPER_ADMIN (ej. contacto hecho por llamada/WhatsApp) */

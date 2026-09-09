@@ -77,28 +77,39 @@ function decodeJwtUser(token: string): AuthUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(() => {
     const token = localStorage.getItem('kidway_token');
+    const refreshToken = localStorage.getItem('kidway_refresh_token');
     const storedUser = getStoredUser();
-    const user = storedUser || (token ? decodeJwtUser(token) : null);
+    const decodedUser = token ? decodeJwtUser(token) : null;
+    const user = storedUser || decodedUser;
 
-    if (token && user) {
+    // Si ya tenemos usuario guardado en localStorage o decodificado del JWT,
+    // inicializar INMEDIATAMENTE como autenticado para evitar que ProtectedRoute
+    // redirija a /login en el primer render (F5).
+    if (user) {
       if (!storedUser) {
         localStorage.setItem('kidway_user', JSON.stringify(user));
       }
       return { user, token, isLoading: false };
     }
 
+    // Si hay token o refresh token pero aún no tenemos el objeto user,
+    // marcamos isLoading: true para esperar la respuesta de /auth/me o /auth/refresh
+    const hasAnySession = Boolean(token || refreshToken);
     return {
       user: null,
       token,
-      isLoading: Boolean(token),
+      isLoading: hasAnySession,
     };
   });
 
   useEffect(() => {
     const token = localStorage.getItem('kidway_token');
+    const refreshToken = localStorage.getItem('kidway_refresh_token');
+    const storedUser = getStoredUser();
 
-    // Si no hay token en localStorage, intentar verificar cookie OAuth (ej. Google)
-    if (!token) {
+    // 1. Si no hay ningún indicador de sesión, finalizar carga
+    if (!token && !refreshToken && !storedUser) {
+      // Intentar una única vez verificar si existe cookie OAuth HttpOnly
       apiClient
         .get<{ success: true; data: AuthUser }>('/auth/me')
         .then((res) => {
@@ -111,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Si hay token, consultar /auth/me en segundo plano para sincronizar datos frescos
+    // 2. Si ya tenemos storedUser o token/refresh, sincronizar datos con el backend
     apiClient
       .get<{ success: true; data: AuthUser }>('/auth/me')
       .then((res) => {
@@ -119,10 +130,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('kidway_user', JSON.stringify(res.data.data));
         setState({ user: res.data.data, token: currentToken, isLoading: false });
       })
-      .catch(() => {
-        // En caso de cualquier error (red, 401 temporal, 500, o CORS),
-        // NUNCA desloguear al usuario en la recarga: conservar la sesión activa.
-        setState((prev) => ({ ...prev, isLoading: false }));
+      .catch((err: unknown) => {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        // Si el servidor responde 401 explícito Y no hay refresh token recuperable:
+        if (status === 401 && !refreshToken) {
+          localStorage.removeItem('kidway_token');
+          localStorage.removeItem('kidway_refresh_token');
+          localStorage.removeItem('kidway_user');
+          setState({ user: null, token: null, isLoading: false });
+          return;
+        }
+
+        // Si fue cualquier error de red, caída temporal del backend (502/503/504),
+        // o si aún tenemos el usuario en localStorage:
+        // NUNCA borrar la sesión ni redirigir a /login en la recarga con F5.
+        const fallbackUser = getStoredUser() || (token ? decodeJwtUser(token) : null);
+        setState((prev) => ({
+          user: prev.user || fallbackUser,
+          token: prev.token || token,
+          isLoading: false,
+        }));
       });
   }, []);
 

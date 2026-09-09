@@ -23,22 +23,30 @@ export function ProtectedRoute({ children, allowedRoles }: Props) {
     );
   }
 
-  // Hay token guardado pero no se pudo verificar (backend no disponible).
-  // No redirigir al login — mostrar aviso de error de red.
-  if (!user && token) {
+  // Verificar si hay algún indicio de sesión en el almacenamiento local
+  const hasLocalSession = Boolean(
+    token ||
+    localStorage.getItem('kidway_user') ||
+    localStorage.getItem('kidway_token') ||
+    localStorage.getItem('kidway_refresh_token')
+  );
+
+  // Hay sesión guardada pero user aún es null (ej. llamada de red pendiente o error transitorio).
+  // No redirigir al login — mostrar aviso de conexión para no perder la ruta ni la sesión.
+  if (!user && hasLocalSession) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 12, textAlign: 'center', padding: 24 }}>
         <span style={{ fontSize: 40 }}>📡</span>
-        <p style={{ fontWeight: 600, fontSize: 16, margin: 0 }}>No se pudo conectar con el servidor</p>
+        <p style={{ fontWeight: 600, fontSize: 16, margin: 0 }}>Conectando con el servidor...</p>
         <p style={{ color: 'var(--color-text-muted)', fontSize: 14, margin: 0 }}>
-          Tu sesión sigue activa. Recarga la página cuando el servidor esté disponible.
+          Tu sesión está guardada. Haz clic en reintentar para continuar.
         </p>
         <button
           className="btn-primary"
           style={{ marginTop: 8 }}
           onClick={() => window.location.reload()}
         >
-          🔄 Recargar
+          🔄 Reintentar
         </button>
       </div>
     );

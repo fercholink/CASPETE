@@ -1,6 +1,5 @@
 import { createContext, useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import axios from 'axios';
 import { apiClient } from '../api/client';
 
 export interface AuthUser {
@@ -33,8 +32,6 @@ interface AuthContextValue extends AuthState {
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
-
-const API_BASE_URL = import.meta.env['VITE_API_URL'] ?? 'http://localhost:3001/api';
 
 function getStoredUser(): AuthUser | null {
   try {

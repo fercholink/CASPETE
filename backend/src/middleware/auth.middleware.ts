@@ -20,13 +20,23 @@ declare global {
 }
 
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
+  // 1) Intentar desde cabecera Authorization: Bearer <token>  (flujo email/password, apps móviles)
+  // 2) Fallback: cookie HttpOnly 'access_token'              (flujo OAuth Google)
+  // El header tiene prioridad para mantener compatibilidad con clientes existentes.
+  let token: string | undefined;
+
   const authHeader = req.headers['authorization'];
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (authHeader?.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+  } else if (req.cookies?.access_token) {
+    token = req.cookies.access_token as string;
+  }
+
+  if (!token) {
     sendError(res, 'Token de autenticación requerido', 401);
     return;
   }
 
-  const token = authHeader.slice(7);
   try {
     const payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
     req.user = payload;

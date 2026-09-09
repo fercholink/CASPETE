@@ -56,13 +56,35 @@ router.get(
   passport.authenticate('google', { session: false, failureRedirect: '/login?error=google_failed' }),
   (req, res) => {
     const result = req.user as { token: string; refresh_token: string } | undefined;
-    if (!result) {
-      return res.redirect(`${env.FRONTEND_URL.split(',')[0]}/login?error=google_failed`);
-    }
     const frontendUrl = (env.FRONTEND_URL.split(',')[0] ?? 'http://localhost:5173').trim();
-    return res.redirect(
-      `${frontendUrl}/auth/callback?token=${encodeURIComponent(result.token)}&refresh_token=${encodeURIComponent(result.refresh_token)}`,
-    );
+
+    if (!result) {
+      return res.redirect(`${frontendUrl}/login?error=google_failed`);
+    }
+
+    const isProduction = env.NODE_ENV === 'production';
+
+    // FIX A-01: Tokens en cookies HttpOnly+Secure en lugar de parámetros en URL.
+    // Los parámetros en URL quedan expuestos en: logs de Nginx, historial del navegador
+    // y cabeceras Referer. Las cookies HttpOnly son invisibles para JavaScript y no
+    // aparecen en logs de servidor ni en headers de terceros.
+    res.cookie('access_token', result.token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      maxAge: 15 * 60 * 1000, // 15 minutos — igual que JWT_EXPIRES_IN
+    });
+    res.cookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días — igual que REFRESH_TOKEN_TTL_MS
+      path: '/api/auth/refresh', // restricción de path: solo enviada al endpoint de refresco
+    });
+
+    // El frontend recibe la redirección limpia (sin tokens) y llama a /api/auth/me
+    // usando la cookie access_token para obtener los datos del usuario.
+    return res.redirect(`${frontendUrl}/auth/callback`);
   },
 );
 

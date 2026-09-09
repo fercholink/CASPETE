@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import * as Sentry from '@sentry/node';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/error.middleware.js';
@@ -41,6 +42,7 @@ import monthlyMenuRouter from './modules/monthly-menu/menu.router.js';
 const app = express();
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(cookieParser()); // Necesario para leer cookies HttpOnly del flujo OAuth Google
 
 const allowedOrigins = env.FRONTEND_URL.split(',').map((o) => o.trim());
 

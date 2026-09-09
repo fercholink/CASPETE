@@ -20,10 +20,18 @@ apiClient.interceptors.request.use((config) => {
 
 // Flag para evitar bucles infinitos de refresco
 let isRefreshing = false;
-let refreshSubscribers: Array<(token: string) => void> = [];
+let refreshSubscribers: Array<{
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}> = [];
 
 function onTokenRefreshed(token: string) {
-  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers.forEach((sub) => sub.resolve(token));
+  refreshSubscribers = [];
+}
+
+function onRefreshFailed(err: unknown) {
+  refreshSubscribers.forEach((sub) => sub.reject(err));
   refreshSubscribers = [];
 }
 
@@ -48,20 +56,21 @@ apiClient.interceptors.response.use(
 
     const refreshToken = localStorage.getItem('kidway_refresh_token');
     if (!refreshToken) {
-      // Sin refresh token — simplemente rechazar. AuthContext + ProtectedRoute
-      // se encargan de redirigir al login vía React Router.
       return Promise.reject(error);
     }
 
     axiosError.config!._retry = true;
 
     if (isRefreshing) {
-      return new Promise((resolve) => {
-        refreshSubscribers.push((token) => {
-          if (axiosError.config!.headers) {
-            axiosError.config!.headers['Authorization'] = `Bearer ${token}`;
-          }
-          resolve(apiClient(axiosError.config!));
+      return new Promise((resolve, reject) => {
+        refreshSubscribers.push({
+          resolve: (token) => {
+            if (axiosError.config!.headers) {
+              axiosError.config!.headers['Authorization'] = `Bearer ${token}`;
+            }
+            resolve(apiClient(axiosError.config!));
+          },
+          reject: (err) => reject(err),
         });
       });
     }
@@ -80,12 +89,17 @@ apiClient.interceptors.response.use(
         axiosError.config!.headers['Authorization'] = `Bearer ${token}`;
       }
       return apiClient(axiosError.config!);
-    } catch {
-      // Refresh falló — limpiar tokens y rechazar.
-      // AuthContext detectará user=null y ProtectedRoute redirigirá a /login.
-      localStorage.removeItem('kidway_token');
-      localStorage.removeItem('kidway_refresh_token');
-      return Promise.reject(error);
+    } catch (refreshErr: unknown) {
+      onRefreshFailed(refreshErr);
+      const status = (refreshErr as { response?: { status?: number } })?.response?.status;
+      // Solo limpiar tokens si el servidor rechazó explícitamente el refresh con 401.
+      // Si es error de red o backend temporalmente caído, preservar tokens.
+      if (status === 401) {
+        localStorage.removeItem('kidway_token');
+        localStorage.removeItem('kidway_refresh_token');
+        localStorage.removeItem('kidway_user');
+      }
+      return Promise.reject(refreshErr);
     } finally {
       isRefreshing = false;
     }

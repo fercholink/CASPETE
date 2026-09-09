@@ -1,7 +1,7 @@
 {
-  "name": "KIDWAY — Loncheras Escolares",
+  "name": "Kidway — Ubicación GPS y Loncheras Escolares",
   "short_name": "Kidway",
-  "description": "Plataforma de loncheras escolares para colegios y padres en Colombia.",
+  "description": "Plataforma de seguridad escolar, ubicación GPS y loncheras saludables para colegios y familias en Colombia.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#fdf8f4",

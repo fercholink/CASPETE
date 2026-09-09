@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import * as Sentry from '@sentry/node';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/error.middleware.js';
+import { globalLimiter } from './middleware/rate-limit.middleware.js';
 import passport from './lib/passport.js';
 import authRouter from './modules/auth/auth.router.js';
 import schoolRouter from './modules/schools/school.router.js';
@@ -43,6 +44,7 @@ const app = express();
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cookieParser()); // Necesario para leer cookies HttpOnly del flujo OAuth Google
+app.use(globalLimiter); // A-03: techo global de 500 req/15 min por IP
 
 const allowedOrigins = env.FRONTEND_URL.split(',').map((o) => o.trim());
 

@@ -19,7 +19,7 @@ router.get('/unread', async (req, res, next) => {
 // ── POST /api/chat/threads — Crear hilo (VENDOR o PARENT) ──────────────────
 router.post(
   '/threads',
-  requireRole(['VENDOR', 'PARENT']),
+  requireRole('VENDOR', 'PARENT'),
   async (req, res, next) => {
     try {
       const body = CreateThreadSchema.parse(req.body);
@@ -65,7 +65,7 @@ router.patch('/threads/:id/read', async (req, res, next) => {
 // ── PATCH /api/chat/threads/:id/close — Cerrar / resolver hilo ──────────────
 router.patch(
   '/threads/:id/close',
-  requireRole(['VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN']),
+  requireRole('VENDOR', 'SCHOOL_ADMIN', 'SUPER_ADMIN'),
   async (req, res, next) => {
     try {
       const body = CloseThreadSchema.parse(req.body);

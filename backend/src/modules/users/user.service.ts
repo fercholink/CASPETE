@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import { prisma } from '../../lib/prisma.js';
+import type { Prisma } from '@prisma/client';
 import { AppError } from '../../middleware/error.middleware.js';
 import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { CreateUserInput, UpdateUserInput } from './user.schemas.js';
@@ -75,8 +76,8 @@ export async function listUsers(
   const limit = Math.min(100, Math.max(1, filters?.limit ?? 50));
   const skip = (page - 1) * limit;
 
-  const where: any = {};
-  let stats: any = null;
+  const where: Prisma.UserWhereInput = {};
+  let stats: { total: number; parents: number; vendors: number; admins: number } | null = null;
 
   // Scope by school for non-super admins
   if (actor.role !== 'SUPER_ADMIN') {
@@ -107,9 +108,9 @@ export async function listUsers(
     // Restrict SCHOOL_ADMIN to only see VENDOR and SCHOOL_ADMIN
     if (actor.role === 'SCHOOL_ADMIN') {
        if (filters?.role && ['VENDOR', 'SCHOOL_ADMIN'].includes(filters.role)) {
-         where.role = filters.role;
+         where.role = filters.role as import('@prisma/client').UserRole;
        } else {
-         where.role = { in: ['VENDOR', 'SCHOOL_ADMIN'] };
+         where.role = { in: ['VENDOR', 'SCHOOL_ADMIN'] as import('@prisma/client').UserRole[] };
        }
     }
   } else if (filters?.school_id) {
@@ -125,7 +126,7 @@ export async function listUsers(
   }
   
   if (actor.role === 'SUPER_ADMIN' && filters?.role) {
-    where.role = filters.role;
+    where.role = filters.role as import('@prisma/client').UserRole;
   }
 
   if (filters?.active !== undefined) where.active = filters.active === 'true';

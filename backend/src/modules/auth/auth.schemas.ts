@@ -1,8 +1,15 @@
 import { z } from 'zod';
 
+// M-03: Contraseña con complejidad mínima (longitud + mayúscula + número)
+const passwordSchema = z
+  .string()
+  .min(8, 'La contraseña debe tener al menos 8 caracteres')
+  .regex(/[A-Z]/, 'Debe incluir al menos una letra mayúscula')
+  .regex(/[0-9]/, 'Debe incluir al menos un número');
+
 export const registerSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+  password: passwordSchema,
   full_name: z
     .string()
     .min(2, 'El nombre debe tener al menos 2 caracteres')
@@ -33,7 +40,7 @@ export const updateProfileSchema = z.object({
 
 export const changePasswordSchema = z.object({
   current_password: z.string().min(1),
-  new_password: z.string().min(8, 'La nueva contraseña debe tener al menos 8 caracteres'),
+  new_password: passwordSchema,
 });
 
 export const refreshTokenSchema = z.object({

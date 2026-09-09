@@ -3,6 +3,10 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { sendError } from '../utils/apiResponse.js';
 import type { UserRole } from '@prisma/client';
+// M-01: Re-exportar requireRole desde rbac.middleware para evitar duplicación.
+// Todos los routers deben importar desde auth.middleware O desde rbac.middleware
+// indistintamente — ambos apuntan a la misma función.
+export { requireRole } from './rbac.middleware.js';
 
 export interface JwtPayload {
   sub: string;
@@ -46,13 +50,3 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   }
 }
 
-/** Verifica que el usuario autenticado tenga uno de los roles permitidos. */
-export function requireRole(roles: UserRole[]) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      sendError(res, 'No tienes permiso para realizar esta acción', 403);
-      return;
-    }
-    next();
-  };
-}

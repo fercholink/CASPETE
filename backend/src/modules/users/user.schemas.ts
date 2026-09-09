@@ -1,8 +1,15 @@
 import { z } from 'zod';
 
+// M-03: Complejidad mínima de contraseña — mismo estándar que auth.schemas.ts
+const passwordSchema = z
+  .string()
+  .min(8, 'Mínimo 8 caracteres')
+  .regex(/[A-Z]/, 'Debe incluir al menos una letra mayúscula')
+  .regex(/[0-9]/, 'Debe incluir al menos un número');
+
 export const createUserSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Mínimo 8 caracteres'),
+  password: passwordSchema,
   full_name: z.string().min(2).max(200),
   phone: z.string().regex(/^[0-9]{10}$/, 'Formato: 10 dígitos numéricos').optional(),
   country_code: z.string().optional(),

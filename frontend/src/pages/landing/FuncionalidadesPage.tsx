@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Sparkles, UtensilsCrossed, AlertTriangle, Check, Star, Smile,
-  MapPin, Phone, Radio, BatteryCharging, Navigation, RefreshCw,
+  MapPin, Phone, Radio, BatteryCharging, Navigation, RefreshCw, Users,
 } from 'lucide-react';
 import { useLeadModal } from '../../components/landing/LeadModalProvider';
 import { useGpsOrderModal } from '../../components/landing/GpsOrderModalProvider';
@@ -216,6 +216,29 @@ export default function FuncionalidadesPage() {
             </div>
           </div>
 
+          {/* Círculo Familiar — Ubicación Compartida */}
+          <div className="mt-8 max-w-3xl mx-auto bg-gradient-to-br from-[#f0fdf4] to-[#e6f4ea] border border-emerald-200 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center gap-8 text-left">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md flex-shrink-0">
+              <Users className="h-8 w-8" />
+            </div>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <span>Nuevo · Familia Conectada</span>
+              </div>
+              <h3 className="font-display text-xl font-black text-[#1e3a2b]">
+                Círculo Familiar: Monitoreo conjunto con Mamá y Cuidadores
+              </h3>
+              <p className="text-xs text-[#2d523e] leading-relaxed">
+                El padre titular puede invitar a la madre, abuelos o cuidadores simplemente ingresando su correo electrónico. Si aún no tienen cuenta, reciben una invitación con enlace directo para registrarse en 1 clic y ver la ubicación de sus hijos al instante, con permisos configurables de monitoreo en vivo, rutas y alertas escolares.
+              </p>
+              <div className="pt-2 flex flex-wrap gap-2 text-[11px] font-semibold text-emerald-900">
+                <span className="bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200">✓ 1 familiar incluido gratis en el plan</span>
+                <span className="bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Cuentas independientes</span>
+                <span className="bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Control de permisos</span>
+              </div>
+            </div>
+          </div>
+
           {/* Precio del localizador para padres */}
           <div id="precios" className="mt-16 max-w-4xl mx-auto scroll-mt-28">
             <div className="text-center mb-8">
@@ -244,24 +267,26 @@ export default function FuncionalidadesPage() {
 
               {/* Mensualidad — recomendado */}
               <div className="bg-white p-8 rounded-[2.5rem] border-2 border-emerald-400 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-lg shadow-emerald-500/10 text-left">
-                <span className="absolute top-6 right-6 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Todo Incluido</span>
+                <span className="absolute top-6 right-6 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest">Plan Familiar</span>
                 <div>
                   <span className="text-3xl">📍</span>
-                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Plan Mensual</h4>
-                  <p className="text-xs text-[#61494c] font-semibold mt-1">Ubicación y llamadas, sin sorpresas.</p>
+                  <h4 className="font-display text-xl font-black text-[#4e2f33] mt-3">Plan Mensual Todo Incluido</h4>
+                  <p className="text-xs text-[#61494c] font-semibold mt-1">Ubicación, llamadas y familia conectada.</p>
                   <p className="font-display text-4xl font-black text-[#4e2f33] mt-4">
-                    $25.000 <span className="text-sm font-bold text-[#61494c]">COP / mes</span>
+                    $30.000 <span className="text-sm font-bold text-[#61494c]">COP / mes</span>
                   </p>
                 </div>
                 <ul className="space-y-2.5 text-xs text-[#61494c] font-bold">
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Llamadas ilimitadas a todo destino</span></li>
-                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Geolocalización en tiempo real</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Llamadas ilimitadas a los 3 números autorizados</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Geolocalización en tiempo real y geocercas</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span><strong>1 familiar adicional incluido ($0 extra)</strong> para mamá o papá</span></li>
+                  <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Familiares adicionales a solo +$5.000 COP/mes c/u</span></li>
                   <li className="flex items-center gap-x-2"><Check className="h-4 w-4 text-emerald-500 flex-shrink-0" /><span>Sin permanencia — pagas mes a mes</span></li>
                 </ul>
               </div>
             </div>
             <p className="text-center text-xs text-[#8c6d71] mt-6 max-w-xl mx-auto">
-              No necesitas que tu colegio esté afiliado a Kidway para usar el localizador — regístrate como padre y elige "solo localizar y llamar" al agregar a tu hijo.
+              No necesitas que tu colegio esté afiliado a Kidway para usar el localizador — regístrate como padre, invita a mamá y elige "solo localizar y llamar" al agregar a tu hijo.
             </p>
             <div className="flex justify-center mt-8">
               <button

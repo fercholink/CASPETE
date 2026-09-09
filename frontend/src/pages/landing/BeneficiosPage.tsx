@@ -112,19 +112,19 @@ export default function BeneficiosPage() {
                   </li>
                   <li className="flex items-center gap-x-2">
                     <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                    <span>📍 Ubicación GPS de tu hijo en el trayecto casa-colegio</span>
+                    <span>📍 Ubicación GPS de tu hijo en tiempo real y trayecto casa-colegio</span>
                   </li>
                   <li className="flex items-center gap-x-2">
                     <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                    <span>📞 Llamadas directas con tu hijo desde su localizador</span>
+                    <span>📞 Llamadas ilimitadas a los 3 números autorizados por el padre</span>
                   </li>
                   <li className="flex items-center gap-x-2">
                     <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                    <span>📍 Batería, señal y última ubicación conocida en vivo</span>
+                    <span>👨‍👩‍👦 Círculo Familiar: ubicación compartida con mamá y cuidadores</span>
                   </li>
                   <li className="flex items-center gap-x-2">
                     <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                    <span>📍 Activa rastreo extendido fuera del horario escolar cuando lo necesites</span>
+                    <span>🔋 Batería, señal y alertas de llegada al colegio en vivo</span>
                   </li>
                 </ul>
               </div>

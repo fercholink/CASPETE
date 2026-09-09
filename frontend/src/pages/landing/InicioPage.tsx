@@ -30,7 +30,7 @@ export default function InicioPage() {
               </h1>
 
               <p className="text-base text-[#C9D6CC] max-w-xl leading-relaxed">
-                Ubicación GPS en tiempo real y llamadas directas a su localizador — sin que tu hijo necesite un celular propio. Y cuando llega la hora del almuerzo, programas su lonchera desde la misma app.
+                Ubicación GPS en tiempo real, llamadas ilimitadas a los 3 números autorizados y círculo familiar compartido con mamá — sin que tu hijo necesite un celular propio. Y cuando llega el descanso, programas su lonchera saludable desde la misma app.
               </p>
 
               {/* Action buttons */}
@@ -55,7 +55,8 @@ export default function InicioPage() {
               {/* What's included — inline, not a stat grid */}
               <div className="flex flex-wrap items-center gap-x-7 gap-y-3 pt-5 border-t border-[#233D31] text-sm text-[#C9D6CC]">
                 <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-400" /> Ubicación en vivo</span>
-                <span className="inline-flex items-center gap-2"><Phone className="h-4 w-4 text-emerald-400" /> Llamadas directas</span>
+                <span className="inline-flex items-center gap-2"><Phone className="h-4 w-4 text-emerald-400" /> Llamadas a 3 números</span>
+                <span className="inline-flex items-center gap-2">👨‍👩‍👦 Círculo familiar</span>
                 <span className="inline-flex items-center gap-2">🎒 Loncheras escolares</span>
               </div>
             </div>

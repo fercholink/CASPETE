@@ -19,6 +19,7 @@ router.get('/shared-students', gpsRoles, guardianController.getMySharedStudents)
 router.get('/students/:studentId/plan-summary', gpsRoles, guardianController.getPlanSummary);
 router.get('/students/:studentId/guardians', gpsRoles, guardianController.listGuardians);
 router.post('/students/:studentId/guardians', gpsRoles, guardianController.enrollGuardian);
+router.post('/students/:studentId/guardians/:guardianId/resend', gpsRoles, guardianController.resendInvitation);
 router.patch('/students/:studentId/guardians/:guardianId', gpsRoles, guardianController.updateGuardian);
 router.delete('/students/:studentId/guardians/:guardianId', gpsRoles, guardianController.deleteGuardian);
 router.patch('/trackers/:trackerId/custom-plan', superAdminOnly, guardianController.updateTrackerCustomPlan);

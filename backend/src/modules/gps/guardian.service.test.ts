@@ -23,6 +23,9 @@ const prismaMock = {
 };
 
 vi.mock('../../lib/prisma.js', () => ({ prisma: prismaMock }));
+vi.mock('../../lib/email.js', () => ({
+  sendGuardianInvitationEmail: vi.fn().mockResolvedValue(undefined),
+}));
 
 const {
   getStudentPlanSummary,
@@ -140,7 +143,7 @@ describe('guardian.service', () => {
   });
 
   describe('enrollGuardian', () => {
-    it('rechaza si el correo ingresado no pertenece a un acudiente registrado en Kidway', async () => {
+    it('crea invitación en estado PENDING y envía correo si el usuario aún no tiene cuenta', async () => {
       prismaMock.student.findUnique.mockResolvedValue({
         id: 'student-1',
         parent_id: 'parent-1',
@@ -148,33 +151,9 @@ describe('guardian.service', () => {
         full_name: 'Mateo Gómez',
       });
 
-      prismaMock.user.findUnique.mockResolvedValue(null); // No existe en la base de datos
-
-      await expect(
-        enrollGuardian('student-1', {
-          email: 'noexiste@test.com',
-          relationship: 'MOTHER',
-          can_view_live: true,
-          can_view_history: true,
-          can_receive_alerts: true,
-          can_view_meals: false,
-        }, PARENT),
-      ).rejects.toThrow('no está registrado como acudiente en Kidway');
-    });
-
-    it('asigna is_included_slot=true al primer familiar enrolado', async () => {
-      prismaMock.student.findUnique.mockResolvedValue({
-        id: 'student-1',
-        parent_id: 'parent-1',
-        school_id: 'school-1',
-        full_name: 'Mateo Gómez',
-      });
-
-      prismaMock.user.findUnique.mockResolvedValue({
-        id: 'guardian-user-1',
-        role: 'PARENT',
-        full_name: 'Laura Madre',
-        active: true,
+      prismaMock.user.findUnique.mockImplementation(({ where }: { where: { id?: string; email?: string } }) => {
+        if (where.id === 'parent-1') return Promise.resolve({ full_name: 'Carlos Padre' });
+        return Promise.resolve(null); // el familiar no existe
       });
 
       prismaMock.studentGuardian.findUnique.mockResolvedValue(null);
@@ -182,9 +161,60 @@ describe('guardian.service', () => {
         included_guardians: 1,
         custom_guardian_price: null,
       });
-      prismaMock.studentGuardian.count.mockResolvedValue(0); // Primer familiar
+      prismaMock.studentGuardian.count.mockResolvedValue(0);
+      prismaMock.studentGuardian.create.mockImplementation(({ data }: { data: unknown }) => ({
+        ...(data as object),
+        id: 'share-pending-1',
+      }));
 
-      prismaMock.studentGuardian.create.mockImplementation(({ data }: { data: unknown }) => data);
+      const res = await enrollGuardian('student-1', {
+        email: 'f_nis88@hotmail.com',
+        relationship: 'MOTHER',
+        can_view_live: true,
+        can_view_history: true,
+        can_receive_alerts: true,
+        can_view_meals: false,
+      }, PARENT);
+
+      expect(res.status).toBe('PENDING');
+      expect(res.guardian_email).toBe('f_nis88@hotmail.com');
+      expect(res.guardian_id).toBeNull();
+      expect(res.is_included_slot).toBe(true);
+      expect(res.message).toContain('Invitación enviada por correo');
+    });
+
+    it('asigna is_included_slot=true al primer familiar enrolado cuando ya tiene cuenta', async () => {
+      prismaMock.student.findUnique.mockResolvedValue({
+        id: 'student-1',
+        parent_id: 'parent-1',
+        school_id: 'school-1',
+        full_name: 'Mateo Gómez',
+      });
+
+      prismaMock.user.findUnique.mockImplementation(({ where }: { where: { id?: string; email?: string } }) => {
+        if (where.id === 'parent-1') return Promise.resolve({ full_name: 'Carlos Padre' });
+        if (where.email === 'laura@test.com') {
+          return Promise.resolve({
+            id: 'guardian-user-1',
+            role: 'PARENT',
+            full_name: 'Laura Madre',
+            active: true,
+          });
+        }
+        return Promise.resolve(null);
+      });
+
+      prismaMock.studentGuardian.findUnique.mockResolvedValue(null);
+      prismaMock.gPSTracker.findUnique.mockResolvedValue({
+        included_guardians: 1,
+        custom_guardian_price: null,
+      });
+      prismaMock.studentGuardian.count.mockResolvedValue(0);
+
+      prismaMock.studentGuardian.create.mockImplementation(({ data }: { data: unknown }) => ({
+        ...(data as object),
+        id: 'share-1',
+      }));
 
       const created = await enrollGuardian('student-1', {
         email: 'laura@test.com',
@@ -198,6 +228,7 @@ describe('guardian.service', () => {
       expect(created.is_included_slot).toBe(true);
       expect(created.extra_price).toBe(0);
       expect(created.guardian_id).toBe('guardian-user-1');
+      expect(created.status).toBe('ACCEPTED');
     });
 
     it('asigna is_included_slot=false y extra_price=5000 al segundo familiar cuando el cupo es 1', async () => {
@@ -208,11 +239,17 @@ describe('guardian.service', () => {
         full_name: 'Mateo Gómez',
       });
 
-      prismaMock.user.findUnique.mockResolvedValue({
-        id: 'guardian-user-2',
-        role: 'PARENT',
-        full_name: 'Abuelo Carlos',
-        active: true,
+      prismaMock.user.findUnique.mockImplementation(({ where }: { where: { id?: string; email?: string } }) => {
+        if (where.id === 'parent-1') return Promise.resolve({ full_name: 'Carlos Padre' });
+        if (where.email === 'abuelo@test.com') {
+          return Promise.resolve({
+            id: 'guardian-user-2',
+            role: 'PARENT',
+            full_name: 'Abuelo Carlos',
+            active: true,
+          });
+        }
+        return Promise.resolve(null);
       });
 
       prismaMock.studentGuardian.findUnique.mockResolvedValue(null);
@@ -222,7 +259,10 @@ describe('guardian.service', () => {
       });
       prismaMock.studentGuardian.count.mockResolvedValue(1); // Ya hay 1 familiar
 
-      prismaMock.studentGuardian.create.mockImplementation(({ data }: { data: unknown }) => data);
+      prismaMock.studentGuardian.create.mockImplementation(({ data }: { data: unknown }) => ({
+        ...(data as object),
+        id: 'share-2',
+      }));
 
       const created = await enrollGuardian('student-1', {
         email: 'abuelo@test.com',
@@ -259,7 +299,6 @@ describe('guardian.service', () => {
         custom_guardian_price: null,
       });
 
-      // Queda 1 familiar que pasa a ser el cupo gratuito
       prismaMock.studentGuardian.findMany.mockResolvedValue([
         { id: 'share-2', is_included_slot: false, extra_price: 5000 },
       ]);

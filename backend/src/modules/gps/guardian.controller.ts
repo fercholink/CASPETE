@@ -19,7 +19,14 @@ export async function enrollGuardian(req: Request, res: Response) {
   const studentId = req.params['studentId'] as string;
   const input = EnrollGuardianSchema.parse(req.body);
   const result = await guardianService.enrollGuardian(studentId, input, req.user!);
-  sendSuccess(res, result, 'Familiar enrolado exitosamente', 201);
+  sendSuccess(res, result, result.message, 201);
+}
+
+export async function resendInvitation(req: Request, res: Response) {
+  const studentId = req.params['studentId'] as string;
+  const guardianId = req.params['guardianId'] as string;
+  const result = await guardianService.resendGuardianInvitation(studentId, guardianId, req.user!);
+  sendSuccess(res, result, result.message);
 }
 
 export async function updateGuardian(req: Request, res: Response) {

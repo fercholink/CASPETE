@@ -93,6 +93,11 @@ export async function loginOrCreateGoogleUser(input: {
         school_id: true, active: true, google_id: true,
       },
     });
+    // Vincular automáticamente invitaciones pendientes al círculo familiar
+    await prisma.studentGuardian.updateMany({
+      where: { guardian_email: user.email.toLowerCase(), status: 'PENDING' },
+      data: { guardian_id: user.id, status: 'ACCEPTED', active: true },
+    }).catch(() => {});
   }
 
   const token = signToken(user);
@@ -148,6 +153,12 @@ export async function registerUser(input: RegisterInput) {
       created_at: true,
     },
   });
+
+  // Vincular automáticamente invitaciones pendientes al círculo familiar
+  await prisma.studentGuardian.updateMany({
+    where: { guardian_email: user.email.toLowerCase(), status: 'PENDING' },
+    data: { guardian_id: user.id, status: 'ACCEPTED', active: true },
+  }).catch(() => {});
 
   if (isParent && verification_token) {
     const baseUrl = (env.FRONTEND_URL.split(',')[0] ?? 'http://localhost:5173').trim();

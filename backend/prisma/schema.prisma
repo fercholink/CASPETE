@@ -977,8 +977,11 @@ model StudentGuardian {
   id              String               @id @default(uuid()) @db.Uuid
   student_id      String               @db.Uuid
   parent_id       String               @db.Uuid              // Padre titular que otorga el permiso
-  guardian_id     String               @db.Uuid              // Usuario familiar (debe tener cuenta en Kidway)
+  guardian_id     String?              @db.Uuid              // Usuario familiar (null si aún no se ha registrado)
+  guardian_email  String               @db.VarChar(255)      // Correo del familiar invitado
   relationship    GuardianRelationship @default(FAMILY_OTHER)
+  status          String               @default("PENDING") @db.VarChar(20) // PENDING | ACCEPTED
+  invite_token    String?              @unique @db.VarChar(64)
 
   // Permisos granulares
   can_view_live     Boolean   @default(true)  // Ubicación en tiempo real
@@ -996,9 +999,9 @@ model StudentGuardian {
 
   student  Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
   parent   User    @relation("OwnerGuardians", fields: [parent_id], references: [id], onDelete: Cascade)
-  guardian User    @relation("UserAsGuardian", fields: [guardian_id], references: [id], onDelete: Cascade)
+  guardian User?   @relation("UserAsGuardian", fields: [guardian_id], references: [id], onDelete: SetNull)
 
-  @@unique([student_id, guardian_id])
+  @@unique([student_id, guardian_email])
   @@index([guardian_id, active])
   @@index([student_id])
 }

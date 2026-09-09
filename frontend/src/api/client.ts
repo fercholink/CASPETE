@@ -13,7 +13,12 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('kidway_token');
   if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+    if (config.headers && typeof (config.headers as any).set === 'function') {
+      (config.headers as any).set('Authorization', `Bearer ${token}`);
+    } else {
+      config.headers = config.headers || {};
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
   }
   return config;
 });
@@ -91,14 +96,6 @@ apiClient.interceptors.response.use(
       return apiClient(axiosError.config!);
     } catch (refreshErr: unknown) {
       onRefreshFailed(refreshErr);
-      const status = (refreshErr as { response?: { status?: number } })?.response?.status;
-      // Solo limpiar tokens si el servidor rechazó explícitamente el refresh con 401.
-      // Si es error de red o backend temporalmente caído, preservar tokens.
-      if (status === 401) {
-        localStorage.removeItem('kidway_token');
-        localStorage.removeItem('kidway_refresh_token');
-        localStorage.removeItem('kidway_user');
-      }
       return Promise.reject(refreshErr);
     } finally {
       isRefreshing = false;

@@ -208,9 +208,11 @@ export async function loginUser(input: LoginInput) {
 }
 
 export async function refreshTokens(rawRefreshToken: string) {
-  const stored = await prisma.refreshToken.findFirst({
+  const hash = hashToken(rawRefreshToken);
+
+  let stored = await prisma.refreshToken.findFirst({
     where: {
-      token_hash: hashToken(rawRefreshToken),
+      token_hash: hash,
       revoked_at: null,
       expires_at: { gt: new Date() },
     },
@@ -221,7 +223,31 @@ export async function refreshTokens(rawRefreshToken: string) {
     },
   });
 
-  if (!stored || !stored.user.active) {
+  // Grace period de 30s: Si el token fue revocado hace menos de 30 segundos
+  // (por una petición concurrente), emitir un nuevo access token sin fallar
+  if (!stored) {
+    const recentlyRevoked = await prisma.refreshToken.findFirst({
+      where: {
+        token_hash: hash,
+        revoked_at: { gt: new Date(Date.now() - 30 * 1000) },
+        expires_at: { gt: new Date() },
+      },
+      include: {
+        user: {
+          select: { id: true, email: true, role: true, school_id: true, active: true },
+        },
+      },
+    });
+
+    if (recentlyRevoked && recentlyRevoked.user.active) {
+      const token = signToken(recentlyRevoked.user);
+      return { token, refresh_token: rawRefreshToken };
+    }
+
+    throw new AppError('Token de refresco inválido o expirado', 401);
+  }
+
+  if (!stored.user.active) {
     throw new AppError('Token de refresco inválido o expirado', 401);
   }
 

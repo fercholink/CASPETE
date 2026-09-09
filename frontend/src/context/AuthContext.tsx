@@ -45,31 +45,51 @@ function getStoredUser(): AuthUser | null {
   }
 }
 
-function isTokenExpired(token: string): boolean {
+function decodeJwtUser(token: string): AuthUser | null {
   try {
     const parts = token.split('.');
-    if (parts.length !== 3) return true;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    if (!payload.exp) return false;
-    // Margen de 15 segundos antes de expiración real
-    return Date.now() >= (payload.exp * 1000) - 15000;
+    if (parts.length !== 3) return null;
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = base64.length % 4;
+    if (pad) base64 += '='.repeat(4 - pad);
+    const json = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const payload = JSON.parse(json) as {
+      sub?: string;
+      email?: string;
+      role?: AuthUser['role'];
+      schoolId?: string | null;
+    };
+    if (!payload.sub || !payload.email || !payload.role) return null;
+    return {
+      id: payload.sub,
+      email: payload.email,
+      full_name: payload.email.split('@')[0],
+      role: payload.role,
+      school_id: payload.schoolId ?? null,
+    };
   } catch {
-    return true;
+    return null;
   }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(() => {
     const token = localStorage.getItem('kidway_token');
-    const user = getStoredUser();
+    const storedUser = getStoredUser();
+    const user = storedUser || (token ? decodeJwtUser(token) : null);
 
-    // Si ya tenemos token y usuario almacenados:
-    // El usuario puede acceder INMEDIATAMENTE sin parpadeos ni "Cargando..."
     if (token && user) {
+      if (!storedUser) {
+        localStorage.setItem('kidway_user', JSON.stringify(user));
+      }
       return { user, token, isLoading: false };
     }
 
-    // Si hay token pero aún no tenemos usuario, o no hay nada:
     return {
       user: null,
       token,
@@ -79,11 +99,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('kidway_token');
-    const refreshToken = localStorage.getItem('kidway_refresh_token');
 
-    // Caso 1: No hay token guardado
+    // Si no hay token en localStorage, intentar verificar cookie OAuth (ej. Google)
     if (!token) {
-      // Podría haber sesión activa por cookie (ej. Google OAuth)
       apiClient
         .get<{ success: true; data: AuthUser }>('/auth/me')
         .then((res) => {
@@ -91,53 +109,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setState({ user: res.data.data, token: null, isLoading: false });
         })
         .catch(() => {
-          localStorage.removeItem('kidway_user');
           setState({ user: null, token: null, isLoading: false });
         });
       return;
     }
 
-    // Caso 2: El access token existe pero ya expiró según su timestamp
-    if (isTokenExpired(token)) {
-      if (refreshToken) {
-        axios
-          .post<{ success: true; data: { token: string; refresh_token: string } }>(
-            `${API_BASE_URL}/auth/refresh`,
-            { refresh_token: refreshToken },
-          )
-          .then(async (refreshRes) => {
-            const { token: newToken, refresh_token: newRefreshToken } = refreshRes.data.data;
-            localStorage.setItem('kidway_token', newToken);
-            localStorage.setItem('kidway_refresh_token', newRefreshToken);
-
-            try {
-              const meRes = await apiClient.get<{ success: true; data: AuthUser }>('/auth/me');
-              localStorage.setItem('kidway_user', JSON.stringify(meRes.data.data));
-              setState({ user: meRes.data.data, token: newToken, isLoading: false });
-            } catch {
-              const existingUser = getStoredUser();
-              setState({ user: existingUser, token: newToken, isLoading: false });
-            }
-          })
-          .catch((refreshErr: unknown) => {
-            const status = (refreshErr as { response?: { status?: number } })?.response?.status;
-            if (status === 401) {
-              // Servidor rechazó explícitamente el refresh token: sesión expirada
-              localStorage.removeItem('kidway_token');
-              localStorage.removeItem('kidway_refresh_token');
-              localStorage.removeItem('kidway_user');
-              setState({ user: null, token: null, isLoading: false });
-            } else {
-              // Error de red / backend temporal: CONSERVAR sesión
-              const existingUser = getStoredUser();
-              setState({ user: existingUser, token, isLoading: false });
-            }
-          });
-        return;
-      }
-    }
-
-    // Caso 3: Token vigente o verificación en segundo plano
+    // Si hay token, consultar /auth/me en segundo plano para sincronizar datos frescos
     apiClient
       .get<{ success: true; data: AuthUser }>('/auth/me')
       .then((res) => {
@@ -145,22 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('kidway_user', JSON.stringify(res.data.data));
         setState({ user: res.data.data, token: currentToken, isLoading: false });
       })
-      .catch((err: unknown) => {
-        const status = (err as { response?: { status?: number } })?.response?.status;
-        if (status === 401) {
-          // El interceptor de apiClient ya intentó refrescar.
-          // Solo si los tokens ya fueron borrados por 401 definitivo, limpiar estado.
-          const currentToken = localStorage.getItem('kidway_token');
-          if (!currentToken) {
-            localStorage.removeItem('kidway_user');
-            setState({ user: null, token: null, isLoading: false });
-          }
-        } else {
-          // Error de red, 500 o backend no disponible:
-          // CONSERVAR el usuario guardado para no desloguear
-          const existingUser = getStoredUser();
-          setState({ user: existingUser, token, isLoading: false });
-        }
+      .catch(() => {
+        // En caso de cualquier error (red, 401 temporal, 500, o CORS),
+        // NUNCA desloguear al usuario en la recarga: conservar la sesión activa.
+        setState((prev) => ({ ...prev, isLoading: false }));
       });
   }, []);
 

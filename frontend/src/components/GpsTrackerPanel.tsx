@@ -37,6 +37,13 @@ interface TrackerData {
   call_whitelist_json: { name: string; number: string }[] | null;
 }
 
+interface LocationData {
+  latitude: string;
+  longitude: string;
+  speed: string | null;
+  recorded_at: string;
+}
+
 interface PaymentMethodField { label: string; value: string }
 interface PaymentMethodInfo { id: string; key: string; label: string; icon: string; color: string; fields: PaymentMethodField[] }
 
@@ -95,6 +102,15 @@ function parseHM(s: string): { hour: number; minute: number } {
   return { hour: hour || 0, minute: minute || 0 };
 }
 
+function timeAgoShort(iso: string): string {
+  const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (min < 1) return 'justo ahora';
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  return `hace ${Math.floor(h / 24)} d`;
+}
+
 interface Props {
   studentId: string;
   onClose: () => void;
@@ -119,6 +135,7 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [gpsPlanStatus, setGpsPlanStatus] = useState<GpsPlanStatus | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodInfo[]>([]);
+  const [lastLocation, setLastLocation] = useState<LocationData | null>(null);
   const [gpsPaymentType, setGpsPaymentType] = useState<'DEVICE' | 'MONTHLY_SUBSCRIPTION' | null>(null);
   const [paymentMethodTab, setPaymentMethodTab] = useState<'BALANCE' | 'WOMPI' | 'TRANSFER'>('BALANCE');
   const [balancePaySuccessMsg, setBalancePaySuccessMsg] = useState('');
@@ -229,6 +246,7 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
     setAlarmWeekdays(0); setAlarmTime(''); setAlarmError(''); setAlarmSaved(false);
     setWifiWeekdays(0); setWifiStartTime('00:00'); setWifiEndTime('23:59'); setWifiSsid('');
     setWifiAttendanceError(''); setWifiAttendanceSaved(false);
+    setLastLocation(null);
     setGpsPlanStatus(null); setGpsPaymentType(null); setGpsPaymentScreenshot('');
     setGpsPaymentRef(''); setGpsPaymentError(''); setGpsPaymentSubmitted(false);
     setPositionRequestMsg('');
@@ -248,10 +266,11 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
       .then((r) => setPaymentMethods(r.data.data))
       .catch(() => {});
     setGpsLoading(true);
-    apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)
+    apiClient.get<{ data: { tracker: TrackerData; location: LocationData | null } }>(`/gps/trackers/student/${studentId}`)
       .then((r) => {
         const tracker = r.data.data.tracker;
         setGpsTracker(tracker);
+        setLastLocation(r.data.data.location);
         setSosNumber(tracker.sos_number ?? '');
         setDadNumber(tracker.dad_number ?? '');
         setMomNumber(tracker.mom_number ?? '');
@@ -309,6 +328,18 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
     }, 15000);
     return () => clearInterval(interval);
   }, [gpsTracker?.id]);
+
+  // Refresco automático de las últimas coordenadas — mismo intervalo que usa
+  // el mapa de rastreo (GPSTrackingPage), para que se vean al día sin recargar.
+  useEffect(() => {
+    if (!studentId) return;
+    const interval = setInterval(() => {
+      apiClient.get<{ data: { location: LocationData | null } }>(`/gps/trackers/student/${studentId}`)
+        .then((r) => setLastLocation(r.data.data.location))
+        .catch(() => {});
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [studentId]);
 
   async function handlePayWithKidwayBalance() {
     if (!gpsTracker) return;
@@ -784,6 +815,25 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
             <p style={{ margin: '0 0 10px', fontSize: 11, color: positionRequestMsg.includes('✓') ? '#059669' : '#dc2626', textAlign: 'center' }}>
               {positionRequestMsg}
             </p>
+          )}
+
+          {lastLocation && (
+            <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: '#f8fafc', border: '1px solid var(--color-border)', fontSize: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>📍 Últimas coordenadas</span>
+                <span style={{ color: 'var(--color-text-muted)' }}>{timeAgoShort(lastLocation.recorded_at)}</span>
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, marginBottom: 6 }}>
+                {Number(lastLocation.latitude).toFixed(6)}, {Number(lastLocation.longitude).toFixed(6)}
+              </div>
+              <a
+                href={`https://www.google.com/maps?q=${lastLocation.latitude},${lastLocation.longitude}`}
+                target="_blank" rel="noopener noreferrer"
+                style={{ fontSize: 12, color: 'var(--color-brand-deep)', fontWeight: 600, textDecoration: 'none' }}
+              >
+                Abrir en Google Maps ↗
+              </a>
+            </div>
           )}
 
           <Link to="/tracking" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', display: 'block', marginBottom: 20 }}>

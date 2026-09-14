@@ -94,9 +94,16 @@ export async function createWompiCheckoutSession(
  */
 function verifyWompiChecksum(body: any): boolean {
   if (!env.WOMPI_EVENTS_SECRET) {
-    // Si no hay secret configurado en desarrollo, permitimos procesar con log de advertencia
-    console.warn('[Wompi Webhook] WOMPI_EVENTS_SECRET no configurado, omitiendo validación de firma en desarrollo');
-    return true;
+    // Sin secret configurado NUNCA se puede validar la firma — solo se tolera
+    // en desarrollo local (con log de advertencia). En producción, aceptar el
+    // webhook sin firma permitiría a cualquiera falsificar un "pago aprobado"
+    // y activar una suscripción sin pagar, así que se rechaza.
+    if (env.NODE_ENV !== 'production') {
+      console.warn('[Wompi Webhook] WOMPI_EVENTS_SECRET no configurado, omitiendo validación de firma en desarrollo');
+      return true;
+    }
+    console.error('[Wompi Webhook] WOMPI_EVENTS_SECRET no configurado en producción — rechazando webhook por seguridad');
+    return false;
   }
 
   const { data, signature, timestamp } = body || {};

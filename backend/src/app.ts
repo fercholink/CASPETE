@@ -42,6 +42,13 @@ import monthlyMenuRouter from './modules/monthly-menu/menu.router.js';
 
 const app = express();
 
+// Detrás de Traefik (un solo hop) — sin esto, Express toma la IP del propio
+// proxy como "la IP del cliente" para todos los usuarios, y el rate limiter
+// global (A-03) los agrupa a todos en el mismo balde de 500 req/15min en vez
+// de contar por usuario real. Coincide con el warning ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+// que express-rate-limit venía mostrando en cada arranque.
+app.set('trust proxy', 1);
+
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cookieParser()); // Necesario para leer cookies HttpOnly del flujo OAuth Google
 app.use(globalLimiter); // A-03: techo global de 500 req/15 min por IP

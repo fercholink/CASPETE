@@ -1,12 +1,12 @@
 import webpush from 'web-push';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.middleware.js';
+import { env } from '../../config/env.js';
 
 // VAPID keys - generadas con web-push generate-vapid-keys
-// Se leen del entorno (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_EMAIL)
-const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY  ?? '';
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY ?? '';
-const VAPID_EMAIL   = process.env.VAPID_EMAIL       ?? 'mailto:info@kidway.co';
+const VAPID_PUBLIC  = env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE = env.VAPID_PRIVATE_KEY;
+const VAPID_EMAIL   = env.VAPID_EMAIL;
 
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);

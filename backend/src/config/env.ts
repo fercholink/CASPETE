@@ -19,6 +19,12 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY es requerida'),
   EMAIL_FROM: z.string().default('info@kidway.co'),
   PAYMENT_EMAIL: z.string().default('pagos@kidway.co'),
+  // Web Push (VAPID) — notificaciones push del navegador (geocercas GPS, pedidos,
+  // chat, recordatorio de mensualidad). Opcional: sin esto, sendPushToUser omite
+  // el envío en silencio (solo console.warn) — generadas con `web-push generate-vapid-keys`.
+  VAPID_PUBLIC_KEY: z.string().default(''),
+  VAPID_PRIVATE_KEY: z.string().default(''),
+  VAPID_EMAIL: z.string().default('mailto:info@kidway.co'),
   GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID es requerida'),
   GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET es requerida'),
   GOOGLE_CALLBACK_URL: z.string().default('http://localhost:3001/api/auth/google/callback'),

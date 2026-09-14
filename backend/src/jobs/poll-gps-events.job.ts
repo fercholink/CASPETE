@@ -78,7 +78,10 @@ async function notifyEvent(event: PlatformEvent) {
   const title = buildTitle(event.type, tracker.student.full_name, geofenceName);
   if (!title) return;
 
-  const time = new Date(event.recorded_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+  // Sin timeZone explícito, toLocaleTimeString usa la zona del contenedor
+  // (UTC en producción, no Bogotá) — sin esto, cada notificación salía
+  // mostrando la hora 5 horas adelantada.
+  const time = new Date(event.recorded_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' });
   await pushService.sendPushToUser(tracker.student.parent_id, {
     title,
     body: `Rastreo GPS · ${time}`,

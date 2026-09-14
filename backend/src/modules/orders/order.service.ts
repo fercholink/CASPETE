@@ -481,6 +481,7 @@ export async function donateOrder(id: string, actor: JwtPayload) {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: 'America/Bogota',
   });
 
   const chatMessageContent = `❤️ DONADO: El padre autorizó al tendero para entregar este pedido a quien lo necesite. Entrega: ${formattedDate}. Código de entrega: ${deliveryCode}`;
@@ -598,6 +599,7 @@ export async function requestPickup(id: string, actor: JwtPayload) {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: 'America/Bogota',
   });
 
   const chatMessageContent = `🛍️ RETIRO SOLICITADO: El padre retira el pedido a la salida del colegio. Entrega: ${formattedDate}. Código de retiro: ${deliveryCode}`;

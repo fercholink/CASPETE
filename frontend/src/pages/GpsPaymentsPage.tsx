@@ -39,18 +39,26 @@ export default function GpsPaymentsPage() {
   const [processLoading, setProcessLoading] = useState(false);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
 
-  const fetchRequests = useCallback((pg = page) => {
-    setLoading(true);
+  const fetchRequests = useCallback((pg = page, opts: { silent?: boolean } = {}) => {
+    if (!opts.silent) setLoading(true);
     const p = new URLSearchParams();
     p.set('page', String(pg)); p.set('limit', '20');
     if (statusFilter) p.set('status', statusFilter);
     apiClient.get<{ data: { requests: GpsPaymentRequest[]; total: number; page: number; pages: number } }>(`/gps-payments?${p}`)
       .then(r => { setRequests(r.data.data.requests); setTotalPages(r.data.data.pages); })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { if (!opts.silent) setLoading(false); });
   }, [statusFilter, page]);
 
   useEffect(() => { fetchRequests(page); }, [fetchRequests, page]);
+
+  // Refresco automático — nuevas solicitudes (y comprobantes) aparecen solas,
+  // sin que el admin tenga que recargar la página. Silencioso: no muestra el
+  // spinner de "Cargando..." en cada poll, solo en la carga inicial/cambio de filtro.
+  useEffect(() => {
+    const interval = setInterval(() => fetchRequests(page, { silent: true }), 15000);
+    return () => clearInterval(interval);
+  }, [fetchRequests, page]);
 
   async function confirmProcess() {
     if (!processTarget) return;

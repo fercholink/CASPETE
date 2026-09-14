@@ -37,6 +37,9 @@ interface TrackerData {
   call_whitelist_json: { name: string; number: string }[] | null;
 }
 
+interface PaymentMethodField { label: string; value: string }
+interface PaymentMethodInfo { id: string; key: string; label: string; icon: string; color: string; fields: PaymentMethodField[] }
+
 interface GpsPlanStatus {
   is_gps_only_plan: boolean;
   device_purchased: boolean;
@@ -115,6 +118,7 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
   const [deviceName, setDeviceName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [gpsPlanStatus, setGpsPlanStatus] = useState<GpsPlanStatus | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodInfo[]>([]);
   const [gpsPaymentType, setGpsPaymentType] = useState<'DEVICE' | 'MONTHLY_SUBSCRIPTION' | null>(null);
   const [paymentMethodTab, setPaymentMethodTab] = useState<'BALANCE' | 'WOMPI' | 'TRANSFER'>('BALANCE');
   const [balancePaySuccessMsg, setBalancePaySuccessMsg] = useState('');
@@ -240,6 +244,9 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
         .then((r) => setGeofenceOptions(r.data.data))
         .catch(() => {});
     }
+    apiClient.get<{ data: PaymentMethodInfo[] }>('/payment-methods')
+      .then((r) => setPaymentMethods(r.data.data))
+      .catch(() => {});
     setGpsLoading(true);
     apiClient.get<{ data: { tracker: TrackerData } }>(`/gps/trackers/student/${studentId}`)
       .then((r) => {
@@ -289,6 +296,19 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
       .finally(() => setGpsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId]);
+
+  // Refresco automático del estado del plan/suscripción — así el padre ve
+  // "Activa" apenas el admin aprueba su comprobante, sin recargar la página.
+  useEffect(() => {
+    if (!gpsTracker?.id) return;
+    const trackerId = gpsTracker.id;
+    const interval = setInterval(() => {
+      apiClient.get<{ data: GpsPlanStatus }>(`/gps-payments/trackers/${trackerId}/status`)
+        .then((r) => setGpsPlanStatus(r.data.data))
+        .catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [gpsTracker?.id]);
 
   async function handlePayWithKidwayBalance() {
     if (!gpsTracker) return;
@@ -994,8 +1014,14 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
                     <div>
                       <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: 10, marginBottom: 10, fontSize: 11, color: '#166534', lineHeight: 1.4 }}>
                         <strong>Cuentas autorizadas Kidway / BS Comunicaciones:</strong><br />
-                        • Nequi / Daviplata: <strong>321 436 4223</strong><br />
-                        • Bancolombia Ahorros: <strong>000-000000-00</strong>
+                        {paymentMethods.length === 0 && 'Cargando cuentas...'}
+                        {paymentMethods.map((pm) => (
+                          <div key={pm.id}>
+                            {pm.fields.map((f) => (
+                              <span key={f.label}>• {pm.icon} {f.label}: <strong>{f.value}</strong><br /></span>
+                            ))}
+                          </div>
+                        ))}
                       </div>
                       <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--color-text-muted)' }}>
                         Sube una foto o captura del comprobante de transferencia:

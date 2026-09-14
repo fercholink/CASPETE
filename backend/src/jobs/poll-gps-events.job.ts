@@ -22,6 +22,10 @@ let lastPolledAt: Date = new Date();
 const NOTIFIABLE_TYPES = new Set([
   'GEOFENCE_ENTER', 'GEOFENCE_EXIT', 'WIFI_ATTENDANCE_ENTER', 'WIFI_ATTENDANCE_EXIT',
   'ROUTE_DEVIATION', 'ROUTE_RESTORED', 'LOW_BATTERY',
+  // SOS/OVERSPEED/VIBRATION ya se detectan y configuran en el panel, pero hasta
+  // ahora nunca se notificaban al padre por push — el botón SOS sí marca por
+  // llamada real, pero si el padre no contesta, no había ningún respaldo.
+  'SOS', 'OVERSPEED', 'VIBRATION', 'DEVICE_REMOVED', 'DEVICE_WORN',
 ]);
 
 // geofenceName es null para la geocerca automática del colegio (se usa la
@@ -40,6 +44,11 @@ function buildTitle(type: PlatformEvent['type'], studentName: string, geofenceNa
     case 'ROUTE_DEVIATION': return `${studentName} se desvió de la ruta esperada`;
     case 'ROUTE_RESTORED': return `${studentName} volvió a la ruta esperada`;
     case 'LOW_BATTERY': return `🔋 Batería baja del localizador de ${studentName}`;
+    case 'SOS': return `🆘 ${studentName} presionó el botón de SOS`;
+    case 'OVERSPEED': return `⚠️ ${studentName} superó la velocidad permitida`;
+    case 'VIBRATION': return `📳 Alarma de vibración del localizador de ${studentName}`;
+    case 'DEVICE_REMOVED': return `⚠️ El localizador de ${studentName} fue retirado`;
+    case 'DEVICE_WORN': return `✓ El localizador de ${studentName} vuelve a estar puesto`;
     default: return null;
   }
 }
@@ -47,6 +56,8 @@ function buildTitle(type: PlatformEvent['type'], studentName: string, geofenceNa
 function buildTag(type: PlatformEvent['type']): string {
   if (type === 'LOW_BATTERY') return 'gps-battery';
   if (type === 'WIFI_ATTENDANCE_ENTER' || type === 'WIFI_ATTENDANCE_EXIT') return 'gps-wifi-attendance';
+  if (type === 'SOS' || type === 'OVERSPEED' || type === 'VIBRATION') return 'gps-safety-alert';
+  if (type === 'DEVICE_REMOVED' || type === 'DEVICE_WORN') return 'gps-device-worn';
   return 'gps-geofence';
 }
 

@@ -10,6 +10,8 @@ import GpsGeofencesPage from './GpsGeofencesPage';
 
 const TABS = [
   { key: 'diagnostico', label: '🔍 Diagnóstico' },
+  { key: 'activos', label: '🟢 Activos' },
+  { key: 'guia', label: '📖 Guía de activación' },
   { key: 'tarifas', label: '⚙️ Tarifas y Precios' },
   { key: 'pagos', label: '💳 Pagos' },
   { key: 'pedidos', label: '📦 Pedidos' },
@@ -246,13 +248,189 @@ function TarifasTab() {
 
 interface StudentOption { id: string; full_name: string; school: { name: string } }
 
+interface TrackerListItem {
+  id: string;
+  device_name: string | null;
+  student_id: string | null;
+  student_name: string;
+  school_name: string | null;
+  online: boolean;
+  battery_level: number | null;
+  last_seen_at: string | null;
+}
+
+function formatLastSeen(iso: string | null): string {
+  if (!iso) return 'Nunca conectado';
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return 'Justo ahora';
+  if (mins < 60) return `Hace ${mins} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `Hace ${hours} h`;
+  return `Desde ${new Date(iso).toLocaleDateString('es-CO')}`;
+}
+
+/** Lista de todos los localizadores vinculados con su estado en vivo (en línea/desconectado, batería). */
+function ActivosTab({ onViewStudent }: { onViewStudent: (studentId: string, studentName: string) => void }) {
+  const [trackers, setTrackers] = useState<TrackerListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = () => {
+    setLoading(true);
+    setError('');
+    apiClient.get<{ data: TrackerListItem[] }>('/gps/trackers')
+      .then((r) => setTrackers(r.data.data))
+      .catch(() => setError('No se pudieron cargar los localizadores'))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const onlineCount = trackers.filter((t) => t.online).length;
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+        <p style={{ fontSize: 14, color: 'var(--color-text-muted)', margin: 0 }}>
+          {loading ? 'Cargando...' : `🟢 ${onlineCount} en línea de ${trackers.length} localizadores vinculados`}
+        </p>
+        <button className="btn-ghost" onClick={load} disabled={loading} style={{ fontSize: 12, padding: '6px 14px' }}>
+          ↻ Actualizar
+        </button>
+      </div>
+
+      {error && <p className="form-error">{error}</p>}
+      {!loading && !error && trackers.length === 0 && (
+        <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>No hay localizadores vinculados todavía.</p>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {trackers.map((t) => (
+          <div
+            key={t.id}
+            className="user-card"
+            style={{ margin: 0, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}
+          >
+            <div style={{ minWidth: 180 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.online ? '#10b981' : '#d1d5db', flexShrink: 0 }} />
+                <strong style={{ fontSize: 14 }}>{t.student_name}</strong>
+              </div>
+              <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+                {t.school_name ?? 'Sin colegio'} · {t.device_name ?? 'Sin nombre'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: 'var(--color-text-muted)' }}>
+              <span>🔋 {t.battery_level ?? '—'}%</span>
+              <span style={{ color: t.online ? '#059669' : 'var(--color-text-muted)', fontWeight: 600 }}>
+                {t.online ? 'En línea' : formatLastSeen(t.last_seen_at)}
+              </span>
+              {t.student_id && (
+                <button className="btn-ghost" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => onViewStudent(t.student_id!, t.student_name)}>
+                  Ver diagnóstico
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface GuiaStep {
+  title: string;
+  description: string;
+  command?: string;
+}
+
+const ACTIVATION_STEPS: GuiaStep[] = [
+  {
+    title: 'Encender el dispositivo',
+    description: 'Con la SIM ya insertada, mantén presionado el botón de encendido unos segundos hasta que prenda.',
+  },
+  {
+    title: 'Configurar el APN de datos (solo si la SIM no trae datos activados por defecto)',
+    description: 'Sin esto el dispositivo puede no tener internet para conectarse, aunque el paso siguiente responda OK. Envía por SMS al número de la SIM del dispositivo:',
+    command: 'APN,<apn>,<usuario>,<clave>#',
+  },
+  {
+    title: 'Apuntar el dispositivo al servidor de Kidway',
+    description: 'Desde otro celular, envía al número de la SIM. Debe responder "Set OK!":',
+    command: 'SERVER,38.191.208.30,5002#',
+  },
+  {
+    title: 'Confirmar la configuración y obtener el IMEI',
+    description: 'Responde con servidor:puerto;imei;...;firmware;fecha. Verifica que diga 38.191.208.30:5002 y copia el IMEI:',
+    command: 'INFO#',
+  },
+  {
+    title: 'Vincular el IMEI al estudiante',
+    description: 'En la pestaña 🔍 Diagnóstico, busca al estudiante y vincula el localizador con el IMEI real y el número de la SIM del dispositivo.',
+  },
+  {
+    title: 'Verificar la conexión',
+    description: 'En la pestaña 🟢 Activos (o en Diagnóstico) debe pasar de "Sin conexión" a "En línea" con batería reportada — puede tardar 1-2 minutos en llegar el primer reporte.',
+  },
+];
+
+function GuiaTab() {
+  return (
+    <div style={{ maxWidth: 720 }}>
+      <div style={{ background: '#fff', padding: 24, borderRadius: 16, border: '1px solid var(--color-border)' }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 700 }}>📖 Activar un localizador GPS nuevo</h2>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--color-text-muted)' }}>
+          Procedimiento completo desde que el dispositivo llega con la SIM instalada hasta que aparece "En línea" en el panel.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {ACTIVATION_STEPS.map((step, i) => (
+            <div key={i} style={{ display: 'flex', gap: 12, background: '#f8fafc', padding: 14, borderRadius: 10, border: '1px solid var(--color-border)' }}>
+              <div style={{
+                flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: 'var(--color-brand-deep)', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
+              }}>
+                {i + 1}
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700 }}>{step.title}</p>
+                <p style={{ margin: step.command ? '0 0 8px' : 0, fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{step.description}</p>
+                {step.command && (
+                  <code style={{
+                    display: 'inline-block', background: '#0f172a', color: '#e2e8f0', padding: '6px 12px',
+                    borderRadius: 6, fontSize: 12, fontFamily: 'var(--font-mono)',
+                  }}>
+                    {step.command}
+                  </code>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 16, padding: 16, borderRadius: 12, background: '#fef2f2', border: '1px solid #fca5a5' }}>
+        <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: '#991b1b' }}>
+          ⚠️ Este modelo no tiene contraseña SMS
+        </p>
+        <p style={{ margin: 0, fontSize: 12, color: '#991b1b', lineHeight: 1.5 }}>
+          Cualquiera que tenga el número de la SIM podría mandarle <code>FACTORY#</code> (borra toda la configuración,
+          incluido el servidor) o <code>RESET#</code>. Trata el número de la SIM como dato sensible — solo visible
+          para SUPER_ADMIN. Si un dispositivo se desconecta y no vuelve a aparecer "En línea" en un tiempo razonable,
+          revisa si necesita reconfigurarse desde el paso 3.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /** Buscar un estudiante y ver/probar/configurar su localizador — mismo panel que en el modal del padre. */
-function DiagnosticoTab() {
+function DiagnosticoTab({ initialStudentId, initialStudentName }: { initialStudentId?: string | null; initialStudentName?: string }) {
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<StudentOption[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedName, setSelectedName] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(initialStudentId ?? null);
+  const [selectedName, setSelectedName] = useState(initialStudentName ?? '');
 
   useEffect(() => {
     if (!search.trim()) { setResults([]); return; }
@@ -320,6 +498,12 @@ export default function GpsAdminPage() {
   const rawTab = searchParams.get('tab') as TabKey | null;
   const tab: TabKey = rawTab && TABS.some((t) => t.key === rawTab) ? rawTab : 'diagnostico';
   const setTab = (key: TabKey) => setSearchParams({ tab: key }, { replace: true });
+  const [jumpToStudent, setJumpToStudent] = useState<{ id: string; name: string } | null>(null);
+
+  function handleViewStudentDiagnostic(studentId: string, studentName: string) {
+    setJumpToStudent({ id: studentId, name: studentName });
+    setTab('diagnostico');
+  }
 
   if (user?.role !== 'SUPER_ADMIN') {
     return <div className="auth-page"><p className="form-error">Acceso denegado</p></div>;
@@ -367,7 +551,15 @@ export default function GpsAdminPage() {
           ))}
         </div>
 
-        {tab === 'diagnostico' && <DiagnosticoTab />}
+        {tab === 'diagnostico' && (
+          <DiagnosticoTab
+            key={jumpToStudent?.id ?? 'none'}
+            initialStudentId={jumpToStudent?.id}
+            initialStudentName={jumpToStudent?.name}
+          />
+        )}
+        {tab === 'activos' && <ActivosTab onViewStudent={handleViewStudentDiagnostic} />}
+        {tab === 'guia' && <GuiaTab />}
         {tab === 'tarifas' && <TarifasTab />}
         {tab === 'pagos' && <GpsPaymentsPage />}
         {tab === 'pedidos' && <GpsDeviceOrdersPage />}

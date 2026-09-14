@@ -31,6 +31,7 @@ router.patch('/students/:studentId/guardians/:guardianId', gpsRoles, guardianCon
 router.delete('/students/:studentId/guardians/:guardianId', gpsRoles, guardianController.deleteGuardian);
 router.patch('/trackers/:trackerId/custom-plan', superAdminOnly, guardianController.updateTrackerCustomPlan);
 
+router.get('/trackers', superAdminOnly, gpsController.listAll);
 router.post('/trackers', gpsRoles, gpsController.link);
 router.delete('/trackers/:id', gpsRoles, gpsController.unlink);
 router.patch('/trackers/:id/emergency-contacts', gpsRoles, gpsController.setEmergencyContacts);

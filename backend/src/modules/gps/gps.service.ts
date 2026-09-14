@@ -362,6 +362,41 @@ export async function getTrackerGeofences(id: string, actor: JwtPayload) {
   return gpsPlatform.listTrackerGeofences(tracker.platform_tracker_id);
 }
 
+/** Lista todos los localizadores vinculados con su estado en vivo — usado por la pestaña "Activos" del panel SUPER_ADMIN. */
+export async function listAllTrackers(actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('No tienes permiso para ver esta información', 403);
+
+  const trackers = await prisma.gPSTracker.findMany({
+    where: { active: true },
+    select: {
+      ...trackerSelect,
+      student: { select: { id: true, full_name: true, school: { select: { name: true } } } },
+    },
+    orderBy: { created_at: 'desc' },
+  });
+
+  const results = await Promise.all(
+    trackers.map(async (t) => {
+      const platform = t.platform_tracker_id
+        ? await gpsPlatform.getTrackerStatus(t.platform_tracker_id).catch(() => null)
+        : null;
+      const info = buildTrackerInfo(t, platform);
+      return {
+        ...info,
+        student_id: t.student?.id ?? null,
+        student_name: t.student?.full_name ?? '(sin estudiante vinculado)',
+        school_name: t.student?.school?.name ?? null,
+      };
+    }),
+  );
+
+  // En línea primero, luego por más reciente visto
+  return results.sort((a, b) => {
+    if (a.online !== b.online) return a.online ? -1 : 1;
+    return (b.last_seen_at ?? '').localeCompare(a.last_seen_at ?? '');
+  });
+}
+
 export async function getCurrentLocation(studentId: string, actor: JwtPayload, req: Request) {
   await assertParentOwnsStudent(studentId, actor, 'live');
 

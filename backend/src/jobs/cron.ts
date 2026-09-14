@@ -19,6 +19,7 @@ import { runDatabaseBackupJob } from './backup-database.job.js';
 import { runPollGpsEventsJob } from './poll-gps-events.job.js';
 import { runActivateRouteTrackingJob } from './activate-route-tracking.job.js';
 import { runGpsSubscriptionReminderJob } from './gps-subscription-reminder.job.js';
+import { runGpsOfflineAlertJob } from './gps-offline-alert.job.js';
 
 const TIMEZONE = 'America/Bogota';
 
@@ -75,6 +76,17 @@ export function initCronJobs(): void {
     timezone: TIMEZONE,
   });
   console.log('[CRON] ✅ gps-subscription-reminder → todos los días a las 09:00 (Bogotá)');
+
+  // ── Job 7: Alerta de localizador GPS sin reportar hace 20-46h ───────────
+  // Ejecuta cada día a las 08:00 AM hora Colombia — este modelo de tarjeta
+  // no tiene contraseña SMS (ver GPS_MODULE.md), así que una desconexión
+  // prolongada puede ser un FACTORY# no autorizado, no solo batería muerta.
+  cron.schedule('0 8 * * *', async () => {
+    await runGpsOfflineAlertJob();
+  }, {
+    timezone: TIMEZONE,
+  });
+  console.log('[CRON] ✅ gps-offline-alert     → todos los días a las 08:00 (Bogotá)');
 
   console.log('[CRON] Scheduler activo. Todos los jobs programados correctamente.');
 }

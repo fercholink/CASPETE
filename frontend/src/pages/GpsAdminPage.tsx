@@ -413,11 +413,16 @@ function GuiaTab() {
         <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: '#991b1b' }}>
           ⚠️ Este modelo no tiene contraseña SMS
         </p>
-        <p style={{ margin: 0, fontSize: 12, color: '#991b1b', lineHeight: 1.5 }}>
+        <p style={{ margin: '0 0 6px', fontSize: 12, color: '#991b1b', lineHeight: 1.5 }}>
           Cualquiera que tenga el número de la SIM podría mandarle <code>FACTORY#</code> (borra toda la configuración,
           incluido el servidor) o <code>RESET#</code>. Trata el número de la SIM como dato sensible — solo visible
-          para SUPER_ADMIN. Si un dispositivo se desconecta y no vuelve a aparecer "En línea" en un tiempo razonable,
-          revisa si necesita reconfigurarse desde el paso 3.
+          para SUPER_ADMIN. Si el operador de la SIM es un plan M2M/IoT, pregunta si soporta bloquear SMS entrantes
+          salvo de un número autorizado — es la mitigación real, esto solo reduce quién puede llegar a saber el número.
+        </p>
+        <p style={{ margin: 0, fontSize: 12, color: '#991b1b', lineHeight: 1.5 }}>
+          Como no se puede bloquear por completo, hay una alerta automática diaria (cron <code>gps-offline-alert</code>,
+          8:00 AM) que avisa por Sentry si un dispositivo lleva 20-46h sin reportar — revisa si necesita
+          reconfigurarse desde el paso 3.
         </p>
       </div>
     </div>

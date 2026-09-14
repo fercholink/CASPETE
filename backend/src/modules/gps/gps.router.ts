@@ -44,6 +44,9 @@ router.patch('/trackers/:id/request-position', gpsRoles, gpsController.requestPo
 router.patch('/trackers/:id/lbs', superAdminOnly, gpsController.setLbsEnabled);
 router.patch('/trackers/:id/speed-threshold', superAdminOnly, gpsController.setSpeedThreshold);
 router.patch('/trackers/:id/vibration-alarm', superAdminOnly, gpsController.setVibrationAlarm);
+router.patch('/trackers/:id/do-not-disturb', superAdminOnly, gpsController.setDoNotDisturb);
+router.patch('/trackers/:id/gps-schedule', superAdminOnly, gpsController.setGpsSchedule);
+router.patch('/trackers/:id/call-whitelist', superAdminOnly, gpsController.setCallWhitelist);
 router.get('/trackers/:id/geofences', gpsRoles, gpsController.getTrackerGeofences);
 router.get('/trackers/student/:studentId', gpsRoles, gpsController.getCurrentLocation);
 router.get('/trackers/student/:studentId/history', gpsRoles, gpsController.getHistory);

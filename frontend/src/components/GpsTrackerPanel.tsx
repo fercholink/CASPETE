@@ -28,6 +28,13 @@ interface TrackerData {
   lbs_enabled: boolean | null;
   speed_threshold_kmh: number | null;
   vibration_alarm_enabled: boolean | null;
+  do_not_disturb_json: {
+    enabled: boolean; weekdays: number;
+    start1: { hour: number; minute: number }; end1: { hour: number; minute: number };
+    start2: { hour: number; minute: number }; end2: { hour: number; minute: number };
+  } | null;
+  gps_schedule_json: { enabled: boolean; start: { hour: number; minute: number }; end: { hour: number; minute: number } } | null;
+  call_whitelist_json: { name: string; number: string }[] | null;
 }
 
 interface GpsPlanStatus {
@@ -74,6 +81,15 @@ function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<s
     reader.onerror = () => reject('Error al leer el archivo');
     reader.readAsDataURL(file);
   });
+}
+
+function formatHM(t: { hour: number; minute: number }): string {
+  return `${String(t.hour).padStart(2, '0')}:${String(t.minute).padStart(2, '0')}`;
+}
+
+function parseHM(s: string): { hour: number; minute: number } {
+  const [hour, minute] = s.split(':').map(Number);
+  return { hour: hour || 0, minute: minute || 0 };
 }
 
 interface Props {
@@ -156,6 +172,35 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
   const [advancedError, setAdvancedError] = useState('');
   const [advancedSaved, setAdvancedSaved] = useState(false);
 
+  // No molestar — silencia parlante/alarma en hasta 2 franjas horarias
+  // (ej. horario de clase) — solo SUPER_ADMIN. weekdays: bitmask igual que la alarma.
+  const [dndEnabled, setDndEnabled] = useState(false);
+  const [dndWeekdays, setDndWeekdays] = useState(0);
+  const [dndStart1, setDndStart1] = useState('00:00');
+  const [dndEnd1, setDndEnd1] = useState('00:00');
+  const [dndStart2, setDndStart2] = useState('00:00');
+  const [dndEnd2, setDndEnd2] = useState('00:00');
+  const [savingDnd, setSavingDnd] = useState(false);
+  const [dndError, setDndError] = useState('');
+  const [dndSaved, setDndSaved] = useState(false);
+
+  // Apagado programado de GPS (ahorro de batería) — solo SUPER_ADMIN.
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleStart, setScheduleStart] = useState('22:00');
+  const [scheduleEnd, setScheduleEnd] = useState('06:00');
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleError, setScheduleError] = useState('');
+  const [scheduleSaved, setScheduleSaved] = useState(false);
+
+  // Lista blanca de llamadas (hasta 50) — solo SUPER_ADMIN. Vacía = cualquier
+  // número puede llamar al dispositivo (comportamiento de fábrica).
+  const [whitelistEntries, setWhitelistEntries] = useState<{ name: string; number: string }[]>([]);
+  const [whitelistNewName, setWhitelistNewName] = useState('');
+  const [whitelistNewNumber, setWhitelistNewNumber] = useState('');
+  const [savingWhitelist, setSavingWhitelist] = useState(false);
+  const [whitelistError, setWhitelistError] = useState('');
+  const [whitelistSaved, setWhitelistSaved] = useState(false);
+
   // Vincular a geocercas adicionales — solo SUPER_ADMIN. Un mismo localizador
   // puede estar en varias geocercas a la vez (la del colegio + cualquier
   // cantidad de zonas adicionales).
@@ -185,6 +230,10 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
     setPositionRequestMsg('');
     setCenterNumber(''); setLbsEnabled(true); setSpeedThreshold(''); setVibrationAlarmEnabled(false);
     setAdvancedError(''); setAdvancedSaved(false);
+    setDndEnabled(false); setDndWeekdays(0); setDndStart1('00:00'); setDndEnd1('00:00'); setDndStart2('00:00'); setDndEnd2('00:00');
+    setDndError(''); setDndSaved(false);
+    setScheduleEnabled(false); setScheduleStart('22:00'); setScheduleEnd('06:00'); setScheduleError(''); setScheduleSaved(false);
+    setWhitelistEntries([]); setWhitelistNewName(''); setWhitelistNewNumber(''); setWhitelistError(''); setWhitelistSaved(false);
     setSelectedGeofenceId(''); setLinkGeofenceMsg(''); setLinkedGeofences([]);
     if (isSuperAdmin) {
       apiClient.get<{ data: { id: string; name: string }[] }>('/gps-geofences')
@@ -214,6 +263,20 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
           setWifiEndTime(savedWifiSlot.endTime);
           setWifiSsid(savedWifiSlot.ssid);
         }
+        const dnd = tracker.do_not_disturb_json;
+        if (dnd) {
+          setDndEnabled(dnd.enabled);
+          setDndWeekdays(dnd.weekdays);
+          setDndStart1(formatHM(dnd.start1)); setDndEnd1(formatHM(dnd.end1));
+          setDndStart2(formatHM(dnd.start2)); setDndEnd2(formatHM(dnd.end2));
+        }
+        const schedule = tracker.gps_schedule_json;
+        if (schedule) {
+          setScheduleEnabled(schedule.enabled);
+          setScheduleStart(formatHM(schedule.start));
+          setScheduleEnd(formatHM(schedule.end));
+        }
+        setWhitelistEntries(tracker.call_whitelist_json ?? []);
         apiClient.get<{ data: GpsPlanStatus }>(`/gps-payments/trackers/${tracker.id}/status`)
           .then((r2) => setGpsPlanStatus(r2.data.data))
           .catch(() => {});
@@ -491,6 +554,77 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
       setAdvancedError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la configuración');
     } finally {
       setSavingAdvanced(false);
+    }
+  }
+
+  function toggleDndWeekday(bit: number) {
+    setDndWeekdays((prev) => (prev & (1 << bit) ? prev & ~(1 << bit) : prev | (1 << bit)));
+  }
+
+  async function handleSaveDnd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!gpsTracker) return;
+    setSavingDnd(true);
+    setDndError('');
+    setDndSaved(false);
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/do-not-disturb`, {
+        enabled: dndEnabled,
+        weekdays: dndWeekdays,
+        start1: parseHM(dndStart1), end1: parseHM(dndEnd1),
+        start2: parseHM(dndStart2), end2: parseHM(dndEnd2),
+      });
+      setDndSaved(true);
+    } catch (err) {
+      setDndError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar "No molestar"');
+    } finally {
+      setSavingDnd(false);
+    }
+  }
+
+  async function handleSaveSchedule(e: React.FormEvent) {
+    e.preventDefault();
+    if (!gpsTracker) return;
+    setSavingSchedule(true);
+    setScheduleError('');
+    setScheduleSaved(false);
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/gps-schedule`, {
+        enabled: scheduleEnabled,
+        start: parseHM(scheduleStart),
+        end: parseHM(scheduleEnd),
+      });
+      setScheduleSaved(true);
+    } catch (err) {
+      setScheduleError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar el apagado programado');
+    } finally {
+      setSavingSchedule(false);
+    }
+  }
+
+  function handleAddWhitelistEntry() {
+    if (!whitelistNewName.trim() || !whitelistNewNumber.trim() || whitelistEntries.length >= 50) return;
+    setWhitelistEntries((prev) => [...prev, { name: whitelistNewName.trim(), number: whitelistNewNumber.trim() }]);
+    setWhitelistNewName('');
+    setWhitelistNewNumber('');
+  }
+
+  function handleRemoveWhitelistEntry(index: number) {
+    setWhitelistEntries((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSaveWhitelist() {
+    if (!gpsTracker) return;
+    setSavingWhitelist(true);
+    setWhitelistError('');
+    setWhitelistSaved(false);
+    try {
+      await apiClient.patch(`/gps/trackers/${gpsTracker.id}/call-whitelist`, { entries: whitelistEntries });
+      setWhitelistSaved(true);
+    } catch (err) {
+      setWhitelistError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'No se pudo guardar la lista blanca');
+    } finally {
+      setSavingWhitelist(false);
     }
   }
 
@@ -1015,6 +1149,110 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
                   {savingAdvanced ? 'Guardando...' : 'Guardar configuración avanzada'}
                 </button>
               </form>
+
+              {/* No molestar — silencia el parlante/alarma en horario de clase */}
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4, fontWeight: 600 }}>
+                🔕 No molestar (Admin)
+              </p>
+              <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--color-placeholder)' }}>
+                Silencia el parlante/alarma del equipo en hasta 2 franjas horarias los días marcados (ej. horario de clase). No confirmado contra hardware real todavía.
+              </p>
+              <form onSubmit={handleSaveDnd} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={dndEnabled} onChange={(e) => setDndEnabled(e.target.checked)} />
+                  Activar "No molestar"
+                </label>
+                <div style={{ display: 'flex', gap: 4, justifyContent: 'space-between' }}>
+                  {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((label, bit) => (
+                    <button
+                      key={bit}
+                      type="button"
+                      onClick={() => toggleDndWeekday(bit)}
+                      style={{
+                        width: 32, height: 32, borderRadius: '50%', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                        border: `1.5px solid ${dndWeekdays & (1 << bit) ? 'var(--color-brand-deep)' : 'var(--color-border)'}`,
+                        background: dndWeekdays & (1 << bit) ? 'var(--color-brand-deep)' : 'transparent',
+                        color: dndWeekdays & (1 << bit) ? '#fff' : 'var(--color-text-muted)',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-muted)', flexShrink: 0, width: 56 }}>Franja 1</span>
+                  <input className="form-input" type="time" value={dndStart1} onChange={(e) => setDndStart1(e.target.value)} style={{ flex: 1 }} />
+                  <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>a</span>
+                  <input className="form-input" type="time" value={dndEnd1} onChange={(e) => setDndEnd1(e.target.value)} style={{ flex: 1 }} />
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-muted)', flexShrink: 0, width: 56 }}>Franja 2</span>
+                  <input className="form-input" type="time" value={dndStart2} onChange={(e) => setDndStart2(e.target.value)} style={{ flex: 1 }} />
+                  <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>a</span>
+                  <input className="form-input" type="time" value={dndEnd2} onChange={(e) => setDndEnd2(e.target.value)} style={{ flex: 1 }} />
+                </div>
+                {dndError && <p className="form-error" style={{ margin: 0 }}>{dndError}</p>}
+                {dndSaved && <p style={{ margin: 0, fontSize: 12, color: '#059669', fontWeight: 600 }}>"No molestar" guardado ✓</p>}
+                <button type="submit" className="btn-ghost" disabled={savingDnd}>
+                  {savingDnd ? 'Guardando...' : 'Guardar "No molestar"'}
+                </button>
+              </form>
+
+              {/* Apagado programado de GPS — ahorro de batería */}
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4, fontWeight: 600 }}>
+                🔋 Apagado programado de GPS (Admin)
+              </p>
+              <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--color-placeholder)' }}>
+                Apaga el GPS entre estas horas para ahorrar batería (ej. de noche); el resto del día reporta normal. No confirmado contra hardware real todavía.
+              </p>
+              <form onSubmit={handleSaveSchedule} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={scheduleEnabled} onChange={(e) => setScheduleEnabled(e.target.checked)} />
+                  Activar apagado programado
+                </label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input className="form-input" type="time" value={scheduleStart} onChange={(e) => setScheduleStart(e.target.value)} style={{ flex: 1 }} />
+                  <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>a</span>
+                  <input className="form-input" type="time" value={scheduleEnd} onChange={(e) => setScheduleEnd(e.target.value)} style={{ flex: 1 }} />
+                </div>
+                {scheduleError && <p className="form-error" style={{ margin: 0 }}>{scheduleError}</p>}
+                {scheduleSaved && <p style={{ margin: 0, fontSize: 12, color: '#059669', fontWeight: 600 }}>Apagado programado guardado ✓</p>}
+                <button type="submit" className="btn-ghost" disabled={savingSchedule}>
+                  {savingSchedule ? 'Guardando...' : 'Guardar apagado programado'}
+                </button>
+              </form>
+
+              {/* Lista blanca de llamadas — bloquea números no autorizados */}
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4, fontWeight: 600 }}>
+                📵 Lista blanca de llamadas (Admin)
+              </p>
+              <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--color-placeholder)' }}>
+                Hasta 50 números autorizados para llamar al equipo — bloquea desconocidos. Vacía = cualquier número puede llamar (comportamiento de fábrica). No confirmado contra hardware real todavía.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                {whitelistEntries.map((entry, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 12px', borderRadius: 10, background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                    <span style={{ fontSize: 13 }}>{entry.name} — {entry.number}</span>
+                    <button type="button" className="btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => handleRemoveWhitelistEntry(i)}>
+                      Quitar
+                    </button>
+                  </div>
+                ))}
+                {whitelistEntries.length < 50 && (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input className="form-input" placeholder="Nombre" value={whitelistNewName} onChange={(e) => setWhitelistNewName(e.target.value.slice(0, 20))} style={{ flex: 1 }} />
+                    <input className="form-input" type="tel" placeholder="Número" value={whitelistNewNumber} onChange={(e) => setWhitelistNewNumber(e.target.value.replace(/\D/g, '').slice(0, 20))} style={{ flex: 1 }} />
+                    <button type="button" className="btn-ghost" onClick={handleAddWhitelistEntry} disabled={!whitelistNewName.trim() || !whitelistNewNumber.trim()}>
+                      Agregar
+                    </button>
+                  </div>
+                )}
+                {whitelistError && <p className="form-error" style={{ margin: 0 }}>{whitelistError}</p>}
+                {whitelistSaved && <p style={{ margin: 0, fontSize: 12, color: '#059669', fontWeight: 600 }}>Lista blanca guardada ✓</p>}
+                <button type="button" className="btn-ghost" disabled={savingWhitelist} onClick={handleSaveWhitelist}>
+                  {savingWhitelist ? 'Guardando...' : 'Guardar lista blanca'}
+                </button>
+              </div>
 
               {/* Control de Tarifa Combo BS Móvil para Super Admin */}
               <div style={{ marginBottom: 20, padding: 14, borderRadius: 12, background: '#f8fafc', border: '1px solid var(--color-border)' }}>

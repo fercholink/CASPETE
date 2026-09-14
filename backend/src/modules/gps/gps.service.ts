@@ -67,6 +67,9 @@ function buildTrackerInfo(local: LocalTracker, platform: gpsPlatform.PlatformTra
     lbs_enabled: platform?.lbs_enabled ?? null,
     speed_threshold_kmh: platform?.speed_threshold_kmh ?? null,
     vibration_alarm_enabled: platform?.vibration_alarm_enabled ?? null,
+    do_not_disturb_json: platform?.do_not_disturb_json ?? null,
+    gps_schedule_json: platform?.gps_schedule_json ?? null,
+    call_whitelist_json: platform?.call_whitelist_json ?? null,
   };
 }
 
@@ -344,6 +347,24 @@ export async function setVibrationAlarm(id: string, enabled: boolean, actor: Jwt
   if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede configurar esto', 403);
   const tracker = await assertSuperAdminOwnsTracker(id);
   return gpsPlatform.setVibrationAlarm(tracker.platform_tracker_id!, enabled);
+}
+
+export async function setDoNotDisturb(id: string, settings: gpsPlatform.DoNotDisturbSettings, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede configurar esto', 403);
+  const tracker = await assertSuperAdminOwnsTracker(id);
+  return gpsPlatform.setDoNotDisturb(tracker.platform_tracker_id!, settings);
+}
+
+export async function setGpsSchedule(id: string, settings: gpsPlatform.GpsScheduleSettings, actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede configurar esto', 403);
+  const tracker = await assertSuperAdminOwnsTracker(id);
+  return gpsPlatform.setGpsSchedule(tracker.platform_tracker_id!, settings);
+}
+
+export async function setCallWhitelist(id: string, entries: gpsPlatform.CallWhitelistEntry[], actor: JwtPayload) {
+  if (actor.role !== 'SUPER_ADMIN') throw new AppError('Solo el Super Administrador puede configurar esto', 403);
+  const tracker = await assertSuperAdminOwnsTracker(id);
+  return gpsPlatform.setCallWhitelist(tracker.platform_tracker_id!, entries);
 }
 
 // Geocercas a las que está vinculado el tracker — un mismo localizador puede

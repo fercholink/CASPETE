@@ -29,6 +29,9 @@ export interface PlatformTracker {
   speed_threshold_kmh: number | null;
   vibration_alarm_enabled: boolean | null;
   wifi_attendance_json: WifiAttendanceSlot[] | null;
+  do_not_disturb_json: DoNotDisturbSettings | null;
+  gps_schedule_json: GpsScheduleSettings | null;
+  call_whitelist_json: CallWhitelistEntry[] | null;
 }
 
 export interface PlatformPosition {
@@ -371,6 +374,52 @@ export async function setWifiAttendance(platformTrackerId: string, slots: WifiAt
   await request(`/trackers/${platformTrackerId}/wifi-attendance`, {
     method: 'PATCH',
     body: JSON.stringify({ slots }),
+  });
+}
+
+export interface TimeOfDay { hour: number; minute: number }
+
+export interface DoNotDisturbSettings {
+  enabled: boolean;
+  weekdays: number; // bitmask 0-127, bit0=lunes...bit6=domingo
+  start1: TimeOfDay;
+  end1: TimeOfDay;
+  start2: TimeOfDay;
+  end2: TimeOfDay;
+}
+
+/** Silencia el parlante/alarma del dispositivo en hasta 2 franjas horarias (ej. horario de clase). */
+export async function setDoNotDisturb(platformTrackerId: string, settings: DoNotDisturbSettings): Promise<void> {
+  await request(`/trackers/${platformTrackerId}/do-not-disturb`, {
+    method: 'PATCH',
+    body: JSON.stringify(settings),
+  });
+}
+
+export interface GpsScheduleSettings {
+  enabled: boolean;
+  start: TimeOfDay;
+  end: TimeOfDay;
+}
+
+/** Apaga el GPS entre dos horas para ahorrar batería; el resto del día reporta normal. */
+export async function setGpsSchedule(platformTrackerId: string, settings: GpsScheduleSettings): Promise<void> {
+  await request(`/trackers/${platformTrackerId}/gps-schedule`, {
+    method: 'PATCH',
+    body: JSON.stringify(settings),
+  });
+}
+
+export interface CallWhitelistEntry {
+  name: string;
+  number: string;
+}
+
+/** Bloquea llamadas de números no autorizados al dispositivo (hasta 50 entradas; [] la desactiva). */
+export async function setCallWhitelist(platformTrackerId: string, entries: CallWhitelistEntry[]): Promise<void> {
+  await request(`/trackers/${platformTrackerId}/call-whitelist`, {
+    method: 'PATCH',
+    body: JSON.stringify({ entries }),
   });
 }
 

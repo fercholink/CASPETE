@@ -4,6 +4,7 @@ import {
   linkTrackerSchema, historyQuerySchema, emergencyContactsSchema, findDeviceSchema,
   powerActionSchema, setAlarmClockSchema, setPhoneNumberSchema,
   setLbsEnabledSchema, setSpeedThresholdSchema, setVibrationAlarmSchema, setWifiAttendanceSchema,
+  setDoNotDisturbSchema, setGpsScheduleSchema, setCallWhitelistSchema,
 } from './gps.schemas.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 
@@ -76,6 +77,24 @@ export async function setVibrationAlarm(req: Request, res: Response) {
   const input = setVibrationAlarmSchema.parse(req.body);
   const result = await gpsService.setVibrationAlarm(req.params['id'] as string, input.enabled, req.user!);
   sendSuccess(res, result, 'Alarma de vibración actualizada');
+}
+
+export async function setDoNotDisturb(req: Request, res: Response) {
+  const input = setDoNotDisturbSchema.parse(req.body);
+  const result = await gpsService.setDoNotDisturb(req.params['id'] as string, input, req.user!);
+  sendSuccess(res, result, 'No molestar actualizado');
+}
+
+export async function setGpsSchedule(req: Request, res: Response) {
+  const input = setGpsScheduleSchema.parse(req.body);
+  const result = await gpsService.setGpsSchedule(req.params['id'] as string, input, req.user!);
+  sendSuccess(res, result, 'Apagado programado de GPS actualizado');
+}
+
+export async function setCallWhitelist(req: Request, res: Response) {
+  const input = setCallWhitelistSchema.parse(req.body);
+  const result = await gpsService.setCallWhitelist(req.params['id'] as string, input.entries, req.user!);
+  sendSuccess(res, result, 'Lista blanca de llamadas actualizada');
 }
 
 export async function getTrackerGeofences(req: Request, res: Response) {

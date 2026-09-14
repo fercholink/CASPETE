@@ -77,3 +77,37 @@ export type SetSpeedThresholdInput = z.infer<typeof setSpeedThresholdSchema>;
 
 export const setVibrationAlarmSchema = z.object({ enabled: z.boolean() });
 export type SetVibrationAlarmInput = z.infer<typeof setVibrationAlarmSchema>;
+
+// No molestar: silencia parlante/alarma en hasta 2 franjas horarias los días
+// marcados (bitmask 0-127, bit0=lunes...bit6=domingo — igual que la alarma).
+const timeOfDaySchema = z.object({
+  hour: z.coerce.number().int().min(0).max(23),
+  minute: z.coerce.number().int().min(0).max(59),
+});
+export const setDoNotDisturbSchema = z.object({
+  enabled: z.boolean(),
+  weekdays: z.coerce.number().int().min(0).max(127),
+  start1: timeOfDaySchema,
+  end1: timeOfDaySchema,
+  start2: timeOfDaySchema,
+  end2: timeOfDaySchema,
+});
+export type SetDoNotDisturbInput = z.infer<typeof setDoNotDisturbSchema>;
+
+// Apagado programado de GPS para ahorro de batería — apaga entre dos horas, el resto del día reporta normal.
+export const setGpsScheduleSchema = z.object({
+  enabled: z.boolean(),
+  start: timeOfDaySchema,
+  end: timeOfDaySchema,
+});
+export type SetGpsScheduleInput = z.infer<typeof setGpsScheduleSchema>;
+
+// Lista blanca de llamadas: hasta 50 números autorizados para llamar al dispositivo.
+const callWhitelistEntrySchema = z.object({
+  name: z.string().min(1).max(20),
+  number: z.string().min(7).max(20),
+});
+export const setCallWhitelistSchema = z.object({
+  entries: z.array(callWhitelistEntrySchema).max(50),
+});
+export type SetCallWhitelistInput = z.infer<typeof setCallWhitelistSchema>;

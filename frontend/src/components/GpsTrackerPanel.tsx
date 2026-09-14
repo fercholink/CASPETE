@@ -637,48 +637,52 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
           </Link>
 
           {gpsPlanStatus && (
-            <div style={{ marginBottom: 20, padding: 16, borderRadius: 12, background: gpsPlanStatus.subscription_active ? 'rgba(24,226,153,0.08)' : '#fef2f2', border: `1px solid ${gpsPlanStatus.subscription_active ? 'var(--color-brand-deep)' : '#fca5a5'}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div style={{ marginBottom: 20, borderRadius: 'var(--radius-lg)', background: '#fff', border: '1px solid var(--color-border-md)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+              <div style={{ height: 4, background: gpsPlanStatus.subscription_active ? 'var(--color-brand)' : 'var(--color-error)' }} />
+              <div style={{ padding: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <p style={{ margin: 0, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)' }}>
                   Suscripción y Plan GPS
                 </p>
-                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, fontWeight: 600, background: gpsPlanStatus.subscription_active ? '#d1fae5' : '#fee2e2', color: gpsPlanStatus.subscription_active ? '#065f46' : '#991b1b' }}>
-                  {gpsPlanStatus.subscription_active ? '● Activa' : '● Vencida o Pendiente'}
+                <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, fontWeight: 600, background: gpsPlanStatus.subscription_active ? 'var(--color-brand-light)' : 'rgba(212,86,86,0.1)', color: gpsPlanStatus.subscription_active ? 'var(--color-brand-deep)' : 'var(--color-error)' }}>
+                  {gpsPlanStatus.subscription_active ? '● Activa' : gpsPlanStatus.subscription_paid_until ? '● Vencida' : '● Pendiente'}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8 }}>
-                <span style={{ fontSize: 13 }}>
-                  Dispositivo — {gpsPlanStatus.device_purchased ? '✅ Comprado' : `$${gpsPlanStatus.device_price.toLocaleString('es-CO')} (pago único)`}
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, paddingBottom: 12 }}>
+                <div style={{ fontSize: 13 }}>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 2 }}>Dispositivo · pago único</div>
+                  <strong style={{ fontSize: 14 }}>
+                    {gpsPlanStatus.device_purchased ? '✅ Comprado' : `$${gpsPlanStatus.device_price.toLocaleString('es-CO')} COP`}
+                  </strong>
+                </div>
                 {!gpsPlanStatus.device_purchased && (
-                  <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px', flexShrink: 0 }} onClick={() => { setGpsPaymentType('DEVICE'); setPaymentMethodTab('WOMPI'); }}>
+                  <button className="btn-ghost" style={{ fontSize: 12, padding: '6px 14px', flexShrink: 0 }} onClick={() => { setGpsPaymentType('DEVICE'); setPaymentMethodTab('WOMPI'); }}>
                     Pagar equipo
                   </button>
                 )}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
                 <div style={{ fontSize: 13 }}>
-                  <div>
-                    <strong>${gpsPlanStatus.monthly_price.toLocaleString('es-CO')} COP/mes</strong>
-                    {Boolean(gpsPlanStatus.extra_guardians_count && gpsPlanStatus.extra_guardians_count > 0) && (
-                      <span style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block' }}>
-                        (Base ${(gpsPlanStatus.base_monthly_price ?? 30000).toLocaleString('es-CO')} + {gpsPlanStatus.extra_guardians_count} familiar(es) extra)
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 12, color: gpsPlanStatus.subscription_active ? '#047857' : '#b91c1c', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 2 }}>Mensualidad</div>
+                  <strong style={{ fontSize: 14 }}>${gpsPlanStatus.monthly_price.toLocaleString('es-CO')} COP/mes</strong>
+                  {Boolean(gpsPlanStatus.extra_guardians_count && gpsPlanStatus.extra_guardians_count > 0) && (
+                    <span style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block' }}>
+                      Base ${(gpsPlanStatus.base_monthly_price ?? 30000).toLocaleString('es-CO')} + {gpsPlanStatus.extra_guardians_count} familiar(es) extra
+                    </span>
+                  )}
+                  <div style={{ fontSize: 11, fontWeight: 500, color: gpsPlanStatus.subscription_active ? 'var(--color-brand-deep)' : 'var(--color-error)', marginTop: 3 }}>
                     {gpsPlanStatus.subscription_active
                       ? `Al día hasta ${new Date(gpsPlanStatus.subscription_paid_until!).toLocaleDateString('es-CO')}`
                       : gpsPlanStatus.subscription_paid_until
-                        ? `Vencida el ${new Date(gpsPlanStatus.subscription_paid_until).toLocaleDateString('es-CO')}`
-                        : 'Aún no has pagado la primera mensualidad'}
+                        ? `Vencida el ${new Date(gpsPlanStatus.subscription_paid_until).toLocaleDateString('es-CO')} — rastreo y llamadas en pausa`
+                        : 'Sin pagar aún — rastreo y llamadas en pausa'}
                   </div>
                 </div>
                 <button
                   className="btn-primary"
-                  style={{ fontSize: 12, padding: '6px 14px', flexShrink: 0, fontWeight: 600 }}
+                  style={{ width: 'auto', marginTop: 0, fontSize: 12, padding: '8px 16px', flexShrink: 0, fontWeight: 600 }}
                   onClick={() => { setGpsPaymentType('MONTHLY_SUBSCRIPTION'); setPaymentMethodTab('BALANCE'); setGpsPaymentError(''); }}
                 >
                   {gpsPlanStatus.subscription_active ? 'Renovar mes' : 'Pagar mensualidad'}
@@ -687,15 +691,15 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
 
               {/* Distintivo de tarifa Combo BS Móvil o banner promocional */}
               {gpsPlanStatus.base_monthly_price === 15000 ? (
-                <div style={{ marginTop: 10, padding: '8px 10px', borderRadius: 8, background: '#ecfdf5', border: '1px solid #10b981', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ marginTop: 14, padding: '8px 10px', borderRadius: 'var(--radius-md)', background: 'var(--color-brand-light)', border: '1px solid var(--color-brand-deep)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 14 }}>🔥</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#065f46' }}>
-                    Tarifa Combo BS Móvil Activa ($15.000 COP/mes). ¡Ahorras el 50% de la mensualidad!
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-brand-deep)' }}>
+                    Tarifa Combo BS Móvil activa ($15.000 COP/mes) — ahorras el 50%
                   </span>
                 </div>
               ) : (
                 <div style={{
-                  marginTop: 10, padding: 12, borderRadius: 10,
+                  marginTop: 14, padding: 12, borderRadius: 'var(--radius-md)',
                   background: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)',
                   color: '#fff', border: '1px solid #10b981',
                 }}>
@@ -725,14 +729,8 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
                 </div>
               )}
 
-              {!gpsPlanStatus.subscription_active && (
-                <p style={{ margin: '8px 0 0', fontSize: 11, color: '#991b1b', lineHeight: 1.4 }}>
-                  ⚠️ El rastreo GPS en tiempo real y las llamadas están en pausa hasta completar la mensualidad.
-                </p>
-              )}
-
               {balancePaySuccessMsg && (
-                <div style={{ marginTop: 12, padding: 12, background: '#ecfdf5', border: '1px solid #10b981', borderRadius: 8, color: '#065f46', fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
+                <div style={{ marginTop: 12, padding: 12, background: 'var(--color-brand-light)', border: '1px solid var(--color-brand-deep)', borderRadius: 'var(--radius-md)', color: 'var(--color-brand-deep)', fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
                   ✓ {balancePaySuccessMsg}
                 </div>
               )}
@@ -893,6 +891,7 @@ export default function GpsTrackerPanel({ studentId, onClose }: Props) {
                   Comprobante enviado — será validado pronto por administración ✓
                 </p>
               )}
+              </div>
             </div>
           )}
 

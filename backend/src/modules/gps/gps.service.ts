@@ -7,6 +7,7 @@ import type { JwtPayload } from '../../middleware/auth.middleware.js';
 import type { LinkTrackerInput, EmergencyContactsInput, SetPhoneNumberInput } from './gps.schemas.js';
 import * as gpsPlatform from '../../lib/gpsPlatform.js';
 import { syncStudentRoute } from '../../lib/routeSync.js';
+import { removeGpsJitter } from '../../lib/geo.js';
 
 // qr_token solo se expone al dueño (padre) o SUPER_ADMIN vía estos endpoints —
 // necesario para poder mostrar/imprimir el QR físico de la tarjeta.
@@ -501,7 +502,7 @@ export async function getHistory(
   const positions = opts.date
     ? await gpsPlatform.getPositionHistoryForDay(tracker.platform_tracker_id, opts.date)
     : await gpsPlatform.getPositionHistory(tracker.platform_tracker_id, opts.hours);
-  return filterPositionsBySegment(positions, opts.segment).map(mapPosition);
+  return removeGpsJitter(filterPositionsBySegment(positions, opts.segment)).map(mapPosition);
 }
 
 // La ruta esperada (línea por calles o recorrido real guardado) — solo para
